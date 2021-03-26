@@ -1,0 +1,16 @@
+[package]
+name = "rustybam"
+version = "0.1.0"
+authors = ["mrvollger <mrvollger@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rust-htslib = "*"
+bio-types = "*"
+colored = "*"
+calm_io = "0.1.1"
+clap = { version = "3.0.0-beta.2", features = ["yaml"] }
+rayon = "1.5"
+regex = "*"
