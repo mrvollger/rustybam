@@ -39,7 +39,7 @@ pub struct Nucfreq{
 
 impl fmt::Display for Nucfreq {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f,"{}\t{}\t{}\t{}\t{}\n", self.pos, self.a, self.c, self.g, self.t)
+    write!(f,"{}\t{}\t{}\t{}\t{}\t{}\n", self.pos, self.pos+1, self.a, self.c, self.g, self.t)
   }
 }
 
@@ -87,8 +87,8 @@ pub fn nucfreq(bam : &mut rust_htslib::bam::IndexedReader) -> Vec<Nucfreq> {
 
 pub struct Region{
   pub name: String,
-  pub st: i64,
-  pub en: i64
+  pub st: u32,
+  pub en: u32
 }
 
 /// parse region strings 
@@ -96,21 +96,21 @@ pub struct Region{
 /// ```
 /// let rgn = rustybam::nucfreq::parse_region("chr1:1-1000");
 /// assert_eq!("chr1", rgn.name);
-/// assert_eq!(1, rgn.st);
+/// assert_eq!(0, rgn.st);
 /// assert_eq!(1000, rgn.en);
 /// 
 /// let rgn2 = rustybam::nucfreq::parse_region("chr1:2-2000:1-1000");
 /// assert_eq!("chr1:2-2000", rgn2.name);
 /// ```
-pub fn parse_region(region : &str ) -> Region{
+pub fn parse_region(region : &str) -> Region{
     let re = Regex::new(r"(.+):([0-9]+)-([0-9]+)").unwrap();
-    let caps = re.captures( region ).unwrap();
+    let caps = re.captures( region ).expect("Failed to parse region string.");
 
-    let nm = caps.get(1).unwrap().as_str().to_string();
-    let st : i64 = caps.get(2).unwrap().as_str().parse().unwrap();
-    let en : i64 = caps.get(3).unwrap().as_str().parse().unwrap();
-
-    Region{name : nm, st : st,en :en}
+    Region{
+        name : caps.get(1).unwrap().as_str().to_string(),
+        st :  caps.get(2).unwrap().as_str().parse::<u32>().unwrap() - 1,
+        en :  caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295) // this is 2^32-1
+    }
 }
 
 /// get count for A,C,G,T at every pos in the region 
@@ -123,10 +123,14 @@ pub fn parse_region(region : &str ) -> Region{
 /// let vec3 = rustybam::nucfreq::region_nucfreq( &mut bam, "chr1:2-2000");
 /// ```
 pub fn region_nucfreq(bam : &mut rust_htslib::bam::IndexedReader, region : &str ) -> Vec<Nucfreq> {
-    //let rgn = parse_region(region);
-    //bam.fetch( (rgn.name.as_bytes(), rgn.st, rgn.en) ).unwrap();
-    bam.fetch(region).unwrap();
-    nucfreq(bam)
+    let rgn = parse_region(region);
+    eprintln!("Finding nucfreq in: {}\t{}\t{}", rgn.name, rgn.st, rgn.en);
+    bam.fetch( (&rgn.name, rgn.st as i64, rgn.en as i64) ).unwrap();
+    
+    // get the nucfreq and filter for valid regions
+    nucfreq(bam).into_iter()
+        .filter(|nf| nf.pos >= rgn.st && nf.pos < rgn.en)
+        .collect()
 }
 
 pub fn print_nucfreq( vec : Vec<Nucfreq>){
