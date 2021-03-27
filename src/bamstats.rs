@@ -80,13 +80,10 @@ pub fn cigar_stats(mut rec: Record) -> Stats {
         + cigar.trailing_hardclips();
 
     // fix query coordinates if rc
-    match rec.strand() {
-        Reverse => {
-            let temp = stats.q_st;
-            stats.q_st = stats.q_len - stats.q_en;
-            stats.q_en = stats.q_len - temp;
-        }
-        _ => (),
+    if rec.strand() == Reverse {
+        let temp = stats.q_st;
+        stats.q_st = stats.q_len - stats.q_en;
+        stats.q_en = stats.q_len - temp;
     }
 
     // count up the cigar operations
@@ -170,8 +167,8 @@ pub fn print_cigar_stats(stats: Stats, qbed: bool, header: &Header) {
         "{}\t{}\t{}\t",
         stats.id_by_matches, stats.id_by_events, stats.id_by_all
     );
-    print!(
-        "{}\t{}\t{}\t{}\t{}\t{}\n",
+    println!(
+        "{}\t{}\t{}\t{}\t{}\t{}",
         stats.equal, stats.diff, stats.del_events, stats.ins_events, stats.del, stats.ins
     );
 }

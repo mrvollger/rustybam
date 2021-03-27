@@ -39,9 +39,9 @@ pub struct Nucfreq {
 
 impl fmt::Display for Nucfreq {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
+        writeln!(
             f,
-            "{}\t{}\t{}\t{}\t{}\t{}\n",
+            "{}\t{}\t{}\t{}\t{}\t{}",
             self.pos,
             self.pos + 1,
             self.a,
@@ -88,7 +88,7 @@ pub fn nucfreq(bam: &mut rust_htslib::bam::IndexedReader) -> Vec<Nucfreq> {
                     b'G' => freqs.g += 1,
                     b'T' => freqs.t += 1,
                     b'N' => (),
-                    _ => eprintln!("Seq character not recognized (u8):{:?}, {}", bp, b'X'),
+                    _ => eprintln!("Seq character not recognized (u8):{:?}", bp),
                 }
             }
         }

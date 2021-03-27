@@ -18,9 +18,11 @@ fn main() {
 pub fn run_stats(args: &clap::ArgMatches) {
     // parse arguments
     let threads = args.value_of_t("threads").unwrap_or(8);
-    eprint!("Number of threads: {}\n", threads);
+    eprintln!("Number of threads: {}", threads);
     let mut bam = match args.value_of("BAM") {
-        Some(bam_f) => bam::Reader::from_path(bam_f).unwrap_or_else(|_| panic!("Failed to open {}.", bam_f)),
+        Some(bam_f) => {
+            bam::Reader::from_path(bam_f).unwrap_or_else(|_| panic!("Failed to open {}.", bam_f))
+        }
         _ => bam::Reader::from_stdin().unwrap(),
     };
     let qbed = args.is_present("qbed");
@@ -36,17 +38,17 @@ pub fn run_stats(args: &clap::ArgMatches) {
         let stats = bamstats::cigar_stats(rec.unwrap());
         bamstats::print_cigar_stats(stats, qbed, &bam_header);
     }
-    eprint!("\n");
+    eprintln!();
 }
 
 pub fn run_nucfreq(args: &clap::ArgMatches) {
     // parse arguments
     let threads = args.value_of_t("threads").unwrap_or(8);
-    eprint!("Number of threads: {}\n", threads);
+    eprintln!("Number of threads: {}", threads);
     let bam_f = args.value_of("BAM").unwrap();
     let region = args.value_of("region").unwrap();
-    let mut bam =
-        bam::IndexedReader::from_path(bam_f).unwrap_or_else(|_| panic!("Failed to open {}.", bam_f));
+    let mut bam = bam::IndexedReader::from_path(bam_f)
+        .unwrap_or_else(|_| panic!("Failed to open {}.", bam_f));
 
     let vec = nucfreq::region_nucfreq(&mut bam, region);
     println!("{}", vec.len());
