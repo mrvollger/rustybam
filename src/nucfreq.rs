@@ -26,7 +26,7 @@ pub fn coverage(path: &str) -> u64 {
             }
         }
     }
-    return count;
+    count
 }
 
 pub struct Nucfreq {
