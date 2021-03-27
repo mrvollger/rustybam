@@ -16,7 +16,7 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-    rustfmt:
+  rustfmt:
     name: Verify code formatting
     runs-on: ubuntu-latest
     steps:
