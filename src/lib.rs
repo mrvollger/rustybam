@@ -1,2 +1,2 @@
-pub mod nucfreq; 
 pub mod bamstats;
+pub mod nucfreq;
