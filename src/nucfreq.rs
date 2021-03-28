@@ -1,9 +1,6 @@
-use regex::Regex;
+use super::bed::*;
 use rust_htslib::bam::Read;
 use std::fmt;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::str;
 
 pub struct Nucfreq {
     pub pos: u32,
@@ -73,84 +70,12 @@ pub fn nucfreq(bam: &mut rust_htslib::bam::IndexedReader) -> Vec<Nucfreq> {
     vec
 }
 
-pub struct Region {
-    pub name: String,
-    pub st: u32,
-    pub en: u32,
-    pub id: String,
-}
-
-/// parse region strings
-/// # Example
-/// ```
-/// let rgn = rustybam::nucfreq::parse_region("chr1:1-1000");
-/// assert_eq!("chr1", rgn.name);
-/// assert_eq!(0, rgn.st);
-/// assert_eq!(1000, rgn.en);
-///
-/// let rgn2 = rustybam::nucfreq::parse_region("chr1:2-2000:1-1000");
-/// assert_eq!("chr1:2-2000", rgn2.name);
-/// ```
-pub fn parse_region(region: &str) -> Region {
-    let re = Regex::new(r"(.+):([0-9]+)-([0-9]+)").unwrap();
-    let caps = re.captures(region).expect("Failed to parse region string.");
-
-    Region {
-        name: caps.get(1).unwrap().as_str().to_string(),
-        st: caps.get(2).unwrap().as_str().parse::<u32>().unwrap() - 1,
-        en: caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295), // this is 2^32-1
-        id: "None".to_string(),
-    }
-}
-
-/// parse bed strings
-/// # Example
-/// ```
-/// let rgn = rustybam::nucfreq::parse_bed_rec("chr1\t0\t1000\tid");
-/// assert_eq!("chr1", rgn.name);
-/// assert_eq!(0, rgn.st);
-/// assert_eq!(1000, rgn.en);
-/// assert_eq!("id", rgn.id);
-///
-/// let rgn2 = rustybam::nucfreq::parse_bed_rec("chr1\t2\t2000");
-/// assert_eq!("chr1", rgn2.name);
-/// assert_eq!("None", rgn2.id);
-/// ```
-pub fn parse_bed_rec(region: &str) -> Region {
-    let re = Regex::new(r"([^\s]+)\t([0-9]+)\t([0-9]+)\t?([^\s]+)?.*").unwrap();
-    let caps = re.captures(region).expect("Failed to parse region string.");
-
-    Region {
-        name: caps.get(1).unwrap().as_str().to_string(),
-        st: caps.get(2).unwrap().as_str().parse::<u32>().unwrap(),
-        en: caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295), // this is 2^32-1
-        id: caps.get(4).map_or("None", |m| m.as_str()).to_string(),
-    }
-}
-
-/// parse bed file
-/// # Example
-/// ```
-/// use rustybam::nucfreq::*;
-/// let vec = parse_bed("test/asm_small.bed");
-/// assert_eq!(vec.len(), 10);
-/// ```
-pub fn parse_bed(filename: &str) -> Vec<Region> {
-    let file = File::open(filename).unwrap();
-    let reader = BufReader::new(file);
-    let mut vec = Vec::new();
-    for (_index, line) in reader.lines().enumerate() {
-        let line = line.unwrap(); // Ignore errors.
-        vec.push(parse_bed_rec(&line));
-    }
-    vec
-}
-
 /// get count for A,C,G,T at every pos in the region
 /// # Example
 /// ```
 /// use rust_htslib::{bam, bam::Read};
 /// use rustybam::nucfreq::*;
+/// use rustybam::bed::*;
 ///
 /// let mut bam = bam::IndexedReader::from_path("test/asm_small.bam").unwrap();
 ///

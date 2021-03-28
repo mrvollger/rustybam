@@ -2,6 +2,7 @@ use clap::{load_yaml, App, AppSettings};
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rustybam::bamstats;
+use rustybam::bed;
 use rustybam::nucfreq;
 
 fn main() {
@@ -53,14 +54,14 @@ pub fn run_nucfreq(args: &clap::ArgMatches) {
     nucfreq::print_nucfreq_header();
     // nuc freq on region
     if args.is_present("region") {
-        let rgn = nucfreq::parse_region(args.value_of("region").unwrap());
+        let rgn = bed::parse_region(args.value_of("region").unwrap());
         let vec = nucfreq::region_nucfreq(&mut bam, &rgn);
         nucfreq::print_nucfreq(vec, &rgn);
     }
     //nucfreq on bed
     if args.is_present("bed") {
         let bed_f = args.value_of("bed").expect("Unable to read bedfile");
-        for rgn in nucfreq::parse_bed(bed_f) {
+        for rgn in bed::parse_bed(bed_f) {
             let vec = nucfreq::region_nucfreq(&mut bam, &rgn);
             nucfreq::print_nucfreq(vec, &rgn);
         }

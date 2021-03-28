@@ -1,0 +1,103 @@
+use regex::Regex;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::str;
+
+pub struct Region {
+    pub name: String,
+    pub st: u32,
+    pub en: u32,
+    pub id: String,
+}
+
+/// Checks if two regions overlap
+/// # Example
+/// ```
+/// use rustybam::bed::*;
+/// let rgn1 = &parse_bed_rec("chr1\t10\t15");
+/// let rgn2 = &parse_bed_rec("chr1\t15\t20");
+/// let rgn3 = &parse_bed_rec("chr1\t5\t10");
+/// let big = &parse_bed_rec("chr1\t0\t20");
+/// let small = &parse_bed_rec("chr1\t11\t12");
+/// let left = &parse_bed_rec("chr1\t8\t12");
+/// let right = &parse_bed_rec("chr1\t14\t16");
+///
+/// assert_eq!(has_overlap(rgn1, rgn2), false);
+/// assert_eq!(has_overlap(rgn1, rgn3), false);
+/// assert_eq!(has_overlap(rgn1, big), true);
+/// assert_eq!(has_overlap(rgn1, small), true);
+/// assert_eq!(has_overlap(rgn1, left), true);
+/// assert_eq!(has_overlap(rgn1, left), true);
+/// ```
+pub fn has_overlap(rgn1: &Region, rgn2: &Region) -> bool {
+    if rgn1.name != rgn2.name {
+        return false;
+    }
+    rgn1.en > rgn2.st && rgn1.st < rgn2.en
+}
+
+/// parse region strings
+/// # Example
+/// ```
+/// let rgn = rustybam::bed::parse_region("chr1:1-1000");
+/// assert_eq!("chr1", rgn.name);
+/// assert_eq!(0, rgn.st);
+/// assert_eq!(1000, rgn.en);
+///
+/// let rgn2 = rustybam::bed::parse_region("chr1:2-2000:1-1000");
+/// assert_eq!("chr1:2-2000", rgn2.name);
+/// ```
+pub fn parse_region(region: &str) -> Region {
+    let re = Regex::new(r"(.+):([0-9]+)-([0-9]+)").unwrap();
+    let caps = re.captures(region).expect("Failed to parse region string.");
+
+    Region {
+        name: caps.get(1).unwrap().as_str().to_string(),
+        st: caps.get(2).unwrap().as_str().parse::<u32>().unwrap() - 1,
+        en: caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295), // this is 2^32-1
+        id: "None".to_string(),
+    }
+}
+
+/// parse bed strings
+/// # Example
+/// ```
+/// let rgn = rustybam::bed::parse_bed_rec("chr1\t0\t1000\tid");
+/// assert_eq!("chr1", rgn.name);
+/// assert_eq!(0, rgn.st);
+/// assert_eq!(1000, rgn.en);
+/// assert_eq!("id", rgn.id);
+///
+/// let rgn2 = rustybam::bed::parse_bed_rec("chr1\t2\t2000");
+/// assert_eq!("chr1", rgn2.name);
+/// assert_eq!("None", rgn2.id);
+/// ```
+pub fn parse_bed_rec(region: &str) -> Region {
+    let re = Regex::new(r"([^\s]+)\t([0-9]+)\t([0-9]+)\t?([^\s]+)?.*").unwrap();
+    let caps = re.captures(region).expect("Failed to parse region string.");
+
+    Region {
+        name: caps.get(1).unwrap().as_str().to_string(),
+        st: caps.get(2).unwrap().as_str().parse::<u32>().unwrap(),
+        en: caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295), // this is 2^32-1
+        id: caps.get(4).map_or("None", |m| m.as_str()).to_string(),
+    }
+}
+
+/// parse bed file
+/// # Example
+/// ```
+/// use rustybam::bed::*;
+/// let vec = parse_bed("test/asm_small.bed");
+/// assert_eq!(vec.len(), 10);
+/// ```
+pub fn parse_bed(filename: &str) -> Vec<Region> {
+    let file = File::open(filename).unwrap();
+    let reader = BufReader::new(file);
+    let mut vec = Vec::new();
+    for (_index, line) in reader.lines().enumerate() {
+        let line = line.unwrap(); // Ignore errors.
+        vec.push(parse_bed_rec(&line));
+    }
+    vec
+}
