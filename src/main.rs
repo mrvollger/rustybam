@@ -48,7 +48,7 @@ pub fn run_nucfreq(args: &clap::ArgMatches) {
     // parse arguments
     let threads = args.value_of_t("threads").unwrap_or(8);
     eprintln!("Number of threads: {}", threads);
-    let bam_f = args.value_of("BAM").unwrap();
+    let bam_f = args.value_of("BAM").expect("Must provide an indexed alignment file (bam/cram)");
     let mut bam =
         bam::IndexedReader::from_path(bam_f).unwrap_or_else(|_| panic!("Failed to open {}", bam_f));
 
