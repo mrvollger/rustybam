@@ -21,7 +21,7 @@ pub fn run_stats(args: &clap::ArgMatches) {
     eprintln!("Number of threads: {}", threads);
     let mut bam = match args.value_of("BAM") {
         Some(bam_f) => {
-            bam::Reader::from_path(bam_f).unwrap_or_else(|_| panic!("Failed to open {}.", bam_f))
+            bam::Reader::from_path(bam_f).unwrap_or_else(|_| panic!("Failed to open {}", bam_f))
         }
         _ => bam::Reader::from_stdin().unwrap(),
     };
@@ -46,11 +46,22 @@ pub fn run_nucfreq(args: &clap::ArgMatches) {
     let threads = args.value_of_t("threads").unwrap_or(8);
     eprintln!("Number of threads: {}", threads);
     let bam_f = args.value_of("BAM").unwrap();
-    let region = args.value_of("region").unwrap();
     let mut bam = bam::IndexedReader::from_path(bam_f)
-        .unwrap_or_else(|_| panic!("Failed to open {}.", bam_f));
-
-    let vec = nucfreq::region_nucfreq(&mut bam, region);
-    println!("{}", vec.len());
-    nucfreq::print_nucfreq(vec);
+        .unwrap_or_else(|_| panic!("Failed to open {}", bam_f));
+   
+    nucfreq::print_nucfreq_header();
+    // nuc freq on region 
+    if args.is_present("region") {
+        let rgn = nucfreq::parse_region(args.value_of("region").unwrap());
+        let vec = nucfreq::region_nucfreq(&mut bam, &rgn);
+        nucfreq::print_nucfreq(vec, &rgn);
+    }
+    //nucfreq on bed 
+    if args.is_present("bed") { 
+        let bed_f =  args.value_of("bed").expect("Unable to read bedfile");
+        for rgn in nucfreq::parse_bed(bed_f) {
+            let vec = nucfreq::region_nucfreq(&mut bam, &rgn);
+            nucfreq::print_nucfreq(vec, &rgn);
+        }
+    }
 }

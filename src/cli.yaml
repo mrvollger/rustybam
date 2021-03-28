@@ -29,3 +29,8 @@ subcommands:
                 long : region
                 takes_value : true
                 help: Print nucfreq info from the input region e.g "chr1:1-1000". 
+            - bed:
+                short: b
+                long : bed
+                takes_value : true
+                help: Print nucfreq info from regions in the bed file, output is optionally tagged using the 4th column. 

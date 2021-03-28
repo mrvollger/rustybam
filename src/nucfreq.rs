@@ -1,33 +1,9 @@
 use regex::Regex;
-use rust_htslib::{bam, bam::Read};
+use rust_htslib::bam::Read;
 use std::fmt;
 use std::str;
-
-/// Code to get the coverage
-/// # Example
-/// ```
-/// let rtn = rustybam::nucfreq::coverage("test/test.bam");
-/// assert_eq!(rtn, 197);
-/// ```
-pub fn coverage(path: &str) -> u64 {
-    eprintln!("Reading from {}", path);
-    let mut bam = bam::Reader::from_path(path).unwrap();
-    let mut count: u64 = 0;
-
-    for p in bam.pileup() {
-        let pileup = p.unwrap();
-        //println!("{}:{} depth {}", pileup.tid(), pileup.pos(), pileup.depth());
-        for alignment in pileup.alignments() {
-            if !alignment.is_del() && !alignment.is_refskip() {
-                let bp = alignment.record().seq()[alignment.qpos().unwrap()];
-                if bp == b'A' {
-                    count += 1;
-                }
-            }
-        }
-    }
-    count
-}
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 pub struct Nucfreq {
     pub pos: u32,
@@ -101,6 +77,7 @@ pub struct Region {
     pub name: String,
     pub st: u32,
     pub en: u32,
+    pub id: String,
 }
 
 /// parse region strings
@@ -122,20 +99,67 @@ pub fn parse_region(region: &str) -> Region {
         name: caps.get(1).unwrap().as_str().to_string(),
         st: caps.get(2).unwrap().as_str().parse::<u32>().unwrap() - 1,
         en: caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295), // this is 2^32-1
+        id: "None".to_string()
     }
 }
+
+/// parse bed strings
+/// # Example
+/// ```
+/// let rgn = rustybam::nucfreq::parse_bed_rec("chr1\t0\t1000\tid");
+/// assert_eq!("chr1", rgn.name);
+/// assert_eq!(0, rgn.st);
+/// assert_eq!(1000, rgn.en);
+/// assert_eq!("id", rgn.id);
+///
+/// let rgn2 = rustybam::nucfreq::parse_bed_rec("chr1\t2\t2000");
+/// assert_eq!("chr1", rgn2.name);
+/// assert_eq!("None", rgn2.id);
+/// ```
+pub fn parse_bed_rec(region: &str) -> Region {
+    let re = Regex::new(r"([^\s]+)\t([0-9]+)\t([0-9]+)\t?([^\s]+)?.*").unwrap();
+    let caps = re.captures(region).expect("Failed to parse region string.");
+
+    Region {
+        name: caps.get(1).unwrap().as_str().to_string(),
+        st: caps.get(2).unwrap().as_str().parse::<u32>().unwrap(),
+        en: caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295), // this is 2^32-1
+        id: caps.get(4).map_or("None", |m| m.as_str()).to_string(),
+    }
+}
+
+/// parse bed file
+/// # Example
+/// ```
+/// use rustybam::nucfreq::*;
+/// let vec = parse_bed("test/asm_small.bed");
+/// assert_eq!(vec.len(), 10);
+/// ```
+pub fn parse_bed(filename: &str) -> Vec<Region> {
+    let file = File::open(filename).unwrap();
+    let reader = BufReader::new(file);
+    let mut vec = Vec::new(); 
+    for (_index, line) in reader.lines().enumerate() {
+        let line = line.unwrap(); // Ignore errors.
+        vec.push(parse_bed_rec(&line));
+    }
+    vec
+}
+
 
 /// get count for A,C,G,T at every pos in the region
 /// # Example
 /// ```
 /// use rust_htslib::{bam, bam::Read};
+/// use rustybam::nucfreq::*;
+/// 
 /// let mut bam = bam::IndexedReader::from_path("test/asm_small.bam").unwrap();
-/// let vec = rustybam::nucfreq::region_nucfreq( &mut bam, "chr1:1-1000");
-/// let vec2 = rustybam::nucfreq::region_nucfreq( &mut bam, "chr6:8-8000");
-/// let vec3 = rustybam::nucfreq::region_nucfreq( &mut bam, "chr1:2-2000");
+/// 
+/// let vec  = region_nucfreq( &mut bam, &parse_region("chr22:1-1000"));
+/// let vec2 = region_nucfreq( &mut bam, &parse_region("chr21:8-8000"));
+/// let vec3 = region_nucfreq( &mut bam, &parse_region("chr20:2-2000"));
 /// ```
-pub fn region_nucfreq(bam: &mut rust_htslib::bam::IndexedReader, region: &str) -> Vec<Nucfreq> {
-    let rgn = parse_region(region);
+pub fn region_nucfreq(bam: &mut rust_htslib::bam::IndexedReader, rgn: &Region) -> Vec<Nucfreq> {
     eprintln!("Finding nucfreq in: {}\t{}\t{}", rgn.name, rgn.st, rgn.en);
     bam.fetch((&rgn.name, rgn.st as i64, rgn.en as i64))
         .unwrap();
@@ -147,8 +171,16 @@ pub fn region_nucfreq(bam: &mut rust_htslib::bam::IndexedReader, region: &str) -
         .collect()
 }
 
-pub fn print_nucfreq(vec: Vec<Nucfreq>) {
+pub fn print_nucfreq_header() {
+    print!("#{}\t{}\t{}\t", "chr", "start", "end");
+    print!("{}\t{}\t{}\t{}\t", "A", "C", "G", "T");
+    println!("{}", "region_id");
+}
+
+pub fn print_nucfreq(vec: Vec<Nucfreq>, rgn: &Region) {
     for nf in vec {
-        print!("{}", nf);
+        print!("{}\t{}\t{}\t", rgn.name, nf.pos, nf.pos+1);
+        print!("{}\t{}\t{}\t{}\t", nf.a, nf.c, nf.g, nf.t);
+        println!("{}", rgn.id);
     }
 }
