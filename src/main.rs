@@ -4,6 +4,7 @@ use rust_htslib::bam::Read;
 use rustybam::bamstats;
 use rustybam::bed;
 use rustybam::nucfreq;
+//use rayon::prelude::*;
 
 fn main() {
     let yaml = load_yaml!("cli.yaml");
@@ -65,5 +66,8 @@ pub fn run_nucfreq(args: &clap::ArgMatches) {
             let vec = nucfreq::region_nucfreq(&mut bam, &rgn);
             nucfreq::print_nucfreq(vec, &rgn);
         }
+        //bed::parse_bed(bed_f).par_iter()
+        //    .map(|rgn| nucfreq::print_nucfreq( nucfreq::region_nucfreq(& mut bam, &rgn), &rgn))
+        //    .collect();
     }
 }
