@@ -1,6 +1,6 @@
 [package]
 name = "rustybam"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["mrvollger <mrvollger@gmail.com>"]
 edition = "2018"
 
