@@ -1,4 +1,4 @@
-use clap::{load_yaml, App};
+use clap::{load_yaml, App, AppSettings};
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rustybam::bamstats;
@@ -6,7 +6,8 @@ use rustybam::nucfreq;
 
 fn main() {
     let yaml = load_yaml!("cli.yaml");
-    let matches = App::from(yaml).get_matches();
+    let app = App::from(yaml).setting(AppSettings::SubcommandRequiredElseHelp);
+    let matches = app.get_matches();
 
     if let Some(matches) = matches.subcommand_matches("stats") {
         run_stats(matches);

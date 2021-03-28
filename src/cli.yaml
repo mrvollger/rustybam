@@ -1,4 +1,4 @@
-name: ./rustybio
+name: ./rustybam
 about: Mitchell R. Vollger's bam utilities. 
 args:
     - threads :
