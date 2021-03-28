@@ -1,9 +1,9 @@
 use regex::Regex;
 use rust_htslib::bam::Read;
 use std::fmt;
-use std::str;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::str;
 
 pub struct Nucfreq {
     pub pos: u32,
@@ -99,7 +99,7 @@ pub fn parse_region(region: &str) -> Region {
         name: caps.get(1).unwrap().as_str().to_string(),
         st: caps.get(2).unwrap().as_str().parse::<u32>().unwrap() - 1,
         en: caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295), // this is 2^32-1
-        id: "None".to_string()
+        id: "None".to_string(),
     }
 }
 
@@ -138,7 +138,7 @@ pub fn parse_bed_rec(region: &str) -> Region {
 pub fn parse_bed(filename: &str) -> Vec<Region> {
     let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
-    let mut vec = Vec::new(); 
+    let mut vec = Vec::new();
     for (_index, line) in reader.lines().enumerate() {
         let line = line.unwrap(); // Ignore errors.
         vec.push(parse_bed_rec(&line));
@@ -146,15 +146,14 @@ pub fn parse_bed(filename: &str) -> Vec<Region> {
     vec
 }
 
-
 /// get count for A,C,G,T at every pos in the region
 /// # Example
 /// ```
 /// use rust_htslib::{bam, bam::Read};
 /// use rustybam::nucfreq::*;
-/// 
+///
 /// let mut bam = bam::IndexedReader::from_path("test/asm_small.bam").unwrap();
-/// 
+///
 /// let vec  = region_nucfreq( &mut bam, &parse_region("chr22:1-1000"));
 /// let vec2 = region_nucfreq( &mut bam, &parse_region("chr21:8-8000"));
 /// let vec3 = region_nucfreq( &mut bam, &parse_region("chr20:2-2000"));
@@ -172,14 +171,14 @@ pub fn region_nucfreq(bam: &mut rust_htslib::bam::IndexedReader, rgn: &Region) -
 }
 
 pub fn print_nucfreq_header() {
-    print!("#{}\t{}\t{}\t", "chr", "start", "end");
-    print!("{}\t{}\t{}\t{}\t", "A", "C", "G", "T");
-    println!("{}", "region_id");
+    print!("#chr\tstart\tend\t");
+    print!("A\tC\tG\tT\t");
+    println!("region_id");
 }
 
 pub fn print_nucfreq(vec: Vec<Nucfreq>, rgn: &Region) {
     for nf in vec {
-        print!("{}\t{}\t{}\t", rgn.name, nf.pos, nf.pos+1);
+        print!("{}\t{}\t{}\t", rgn.name, nf.pos, nf.pos + 1);
         print!("{}\t{}\t{}\t{}\t", nf.a, nf.c, nf.g, nf.t);
         println!("{}", rgn.id);
     }
