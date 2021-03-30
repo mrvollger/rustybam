@@ -27,8 +27,7 @@ pub fn get_shortest_subseq_size(text: &[u8]) -> Vec<Option<usize>> {
     let lcp = lcp(text, &pos);
 
     // calculate shortest unique substrings
-    let sus = shortest_unique_substrings(&pos, &lcp);
-    sus
+    shortest_unique_substrings(&pos, &lcp)
 }
 
 /// Returns a vector of start and end coordiantes that are 100% made of SUNs
@@ -66,6 +65,7 @@ pub fn find_intervals(sus: Vec<Option<usize>>, kmer_size: usize) -> Vec<(usize, 
 
 /// prints the interval that is a SUN in a pretty way.
 pub fn pretty_interval_print(intervals: &[(usize, usize)], text: &[u8]) {
+    println!("\n{}", "-".repeat(50));
     for (start, end) in intervals {
         println!("start:{}, end:{}", start, end);
         println!("{}", std::str::from_utf8(text).unwrap());
@@ -78,6 +78,7 @@ pub fn pretty_interval_print(intervals: &[(usize, usize)], text: &[u8]) {
         }
         println!();
     }
+    println!("{}\n", "-".repeat(50));
 }
 
 #[cfg(test)]
@@ -89,6 +90,13 @@ mod tests {
         let sus = get_shortest_subseq_size(text);
         let intervals = find_intervals(sus, 2);
         assert_eq!(intervals, [(2, 4), (5, 8)]);
+        pretty_interval_print(&intervals, text);
+    }
+    #[test]
+    fn test_get_shortest_subseq_size_two() {
+        let text = b"AAAGGG$";
+        let sus = get_shortest_subseq_size(text);
+        let intervals = find_intervals(sus, 2);
         pretty_interval_print(&intervals, text);
     }
 }

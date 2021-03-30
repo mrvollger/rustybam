@@ -121,7 +121,7 @@ pub fn print_nucfreq_header() {
     println!("region_id");
 }
 
-pub fn print_nucfreq(vec: &Vec<Nucfreq>) {
+pub fn print_nucfreq(vec: &[Nucfreq]) {
     for nf in vec {
         println!("{}", nf);
     }
