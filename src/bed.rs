@@ -1,4 +1,5 @@
 use regex::Regex;
+use std::fmt;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::str;
@@ -8,6 +9,12 @@ pub struct Region {
     pub st: u32,
     pub en: u32,
     pub id: String,
+}
+
+impl fmt::Display for Region {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}:{}-{}", self.name, self.st + 1, self.en)
+    }
 }
 
 /// Checks if two regions overlap

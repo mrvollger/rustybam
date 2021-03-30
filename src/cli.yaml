@@ -34,3 +34,7 @@ subcommands:
                 long : bed
                 takes_value : true
                 help: Print nucfreq info from regions in the bed file, output is optionally tagged using the 4th column. 
+            - small :
+                short : s
+                long : small
+                help : smaller output format.

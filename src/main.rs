@@ -1,10 +1,10 @@
 use clap::{load_yaml, App, AppSettings};
+use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rustybam::bamstats;
 use rustybam::bed;
 use rustybam::nucfreq;
-//use rayon::prelude::*;
 
 fn main() {
     let yaml = load_yaml!("cli.yaml");
@@ -45,31 +45,40 @@ pub fn run_stats(args: &clap::ArgMatches) {
 }
 
 pub fn run_nucfreq(args: &clap::ArgMatches) {
-    // parse arguments
+    // set the number of threads
     let threads = args.value_of_t("threads").unwrap_or(8);
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .build_global()
+        .unwrap();
     eprintln!("Number of threads: {}", threads);
+
+    // read the bam
     let bam_f = args
         .value_of("BAM")
         .expect("Must provide an indexed alignment file (bam/cram)");
-    let mut bam =
-        bam::IndexedReader::from_path(bam_f).unwrap_or_else(|_| panic!("Failed to open {}", bam_f));
 
-    nucfreq::print_nucfreq_header();
-    // nuc freq on region
+    // add the nuc freq regions to process.
+    let mut rgns = Vec::new();
     if args.is_present("region") {
-        let rgn = bed::parse_region(args.value_of("region").unwrap());
-        let vec = nucfreq::region_nucfreq(&mut bam, &rgn);
-        nucfreq::print_nucfreq(vec, &rgn);
+        rgns.push(bed::parse_region(args.value_of("region").unwrap()));
     }
-    //nucfreq on bed
     if args.is_present("bed") {
         let bed_f = args.value_of("bed").expect("Unable to read bedfile");
-        for rgn in bed::parse_bed(bed_f) {
-            let vec = nucfreq::region_nucfreq(&mut bam, &rgn);
-            nucfreq::print_nucfreq(vec, &rgn);
-        }
-        //bed::parse_bed(bed_f).par_iter()
-        //    .map(|rgn| nucfreq::print_nucfreq( nucfreq::region_nucfreq(& mut bam, &rgn), &rgn))
-        //    .collect();
+        rgns.append(&mut bed::parse_bed(bed_f));
+    }
+    // generate the nucfreqs
+    let vec: Vec<nucfreq::Nucfreq> = rgns
+        .into_par_iter()
+        .map(|rgn| nucfreq::region_nucfreq(bam_f, &rgn, 2))
+        .flatten()
+        .collect();
+
+    // print the results
+    if args.is_present("small") {
+        nucfreq::small_nucfreq(&vec)
+    } else {
+        nucfreq::print_nucfreq_header();
+        nucfreq::print_nucfreq(&vec);
     }
 }

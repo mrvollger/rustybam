@@ -1,26 +1,31 @@
 use super::bed::*;
+use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use std::fmt;
 
 pub struct Nucfreq {
+    pub name: String,
     pub pos: u32,
     pub a: u64,
     pub c: u64,
     pub g: u64,
     pub t: u64,
+    pub id: String,
 }
 
 impl fmt::Display for Nucfreq {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(
+        write!(
             f,
-            "{}\t{}\t{}\t{}\t{}\t{}",
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            self.name,
             self.pos,
             self.pos + 1,
             self.a,
             self.c,
             self.g,
-            self.t
+            self.t,
+            self.id
         )
     }
 }
@@ -30,7 +35,13 @@ impl fmt::Display for Nucfreq {
 /// ```
 /// use rust_htslib::{bam, bam::Read};
 /// let mut bam = bam::IndexedReader::from_path("test/test_nucfreq.bam").unwrap();
-/// let vec = rustybam::nucfreq::nucfreq( &mut bam );
+/// let rgn = rustybam::bed::Region {
+///     name : "CHROMOSOME_I".to_string(),
+///     st :  1,
+///     en : 102,
+///     id : "None".to_string()
+/// };
+/// let vec = rustybam::nucfreq::nucfreq( &mut bam, &rgn);
 /// eprintln!("{:?}", vec[0].a);
 /// for f in vec {
 ///   let t = vec![f.a, f.c, f.g, f.t];
@@ -40,17 +51,22 @@ impl fmt::Display for Nucfreq {
 ///   }
 /// }
 /// ```
-pub fn nucfreq(bam: &mut rust_htslib::bam::IndexedReader) -> Vec<Nucfreq> {
+pub fn nucfreq(bam: &mut rust_htslib::bam::IndexedReader, rgn: &Region) -> Vec<Nucfreq> {
     let mut vec = Vec::new();
     for (_idx, p) in bam.pileup().enumerate() {
         let pileup = p.unwrap();
+        if pileup.pos() < rgn.st || pileup.pos() >= rgn.en {
+            continue;
+        }
         //println!("{}", _idx);
         let mut freqs = Nucfreq {
+            name: rgn.name.clone(),
             pos: pileup.pos(),
             a: 0,
             c: 0,
             g: 0,
             t: 0,
+            id: rgn.id.clone(),
         };
         for aln in pileup.alignments() {
             if !aln.is_del() && !aln.is_refskip() {
@@ -77,22 +93,26 @@ pub fn nucfreq(bam: &mut rust_htslib::bam::IndexedReader) -> Vec<Nucfreq> {
 /// use rustybam::nucfreq::*;
 /// use rustybam::bed::*;
 ///
-/// let mut bam = bam::IndexedReader::from_path("test/asm_small.bam").unwrap();
+/// let mut bam = "test/asm_small.bam";
 ///
-/// let vec  = region_nucfreq( &mut bam, &parse_region("chr22:1-1000"));
-/// let vec2 = region_nucfreq( &mut bam, &parse_region("chr21:8-8000"));
-/// let vec3 = region_nucfreq( &mut bam, &parse_region("chr20:2-2000"));
+/// let vec  = region_nucfreq( bam, &parse_region("chr22:1-1000"), 1);
+/// let vec2 = region_nucfreq( bam, &parse_region("chr21:8-8000"), 4);
+/// let vec3 = region_nucfreq( bam, &parse_region("chr20:2-2000"), 2);
 /// ```
-pub fn region_nucfreq(bam: &mut rust_htslib::bam::IndexedReader, rgn: &Region) -> Vec<Nucfreq> {
+pub fn region_nucfreq(bam_f: &str, rgn: &Region, threads: usize) -> Vec<Nucfreq> {
+    // open the bam
+    let mut bam =
+        bam::IndexedReader::from_path(bam_f).unwrap_or_else(|_| panic!("Failed to open {}", bam_f));
+    bam.set_threads(threads)
+        .expect("Failed to enable multithreaded bam reading.");
+
+    // read the bam
     eprintln!("Finding nucfreq in: {}\t{}\t{}", rgn.name, rgn.st, rgn.en);
     bam.fetch((&rgn.name, rgn.st as i64, rgn.en as i64))
-        .unwrap();
+        .expect(&format!("Is this region ({}) in your reference/bam?", rgn));
 
     // get the nucfreq and filter for valid regions
-    nucfreq(bam)
-        .into_iter()
-        .filter(|nf| nf.pos >= rgn.st && nf.pos < rgn.en)
-        .collect()
+    nucfreq(&mut bam, rgn)
 }
 
 pub fn print_nucfreq_header() {
@@ -101,10 +121,24 @@ pub fn print_nucfreq_header() {
     println!("region_id");
 }
 
-pub fn print_nucfreq(vec: Vec<Nucfreq>, rgn: &Region) {
+pub fn print_nucfreq(vec: &Vec<Nucfreq>) {
     for nf in vec {
-        print!("{}\t{}\t{}\t", rgn.name, nf.pos, nf.pos + 1);
-        print!("{}\t{}\t{}\t{}\t", nf.a, nf.c, nf.g, nf.t);
-        println!("{}", rgn.id);
+        println!("{}", nf);
+    }
+}
+
+pub fn small_nucfreq(vec: &Vec<Nucfreq>) {
+    let mut cur_name = "".to_string();
+    let mut cur_id = "".to_string();
+
+    for nf in vec {
+        if nf.name != cur_name || nf.id != cur_id {
+            cur_name = nf.name.clone();
+            cur_id = nf.id.clone();
+            println!("#{}\t{}\t{}", nf.name, nf.pos, nf.id);
+        }
+        let mut mc = vec![nf.a, nf.c, nf.g, nf.t];
+        mc.sort();
+        println!("{}\t{}", mc[3], mc[2]);
     }
 }
