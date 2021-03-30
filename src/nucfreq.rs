@@ -109,7 +109,7 @@ pub fn region_nucfreq(bam_f: &str, rgn: &Region, threads: usize) -> Vec<Nucfreq>
     // read the bam
     eprintln!("Finding nucfreq in: {}\t{}\t{}", rgn.name, rgn.st, rgn.en);
     bam.fetch((&rgn.name, rgn.st as i64, rgn.en as i64))
-        .expect(&format!("Is this region ({}) in your reference/bam?", rgn));
+        .unwrap_or_else(|_| panic!("Is this region ({}) in your reference/bam?", rgn));
 
     // get the nucfreq and filter for valid regions
     nucfreq(&mut bam, rgn)
@@ -127,7 +127,7 @@ pub fn print_nucfreq(vec: &Vec<Nucfreq>) {
     }
 }
 
-pub fn small_nucfreq(vec: &Vec<Nucfreq>) {
+pub fn small_nucfreq(vec: &[Nucfreq]) {
     let mut cur_name = "".to_string();
     let mut cur_id = "".to_string();
 
@@ -138,7 +138,7 @@ pub fn small_nucfreq(vec: &Vec<Nucfreq>) {
             println!("#{}\t{}\t{}", nf.name, nf.pos, nf.id);
         }
         let mut mc = vec![nf.a, nf.c, nf.g, nf.t];
-        mc.sort();
+        mc.sort_unstable();
         println!("{}\t{}", mc[3], mc[2]);
     }
 }
