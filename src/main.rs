@@ -5,6 +5,7 @@ use rust_htslib::bam::Read;
 use rustybam::bamstats;
 use rustybam::bed;
 use rustybam::nucfreq;
+use rustybam::suns;
 
 fn main() {
     let yaml = load_yaml!("cli.yaml");
@@ -15,6 +16,8 @@ fn main() {
         run_stats(matches);
     } else if let Some(matches) = matches.subcommand_matches("nucfreq") {
         run_nucfreq(matches);
+    } else if let Some(matches) = matches.subcommand_matches("suns") {
+        run_suns(matches);
     }
 }
 
@@ -80,5 +83,25 @@ pub fn run_nucfreq(args: &clap::ArgMatches) {
     } else {
         nucfreq::print_nucfreq_header();
         nucfreq::print_nucfreq(&vec);
+    }
+}
+
+pub fn run_suns(args: &clap::ArgMatches) {
+    let kmer_size = args.value_of_t("kmersize").unwrap_or(21);
+    let max_interval = args.value_of_t("maxsize").unwrap_or(std::usize::MAX);
+    let fastafile = args.value_of("fasta").expect("Fasta file reuqired!");
+    let genome = suns::Genome::from_file(fastafile);
+    let sun_intervals = genome.find_sun_intervals(kmer_size);
+    println!("#chr\tstart\tend\tsun_seq");
+    for (chr, start, end, seq) in sun_intervals {
+        if end - start < max_interval {
+            println!(
+                "{}\t{}\t{}\t{}",
+                chr,
+                start,
+                end,
+                std::str::from_utf8(seq).unwrap()
+            );
+        }
     }
 }

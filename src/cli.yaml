@@ -1,5 +1,5 @@
 name: ./rustybam
-about: Mitchell R. Vollger's bam utilities. 
+about: Mitchell R. Vollger's bam utilities
 args:
     - threads :
         short : t
@@ -9,7 +9,7 @@ args:
         global : true 
 subcommands:
     - stats:
-        about: Get precent identity stats from a sam/bam/cram (PAF coming soon).
+        about: Get precent identity stats from a sam/bam/cram (PAF coming soon)
         args:
             - BAM:
                 about: sam/bam/cram file
@@ -28,13 +28,30 @@ subcommands:
                 short: r
                 long : region
                 takes_value : true
-                help: Print nucfreq info from the input region e.g "chr1:1-1000". 
+                help: Print nucfreq info from the input region e.g "chr1:1-1000"
             - bed:
                 short: b
                 long : bed
                 takes_value : true
-                help: Print nucfreq info from regions in the bed file, output is optionally tagged using the 4th column. 
+                help: Print nucfreq info from regions in the bed file, output is optionally tagged using the 4th column
             - small :
                 short : s
                 long : small
-                help : smaller output format.
+                help : smaller output format
+    - suns:
+        about: Extract the intervals in a genome (fasta) that are made up of SUNs
+        args:
+            - kmersize:
+                short: k
+                long : kmersize
+                takes_value : true
+                help: The size of the required unique kmer
+            - maxsize:
+                short: m
+                long : maxsize
+                takes_value : true
+                help: The maximum size SUN interval to report
+            - fasta:
+                about: a fasta file 
+                index : 1
+            
