@@ -6,8 +6,8 @@ use std::str;
 
 pub struct Region {
     pub name: String,
-    pub st: u32,
-    pub en: u32,
+    pub st: u64,
+    pub en: u64,
     pub id: String,
 }
 
@@ -60,7 +60,7 @@ pub fn parse_region(region: &str) -> Region {
 
     Region {
         name: caps.get(1).unwrap().as_str().to_string(),
-        st: caps.get(2).unwrap().as_str().parse::<u32>().unwrap() - 1,
+        st: caps.get(2).unwrap().as_str().parse::<u64>().unwrap() - 1,
         en: caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295), // this is 2^32-1
         id: "None".to_string(),
     }
@@ -85,7 +85,7 @@ pub fn parse_bed_rec(region: &str) -> Region {
 
     Region {
         name: caps.get(1).unwrap().as_str().to_string(),
-        st: caps.get(2).unwrap().as_str().parse::<u32>().unwrap(),
+        st: caps.get(2).unwrap().as_str().parse::<u64>().unwrap(),
         en: caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295), // this is 2^32-1
         id: caps.get(4).map_or("None", |m| m.as_str()).to_string(),
     }
@@ -107,4 +107,44 @@ pub fn parse_bed(filename: &str) -> Vec<Region> {
         vec.push(parse_bed_rec(&line));
     }
     vec
+}
+
+/// # Example
+/// ```
+/// use rust_htslib::{bam, bam::Read};
+/// let mut bam = bam::IndexedReader::from_path("test/test_nucfreq.bam").unwrap();
+/// let rgn = rustybam::bed::Region {
+///     name : "CHROMOSOME_I".to_string(),
+///     st :  0,
+///     en : 95,
+///     id : "None".to_string()
+/// };
+/// let small_rgns = rustybam::bed::split_region(&rgn, 10);
+/// assert_eq!(small_rgns[0].st, 0);
+/// assert_eq!(small_rgns[0].en, 10);
+/// assert_eq!(small_rgns[9].st, 90);
+/// assert_eq!(small_rgns[9].en, 95);
+/// let small_rgns_2 = rustybam::bed::split_region(&rgn, 100);
+/// assert_eq!(small_rgns_2[0].st, 0);
+/// assert_eq!(small_rgns_2[0].en, 95);
+/// ```
+pub fn split_region(rgn: &Region, window: u64) -> Vec<Region> {
+    // make many smaller regions
+    let mut start = rgn.st;
+    let mut small_rgns = Vec::new();
+    while start < rgn.en {
+        let mut end = start + window;
+        if end > rgn.en {
+            end = rgn.en;
+        }
+        let tmprgn = Region {
+            name: rgn.name.clone(),
+            st: start,
+            en: end,
+            id: rgn.id.clone(),
+        };
+        small_rgns.push(tmprgn);
+        start = end;
+    }
+    small_rgns
 }

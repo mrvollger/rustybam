@@ -1,6 +1,7 @@
 use super::bed::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
+use std::convert::TryFrom;
 use std::fmt;
 
 pub struct Nucfreq {
@@ -30,6 +31,11 @@ impl fmt::Display for Nucfreq {
     }
 }
 
+pub struct NucList {
+    pub rgn: Region,
+    pub nucfreqs: Vec<Nucfreq>,
+}
+
 /// get count for A,C,G,T at every pos
 /// # Example
 /// ```
@@ -52,10 +58,11 @@ impl fmt::Display for Nucfreq {
 /// }
 /// ```
 pub fn nucfreq(bam: &mut rust_htslib::bam::IndexedReader, rgn: &Region) -> Vec<Nucfreq> {
-    let mut vec = Vec::new();
+    let rgn_length = usize::try_from(rgn.en - rgn.st + 1).unwrap();
+    let mut vec = Vec::with_capacity(rgn_length);
     for (_idx, p) in bam.pileup().enumerate() {
         let pileup = p.unwrap();
-        if pileup.pos() < rgn.st || pileup.pos() >= rgn.en {
+        if (pileup.pos() as u64) < rgn.st || (pileup.pos() as u64) >= rgn.en {
             continue;
         }
         //println!("{}", _idx);
@@ -100,6 +107,7 @@ pub fn nucfreq(bam: &mut rust_htslib::bam::IndexedReader, rgn: &Region) -> Vec<N
 /// let vec3 = region_nucfreq( bam, &parse_region("chr20:2-2000"), 2);
 /// ```
 pub fn region_nucfreq(bam_f: &str, rgn: &Region, threads: usize) -> Vec<Nucfreq> {
+    eprint!("\rFinding nucfreq in: {}\t{}\t{}", rgn.name, rgn.st, rgn.en);
     // open the bam
     let mut bam =
         bam::IndexedReader::from_path(bam_f).unwrap_or_else(|_| panic!("Failed to open {}", bam_f));
@@ -107,7 +115,6 @@ pub fn region_nucfreq(bam_f: &str, rgn: &Region, threads: usize) -> Vec<Nucfreq>
         .expect("Failed to enable multithreaded bam reading.");
 
     // read the bam
-    eprintln!("Finding nucfreq in: {}\t{}\t{}", rgn.name, rgn.st, rgn.en);
     bam.fetch((&rgn.name, rgn.st as i64, rgn.en as i64))
         .unwrap_or_else(|_| panic!("Is this region ({}) in your reference/bam?", rgn));
 

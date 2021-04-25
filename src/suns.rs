@@ -38,6 +38,9 @@ impl Genome {
         seq.append(&mut revcomp(&seq));
         seq.push(END_CHAR);
         genome.seq = seq;
+        eprintln!("Done reading in the genome.");
+        eprintln!("Genome length: {}", genome.length - genome.starts.len());
+        eprintln!("Genome structure size: {}", genome.seq.len());
         genome
     }
 
@@ -65,10 +68,12 @@ impl Genome {
     ///    );
     /// ```
     pub fn get_shortest_subseq_size(text: &[u8]) -> Vec<Option<usize>> {
+        eprintln!("Making a suffix array (SA) from {} elements.", text.len());
         let pos = suffix_array(text);
+        eprintln!("Done reading making the SA.");
         // obtain compressed LCP array
         let lcp = lcp(text, &pos);
-
+        eprintln!("Done reading making the longest common prefix (LCP) structure.");
         // calculate shortest unique substrings
         shortest_unique_substrings(&pos, &lcp)
     }
@@ -91,9 +96,9 @@ impl Genome {
                 i += 1;
                 cur = sus[i].unwrap_or(kmer_size + 1);
             }
-            // add the interval to the return (+1 for bed interval)
+            // the current kmer failed but the previous one was unique
             let end = i + 1;
-            if end - start >= kmer_size {
+            if start < i && end - start >= kmer_size {
                 vec.push((start, end));
             }
             // increment to next start
@@ -128,27 +133,30 @@ impl Genome {
     pub fn find_sun_intervals(&self, kmer_size: usize) -> Vec<(&String, usize, usize, &[u8])> {
         assert!(kmer_size > 1);
         let sus = Genome::get_shortest_subseq_size(&self.seq);
+        eprintln!("Done calculating the shortest unique substrings.");
         let raw_intervals = self.find_intervals(sus, kmer_size);
+        eprintln!("Done calculating the raw SUN intervals from the LCP.");
+        pretty_interval_print(&raw_intervals, &self.seq);
         self.convert_from_raw(raw_intervals)
     }
 }
 
 /// prints the interval that is a SUN in a pretty way.
 pub fn pretty_interval_print(intervals: &[(usize, usize)], text: &[u8]) {
-    println!("\n{}", "-".repeat(50));
+    eprintln!("\n{}", "-".repeat(50));
     for (start, end) in intervals {
-        println!("start:{}, end:{}", start, end);
-        println!("{}", std::str::from_utf8(text).unwrap());
-        for i in 0..text.len() {
+        eprintln!("start:{}, end:{}, {}", start, end, text.len());
+        eprintln!("{}", std::str::from_utf8(text).unwrap());
+        for i in 0..(text.len()) {
             if i >= *start && i < *end {
-                print!(".");
+                eprint!(".");
             } else {
-                print!(" ");
+                eprint!(" ");
             }
         }
-        println!();
+        eprintln!();
     }
-    println!("{}\n", "-".repeat(50));
+    eprintln!("{}\n", "-".repeat(50));
 }
 
 pub fn validate_suns(
@@ -157,14 +165,12 @@ pub fn validate_suns(
     kmer_size: usize,
 ) {
     let genome_str = std::str::from_utf8(&genome.seq).unwrap();
-    println!("kmer size:{}\n\nSUN intervals:", kmer_size);
+    // println!("kmer size:{}\n\nSUN intervals:", kmer_size);
     let mut all_suns = Vec::new();
     // check that the SUNs only happen once and are valid
-    for (chr, start, end, seq) in intervals {
+    for (chr, start, _end, seq) in intervals {
         let sun_r = std::str::from_utf8(seq).unwrap();
-        // print the result
-        println!("{}\t{}\t{}\t{}", chr, start, end, sun_r);
-
+        eprint!("\r{}:{}", chr, start);
         // break sun range into individual suns
         for i in 0..(sun_r.len() - kmer_size + 1) {
             let sun = &sun_r[i..i + kmer_size];
@@ -175,8 +181,10 @@ pub fn validate_suns(
             assert_eq!(0, sun.matches(END_CHAR_STR).count());
         }
     }
+    eprintln!();
     // check that we found all sun kmers TODO
     for i in 0..(genome_str.len() - kmer_size) {
+        //eprint!("\r{}", i);
         let sun = &genome_str[i..i + kmer_size];
         // skip contig ends
         if sun.matches(END_CHAR_STR).count() > 0 {
@@ -186,11 +194,12 @@ pub fn validate_suns(
         if i >= genome.length {
             break;
         }
-        //println!("{}\tis this a sun?", sun);
         let count = genome_str.matches(sun).count();
         // assert that this kmer happens more than once or is a SUN
+        eprintln!("{}\t{}\t{}", i, sun, count);
         assert!(count > 1 || all_suns.contains(&sun));
     }
+    eprintln!();
 }
 
 #[cfg(test)]

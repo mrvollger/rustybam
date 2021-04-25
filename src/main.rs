@@ -2,10 +2,14 @@ use clap::{load_yaml, App, AppSettings};
 use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
-use rustybam::bamstats;
 use rustybam::bed;
 use rustybam::nucfreq;
+use rustybam::paf;
 use rustybam::suns;
+use rustybam::{bamstats, paf::trim_paf_to_rgn};
+use std::fs;
+use std::io::{self, BufRead, BufReader};
+use std::time::Instant;
 
 fn main() {
     let yaml = load_yaml!("cli.yaml");
@@ -18,6 +22,8 @@ fn main() {
         run_nucfreq(matches);
     } else if let Some(matches) = matches.subcommand_matches("suns") {
         run_suns(matches);
+    } else if let Some(matches) = matches.subcommand_matches("liftover") {
+        run_liftover(matches);
     }
 }
 
@@ -70,19 +76,28 @@ pub fn run_nucfreq(args: &clap::ArgMatches) {
         let bed_f = args.value_of("bed").expect("Unable to read bedfile");
         rgns.append(&mut bed::parse_bed(bed_f));
     }
-    // generate the nucfreqs
-    let vec: Vec<nucfreq::Nucfreq> = rgns
-        .into_par_iter()
-        .map(|rgn| nucfreq::region_nucfreq(bam_f, &rgn, 2))
-        .flatten()
-        .collect();
 
-    // print the results
-    if args.is_present("small") {
-        nucfreq::small_nucfreq(&vec)
-    } else {
-        nucfreq::print_nucfreq_header();
-        nucfreq::print_nucfreq(&vec);
+    for rgn in rgns {
+        // say the max window size a region can be before printing
+        let med_rgns = bed::split_region(&rgn, 1_000_000);
+        // split the windows into windows of that size
+        for med_rgn in med_rgns {
+            let small_rgns = bed::split_region(&med_rgn, 10_000);
+            // generate the nucfreqs
+            let vec: Vec<nucfreq::Nucfreq> = small_rgns
+                .into_par_iter()
+                .map(|r| nucfreq::region_nucfreq(bam_f, &r, 4))
+                .flatten()
+                .collect();
+
+            // print the results
+            if args.is_present("small") {
+                nucfreq::small_nucfreq(&vec)
+            } else {
+                nucfreq::print_nucfreq_header();
+                nucfreq::print_nucfreq(&vec);
+            }
+        }
     }
 }
 
@@ -93,7 +108,7 @@ pub fn run_suns(args: &clap::ArgMatches) {
     let genome = suns::Genome::from_file(fastafile);
     let sun_intervals = genome.find_sun_intervals(kmer_size);
     println!("#chr\tstart\tend\tsun_seq");
-    for (chr, start, end, seq) in sun_intervals {
+    for (chr, start, end, seq) in &sun_intervals {
         if end - start < max_interval {
             println!(
                 "{}\t{}\t{}\t{}",
@@ -104,4 +119,30 @@ pub fn run_suns(args: &clap::ArgMatches) {
             );
         }
     }
+    if args.is_present("validate") {
+        suns::validate_suns(&genome, &sun_intervals, kmer_size);
+    }
+}
+
+pub fn run_liftover(args: &clap::ArgMatches) {
+    let paf_buff: Box<dyn BufRead> = match args.value_of("paf") {
+        Some(paf_f) => Box::new(BufReader::new(fs::File::open(paf_f).unwrap())),
+        _ => Box::new(BufReader::new(io::stdin())),
+    };
+    let start = Instant::now();
+    let bed = args.value_of("bed").expect("Bed file reuqired!");
+    let paf = paf::read_paf(paf_buff);
+    let rgns = bed::parse_bed(bed);
+    let duration = start.elapsed();
+    eprintln!("Time elapsed reading paf and bed: {:.3?}", duration);
+
+    let start = Instant::now();
+    for rgn in rgns {
+        let new_paf = trim_paf_to_rgn(&rgn, &paf);
+        for rec in new_paf {
+            println!("{}", rec);
+        }
+    }
+    let duration = start.elapsed();
+    eprintln!("Time elapsed during liftover: {:.3?}", duration);
 }
