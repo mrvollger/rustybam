@@ -8,7 +8,7 @@ use std::io::BufRead;
 //use std::convert::TryFrom;
 use std::str::FromStr;
 
-#[derive(Debug, Default, Clone)] // Derive is cool, I have no idea how it works!
+#[derive(Debug, Default, Clone)]
 pub struct PafRecord {
     pub q_name: String,
     pub q_len: u64,
@@ -48,14 +48,10 @@ impl fmt::Display for PafRecord {
 }
 
 pub fn consumes_reference(cigar_opt: &Cigar) -> bool {
-    match cigar_opt {
-        Match(_i) => true,
-        Del(_i) => true,
-        RefSkip(_i) => true,
-        Diff(_i) => true,
-        Equal(_i) => true,
-        _ => false,
-    }
+    matches!(
+        cigar_opt,
+        Match(_i) | Del(_i) | RefSkip(_i) | Diff(_i) | Equal(_i)
+    )
 }
 /// # Example
 /// ```
@@ -64,14 +60,10 @@ pub fn consumes_reference(cigar_opt: &Cigar) -> bool {
 /// assert!(paf::consumes_query(&Diff(5)));
 /// ```
 pub fn consumes_query(cigar_opt: &Cigar) -> bool {
-    match cigar_opt {
-        Match(_i) => true,
-        Ins(_i) => true,
-        SoftClip(_i) => true,
-        Diff(_i) => true,
-        Equal(_i) => true,
-        _ => false,
-    }
+    matches!(
+        cigar_opt,
+        Match(_i) | Ins(_i) | SoftClip(_i) | Diff(_i) | Equal(_i)
+    )
 }
 
 pub fn paf_overlaps_target(paf: &PafRecord, rgn: &bed::Region) -> bool {
@@ -128,16 +120,16 @@ pub fn cigar_from_str(text: &str) -> Result<CigarString, std::io::Error> {
 }
 
 pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
-    let cigar = cigar_from_str(paf.cigar.as_str()).expect("Unable to parse cigar.");
     //let bytes = paf.cigar.as_bytes();
     //let cigar = CigarString::try_from(bytes).expect("Unable to parse cigar");
-    let mut t_pos = paf.t_st;
-    let mut q_pos = paf.q_st;
+    let cigar = cigar_from_str(paf.cigar.as_str()).expect("Unable to parse cigar.");
 
     // initalize a trimmed paf record
     let mut trimmed_paf = (*paf).clone();
 
     // count until we get to the correct regions
+    let mut t_pos = paf.t_st;
+    let mut q_pos = paf.q_st;
     for opt in cigar.into_iter() {
         let moves_t = consumes_reference(&opt);
         let moves_q = consumes_query(&opt);
@@ -202,24 +194,26 @@ pub fn trim_paf_to_rgn(rgn: &bed::Region, paf: &[PafRecord]) -> Vec<PafRecord> {
 pub fn read_paf_line(line: &str) -> PafRecord {
     let t: Vec<&str> = line.split_ascii_whitespace().collect();
     assert!(t.len() >= 12); // must have all required columns
-    let mut rec = PafRecord::default();
-    rec.q_name = t[0].to_string();
-    rec.q_len = t[1].parse::<u64>().expect("q_len must be u64");
-    rec.q_st = t[2].parse::<u64>().expect("q_st must be u64");
-    rec.q_en = t[3].parse::<u64>().expect("q_en must be u64");
-    rec.strand = t[4].parse::<char>().expect("strand must be a single char");
-    rec.t_name = t[5].to_string();
-    rec.t_len = t[6].parse::<u64>().expect("t_len must be u64");
-    rec.t_st = t[7].parse::<u64>().expect("t_st must be u64");
-    rec.t_en = t[8].parse::<u64>().expect("t_en must be u64");
-    rec.nmatch = t[9].parse::<u64>().expect("nmatch must be u64");
-    rec.aln_len = t[10].parse::<u64>().expect("aln_len must be u64");
-    rec.mapq = t[11].parse::<u64>().expect("mapq must be u64");
+    let mut rec = PafRecord {
+        q_name: t[0].to_string(),
+        q_len: t[1].parse::<u64>().expect("q_len must be u64"),
+        q_st: t[2].parse::<u64>().expect("q_st must be u64"),
+        q_en: t[3].parse::<u64>().expect("q_en must be u64"),
+        strand: t[4].parse::<char>().expect("strand must be a single char"),
+        t_name: t[5].to_string(),
+        t_len: t[6].parse::<u64>().expect("t_len must be u64"),
+        t_st: t[7].parse::<u64>().expect("t_st must be u64"),
+        t_en: t[8].parse::<u64>().expect("t_en must be u64"),
+        nmatch: t[9].parse::<u64>().expect("nmatch must be u64"),
+        aln_len: t[10].parse::<u64>().expect("aln_len must be u64"),
+        mapq: t[11].parse::<u64>().expect("mapq must be u64"),
+        ..Default::default()
+    };
 
     let pattern = Regex::new("(..):(.):(.*)").unwrap();
-    for i in 12..t.len() {
-        assert!(pattern.is_match(t[i]));
-        let caps = pattern.captures(t[i]).unwrap();
+    for token in t.iter().skip(12) {
+        assert!(pattern.is_match(token));
+        let caps = pattern.captures(token).unwrap();
         let tag = &caps[1];
         let value = &caps[3];
         if tag == "cg" {
