@@ -38,7 +38,7 @@ impl fmt::Display for PafRecord {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\tcg:Z:{}{}",
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\tcg:Z:{}",
             self.q_name,
             self.q_len,
             self.q_st,
@@ -51,8 +51,7 @@ impl fmt::Display for PafRecord {
             self.nmatch,
             self.aln_len,
             self.mapq,
-            self.cigar.to_string(),
-            self.tags
+            self.cigar.to_string()
         )
     }
 }
@@ -165,14 +164,10 @@ pub fn paf_swap_query_and_target(paf: &PafRecord) -> PafRecord {
 }
 
 pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
-    //let bytes = paf.cigar.as_bytes();
-    //let cigar = CigarString::try_from(bytes).expect("Unable to parse cigar");
-
     // initalize a trimmed paf record
     let mut trimmed_paf = (*paf).clone();
     // check if we can return right away
     if paf.t_st >= rgn.st && paf.t_en <= rgn.en {
-        //eprintln!("quick finish");
         return trimmed_paf;
     }
     // count until we get to the correct regions
@@ -181,6 +176,8 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
     let mut q_offset_st = 0;
     let mut q_offset_en = 0;
     let mut new_cigar = Vec::new();
+    trimmed_paf.nmatch = 0;
+    trimmed_paf.aln_len = 0;
     for opt in paf.cigar.into_iter() {
         let moves_t = consumes_reference(&opt);
         let moves_q = consumes_query(&opt);
@@ -198,6 +195,7 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
             // add to the new cigar opt length
             if t_pos > rgn.st && t_pos <= rgn.en {
                 new_opt_len += 1;
+                trimmed_paf.aln_len += 1;
             }
             // record the starting positions
             if moves_t && t_pos == rgn.st {
@@ -222,37 +220,16 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
                 HardClip(_) => HardClip(new_opt_len),
                 SoftClip(_) => SoftClip(new_opt_len),
                 Pad(_) => Pad(new_opt_len),
-                Equal(_) => Equal(new_opt_len),
+                Equal(_) => {
+                    trimmed_paf.nmatch += new_opt_len as u64;
+                    Equal(new_opt_len)
+                }
                 Diff(_) => Diff(new_opt_len),
             })
         }
         if done {
             break;
         }
-
-        /*
-        // record the starting positions
-        if moves_t && t_pos >= rgn.st && t_pos - opt_len < rgn.st {
-            trimmed_paf.t_st = rgn.st;
-            q_offset_st = q_offset;
-            if moves_q {
-                q_offset_st -= t_pos - rgn.st;
-            }
-            eprintln!("set start\t{}\t{}", rgn.st, q_offset_st);
-        } else if t_pos > rgn.st { // add to the cigar string
-            new_cigar.push(opt.clone());
-        }
-        // record the ending positions
-        if (moves_t && t_pos >= rgn.en && t_pos - opt_len < rgn.en) ||
-            t_pos == paf.t_en {
-            trimmed_paf.t_en = rgn.en;
-            q_offset_en = q_offset;
-            if moves_q {
-                q_offset_en -= t_pos - rgn.en;
-            }
-            eprintln!("set end\t{}\t{}", rgn.en, q_offset_en);
-            break;
-        }*/
     }
     // fix strand if needed
     if paf.strand == '+' {

@@ -145,7 +145,7 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     for rgn in rgns {
         let new_paf = trim_paf_to_rgn(&rgn, &paf, invert_query);
         for rec in new_paf {
-            println!("{}", rec);
+            println!("{}\tid:Z:{}_{}_{}", rec, rgn.name, rgn.st, rgn.en);
         }
     }
     let duration = start.elapsed();

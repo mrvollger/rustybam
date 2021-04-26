@@ -59,10 +59,10 @@ subcommands:
                 long : validate
                 help: Confirm all the SUNs (very slow) only for debugging. 
     - liftover:
-        about: liftover target sequence coordinates onto query sequence using a paf
+        about: liftover target sequence coordinates onto query sequence using a PAF
         args:
             - paf:
-                about: PAF file from minimap2 or unimap. Must have the cg tag
+                about: PAF file from minimap2 or unimap. Must have the cg tag, and nmatches will be zero unless the cigar uses =X. 
                 index : 1
             - bed:
                 required: true

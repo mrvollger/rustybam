@@ -6,7 +6,7 @@
 # Usage 
 ```
 ./rustybam 
-Mitchell R. Vollger's bam utilities.
+Mitchell R. Vollger's bam utilities
 
 USAGE:
     rustybam [OPTIONS] <SUBCOMMAND>
@@ -19,11 +19,12 @@ OPTIONS:
     -t, --threads <threads>    Number of threads to use for uncompressing
 
 SUBCOMMANDS:
-    help       Prints this message or the help of the given subcommand(s)
-    nucfreq    Get the freqs of each bp at each postion.
-    stats      Get precent identity stats from a sam/bam/cram (PAF coming soon).
+    help        Prints this message or the help of the given subcommand(s)
+    liftover    liftover target sequence coordinates onto query sequence using a paf
+    nucfreq     Get the freqs of each bp at each postion.
+    stats       Get precent identity stats from a sam/bam/cram (PAF coming soon)
+    suns        Extract the intervals in a genome (fasta) that are made up of SUNs
 ```
-
 ## NucFreq
 ```
 ./rustybam nucfreq --help
@@ -99,4 +100,5 @@ OPTIONS:
     -b, --bed <bed>            Bed file of regions to liftover
     -t, --threads <threads>    Number of threads to use for uncompressing
 ```
+
 
