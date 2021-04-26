@@ -130,7 +130,7 @@ pub fn run_liftover(args: &clap::ArgMatches) {
         _ => Box::new(BufReader::new(io::stdin())),
     };
     let start = Instant::now();
-    let bed = args.value_of("bed").expect("Bed file reuqired!");
+    let bed = args.value_of("bed").expect("Bed file required!");
     let paf = paf::read_paf(paf_buff);
     let rgns = bed::parse_bed(bed);
     let duration = start.elapsed();
