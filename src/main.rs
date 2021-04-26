@@ -142,10 +142,13 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     }
     //
     let start = Instant::now();
-    for rgn in rgns {
+    for mut rgn in rgns {
         let new_paf = trim_paf_to_rgn(&rgn, &paf, invert_query);
         for rec in new_paf {
-            println!("{}\tid:Z:{}_{}_{}", rec, rgn.name, rgn.st, rgn.en);
+            if rgn.id == "None" {
+                rgn.id = format!("{}_{}_{}", rgn.name, rgn.st, rgn.en)
+            }
+            println!("{}\tid:Z:{}", rec, rgn.id);
         }
     }
     let duration = start.elapsed();
