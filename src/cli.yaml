@@ -62,7 +62,7 @@ subcommands:
         about: liftover target sequence coordinates onto query sequence using a paf
         args:
             - paf:
-                about: sam/bam/cram file
+                about: PAF file from minimap2 or unimap. Must have the cg tag
                 index : 1
             - bed:
                 required: true
@@ -70,4 +70,8 @@ subcommands:
                 long : bed
                 takes_value : true
                 help: Bed file of regions to liftover
+            - querybed :
+                short : q
+                long : querybed
+                help : The bed contains query coordiantes to be lifted (note the query in the original PAF will become the target in the output)
      

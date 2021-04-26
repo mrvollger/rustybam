@@ -67,3 +67,36 @@ FLAGS:
 OPTIONS:
     -t, --threads <threads>    Number of threads to use for uncompressing
 ```
+
+## Liftover 
+This is a function for lifting over coordinates from a reference (`-bed`) 
+  to a query using a PAF file from `minimap2` or `unimap`. 
+
+The return file is a PAF file that is trimmed to the regions in the bed file. 
+Even the cigar in the returned PAF file is trimmed so it can be used downstream!
+
+Want to liftover from the query to the reference? 
+  No problem, just pass the `-q` flag. Note, that this will make
+  the query in the input PAF the target in the output PAF. 
+
+```
+rustybam-liftover 
+liftover target sequence coordinates onto query sequence using a paf
+
+USAGE:
+    rustybam liftover [FLAGS] [OPTIONS] --bed <bed> [paf]
+
+ARGS:
+    <paf>    PAF file from minimap2 or unimap. Must have the cg tag
+
+FLAGS:
+    -h, --help        Prints help information
+    -q, --querybed    The bed contains query coordiantes to be lifted (note the query in the
+                      original PAF will become the target in the output)
+    -V, --version     Prints version information
+
+OPTIONS:
+    -b, --bed <bed>            Bed file of regions to liftover
+    -t, --threads <threads>    Number of threads to use for uncompressing
+```
+

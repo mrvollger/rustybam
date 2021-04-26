@@ -135,10 +135,15 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     let rgns = bed::parse_bed(bed);
     let duration = start.elapsed();
     eprintln!("Time elapsed reading paf and bed: {:.3?}", duration);
-
+    // whether the input bed is for the query.
+    let mut invert_query = false;
+    if args.is_present("querybed") {
+        invert_query = true;
+    }
+    //
     let start = Instant::now();
     for rgn in rgns {
-        let new_paf = trim_paf_to_rgn(&rgn, &paf);
+        let new_paf = trim_paf_to_rgn(&rgn, &paf, invert_query);
         for rec in new_paf {
             println!("{}", rec);
         }
