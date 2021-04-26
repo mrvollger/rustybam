@@ -4,12 +4,12 @@ args:
     - threads :
         short : t
         long : threads
-        help : Number of threads to use for uncompressing  
+        help : Number of threads to use for decompressing  
         takes_value : true
         global : true 
 subcommands:
     - stats:
-        about: Get precent identity stats from a sam/bam/cram (PAF coming soon)
+        about: Get percent identity stats from a sam/bam/cram (PAF coming soon)
         args:
             - BAM:
                 about: sam/bam/cram file
@@ -19,7 +19,7 @@ subcommands:
                 long : qbed
                 help: Print query coordinates first 
     - nucfreq:
-        about: Get the freqs of each bp at each postion. 
+        about: Get the freqs of each bp at each position. 
         args:
             - BAM:
                 about: sam/bam/cram file
@@ -73,5 +73,5 @@ subcommands:
             - querybed :
                 short : q
                 long : querybed
-                help : The bed contains query coordiantes to be lifted (note the query in the original PAF will become the target in the output)
+                help : The bed contains query coordinates to be lifted (note the query in the original PAF will become the target in the output)
      
