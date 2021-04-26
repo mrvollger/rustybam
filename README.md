@@ -3,6 +3,18 @@
 [![Actions Status](https://github.com/mrvollger/rustybam/workflows/Formatting/badge.svg)](https://github.com/mrvollger/rustybam/actions) 
 [![Actions Status](https://github.com/mrvollger/rustybam/workflows/Clippy/badge.svg)](https://github.com/mrvollger/rustybam/actions) 
 
+# Install
+It is easy just make sure you have rust installed and then:
+```
+git clone https://github.com/mrvollger/rustybam.git
+cd rustybam 
+cargo build --release 
+```
+and the executable will be built here:
+```
+target/release/rustybam 
+```
+
 # Usage 
 ```
 ./rustybam 

@@ -70,8 +70,8 @@ subcommands:
                 long : bed
                 takes_value : true
                 help: Bed file of regions to liftover
-            - querybed :
+            - qbed :
                 short : q
-                long : querybed
+                long : qbed
                 help : The bed contains query coordinates to be lifted (note the query in the original PAF will become the target in the output)
      

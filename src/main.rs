@@ -1,4 +1,4 @@
-use clap::{load_yaml, App, AppSettings};
+use clap::{crate_version, load_yaml, App, AppSettings};
 use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
@@ -13,7 +13,9 @@ use std::time::Instant;
 
 fn main() {
     let yaml = load_yaml!("cli.yaml");
-    let app = App::from(yaml).setting(AppSettings::SubcommandRequiredElseHelp);
+    let app = App::from(yaml)
+        .version(crate_version!())
+        .setting(AppSettings::SubcommandRequiredElseHelp);
     let matches = app.get_matches();
 
     if let Some(matches) = matches.subcommand_matches("stats") {
@@ -137,7 +139,7 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     eprintln!("Time elapsed reading paf and bed: {:.3?}", duration);
     // whether the input bed is for the query.
     let mut invert_query = false;
-    if args.is_present("querybed") {
+    if args.is_present("qbed") {
         invert_query = true;
     }
     //
