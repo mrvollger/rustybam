@@ -15,3 +15,8 @@ calm_io = "0.1.1"
 clap = { version = "3.0.0-beta.2", features = ["yaml"] }
 rayon = "1.5"
 regex = "*"
+
+
+[build-dependencies]
+clap_generate = "3.0.0-beta.2"
+clap = "3.0.0-beta.2"
