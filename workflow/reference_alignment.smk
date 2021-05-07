@@ -37,10 +37,17 @@ rule clean_query:
                 out.write(f">{name} {rec.comment}\n{rec.sequence}\n")
         out.close()
 
+rule unimap_index:
+    input:
+        ref = os.path.abspath(config.get("ref")),
+    output:
+        umi="reference_alignment/ref.umi",
+    threads: 8
+    shell: "unimap -t {threads} -ax asm20 -d {output.umi} {input.ref}" 
 
 rule unimap:
     input:
-        ref = os.path.abspath(config.get("ref")),
+        ref = rules.unimap_index.output.umi,
         query= get_asm,
     output:
         aln=pipe("reference_alignment/{sm}.sam"),
