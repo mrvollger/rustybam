@@ -16,9 +16,10 @@ if(! require("GenomicRanges")) BiocManager::install("GenomicRanges")
 
 
 # create parser object
+indir="~/Desktop/EichlerVolumes/chm13_t2t/nobackups/assembly_alignments/rustybam/reference_alignment/bed/"
 parser <- ArgumentParser()
-parser$add_argument("-a", "--asm",  help="bed file with all the asm mapping", default = "~/Desktop/repos/rustybam/reference_alignment/bed/test_1.bed")
-parser$add_argument("-b", "--asm2",  help="bed file with a second asm mapping", default = "~/Desktop/repos/rustybam/reference_alignment/bed/test_2.bed")
+parser$add_argument("-a", "--asm",  help="bed file with all the asm mapping", default = glue("{indir}/HG00733_1.bed"))
+parser$add_argument("-b", "--asm2",  help="bed file with a second asm mapping", default = glue("{indir}/HG00733_2.bed"))
 parser$add_argument("-k", "--karyotype",  help="karyotpye file for different genomes")
 parser$add_argument("-p", "--plot",  help="output plot, must have .pdf ext.", default = "~/Desktop/ideogram.pdf")
 args <- parser$parse_args()

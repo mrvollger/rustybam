@@ -1,8 +1,6 @@
 import os
 import sys
 import pandas as pd
-import pysam
-
 
 
 df = pd.read_csv(config.get("tbl"), sep="\t")
@@ -27,6 +25,7 @@ rule clean_query:
         fasta="reference_alignment/{sm}.fasta",
     threads: 1
     run:
+        import pysam
         out = open(output.fasta, "w+")
         seen = set()
         for idx, fasta in enumerate(input.query):
@@ -51,7 +50,13 @@ rule unimap:
         "log/unimap.{sm}.benchmark.txt"
     threads: config.get("aln_threads", 40)
     shell:
-        " unimap -K 8G -r 200000 -ax asm20 --eqx -Y {input.ref} {input.query} > {output.aln} 2> {log}"
+        """
+        unimap -K 8G -t {threads} \
+            -r 200000 -ax asm20 \
+            --secondary=no --eqx -s 25000 \
+                    {input.ref} {input.query} > {output.aln} \
+                        2> {log}
+        """
 
 
 rule compress_sam:
@@ -64,9 +69,8 @@ rule compress_sam:
     shell:
         """
         samtools view -@8 -u {input.aln} \
-            | samtools sort -u -m 4G -@8 - \
-            | samtools view --write-index \
-                -@8 - -o {output.aln}
+            | samtools sort -m 4G -@8 --write-index \
+                 -o {output.aln}
         """
 
 
