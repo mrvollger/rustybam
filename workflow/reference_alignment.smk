@@ -79,9 +79,8 @@ rule sam_to_paf:
         aln=rules.compress_sam.output.aln,
     output:
         paf="reference_alignment/paf/{sm}.paf.gz",
-    threads: 8
     shell:
-        "samtools view -@8 -h {input.aln} | paftools.js sam2paf - | gzip > {output.paf}"
+        "samtools view -h {input.aln} | paftools.js sam2paf - | gzip > {output.paf}"
 
 
 rule paf_to_bed:
