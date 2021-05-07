@@ -6,13 +6,16 @@ import pandas as pd
 df = pd.read_csv(config.get("tbl"), sep="\t")
 df.asm = df.asm.map(os.path.abspath)
 df["asm"] = df.asm.str.split(",")
-df=df.explode("asm")
-df['num'] = df.groupby(level=0).cumcount()+1
-df.set_index( df["sample"] + "_" + df["num"].astype(str), inplace=True)
+df = df.explode("asm")
+df["num"] = df.groupby(level=0).cumcount() + 1
+df.set_index(df["sample"] + "_" + df["num"].astype(str), inplace=True)
 
 print(df)
+
+
 wildcard_constraints:
-    i="\d+"
+    i="\d+",
+
 
 def get_asm(wc):
     return df.loc[str(wc.sm)].asm
@@ -26,6 +29,7 @@ rule clean_query:
     threads: 1
     run:
         import pysam
+
         out = open(output.fasta, "w+")
         seen = set()
         for idx, fasta in enumerate(input.query):
@@ -37,18 +41,22 @@ rule clean_query:
                 out.write(f">{name} {rec.comment}\n{rec.sequence}\n")
         out.close()
 
+
+
 rule unimap_index:
     input:
-        ref = os.path.abspath(config.get("ref")),
+        ref=os.path.abspath(config.get("ref")),
     output:
         umi="reference_alignment/ref.umi",
     threads: 8
-    shell: "unimap -t {threads} -ax asm20 -d {output.umi} {input.ref}" 
+    shell:
+        "unimap -t {threads} -ax asm20 -d {output.umi} {input.ref}"
+
 
 rule unimap:
     input:
-        ref = rules.unimap_index.output.umi,
-        query= get_asm,
+        ref=rules.unimap_index.output.umi,
+        query=get_asm,
     output:
         aln=pipe("reference_alignment/{sm}.sam"),
     log:
@@ -72,11 +80,11 @@ rule compress_sam:
     output:
         aln="reference_alignment/bam/{sm}.bam",
         index="reference_alignment/bam/{sm}.bam.csi",
-    threads: 8
+    threads: 1 # dont increase this, it will break things randomly 
     shell:
         """
-        samtools view -@8 -u {input.aln} \
-            | samtools sort -m 4G -@8 --write-index \
+        samtools view -u {input.aln} \
+            | samtools sort -m 20G --write-index \
                  -o {output.aln}
         """
 
@@ -105,10 +113,9 @@ rule paf_to_bed:
         """
 
 
-
 rule reference_alignment:
     input:
         expand(rules.ra_sam_to_paf.output, sm=df.index),
         expand(rules.ra_paf_to_bed.output, sm=df.index),
-    output:
-    message: "Reference alignments complete"
+    message:
+        "Reference alignments complete"
