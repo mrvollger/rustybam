@@ -197,6 +197,6 @@ mod tests {
         let view = CigarStringView::new(cigar, 0);
         let mut stats = Stats::default();
         add_stats_from_cigar(&view, &mut stats);
-        assert_eq!(50.0, stats.id_by_all);
+        assert_eq!(50.0 as f32, stats.id_by_all);
     }
 }
