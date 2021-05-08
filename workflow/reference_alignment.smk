@@ -63,7 +63,7 @@ rule unimap:
         "log/unimap.{sm}.log",
     benchmark:
         "log/unimap.{sm}.benchmark.txt"
-    threads: config.get("aln_threads", 40)
+    threads: config.get("aln_threads", 4)
     shell:
         """
         unimap -K 8G -t {threads} \

@@ -1,7 +1,6 @@
-use bio_types::strand::ReqStrand;
 use bio_types::strand::ReqStrand::*;
 use colored::Colorize;
-use rust_htslib::bam::record::Cigar::*;
+use rust_htslib::bam::record::{Cigar::*, CigarStringView};
 use rust_htslib::bam::Header;
 use rust_htslib::bam::HeaderView;
 use rust_htslib::bam::Record;
@@ -9,6 +8,7 @@ use std::convert::TryFrom;
 use std::fmt;
 use std::str;
 
+#[derive(Default)]
 pub struct Stats {
     pub tid: i32,
     pub q_nm: String,
@@ -17,7 +17,7 @@ pub struct Stats {
     pub q_en: i64,
     pub r_st: i64,
     pub r_en: i64,
-    pub strand: ReqStrand,
+    pub strand: String,
     pub equal: u32,
     pub diff: u32,
     pub ins: u32,
@@ -35,14 +35,49 @@ impl fmt::Display for Stats {
         write!(
             f,
             "{} {} {} {} {} {} {}",
-            self.tid,
-            self.r_st,
-            self.r_en,
-            self.strand.strand_symbol(),
-            self.q_nm,
-            self.q_st,
-            self.q_en
+            self.tid, self.r_st, self.r_en, self.strand, self.q_nm, self.q_st, self.q_en
         )
+    }
+}
+
+pub fn add_stats_from_cigar(cigar: &CigarStringView, stats: &mut Stats) {
+    // iterate over cigar
+    for opt in cigar {
+        match opt {
+            Del(val) => {
+                stats.del_events += 1;
+                stats.del += val
+            }
+            Ins(val) => {
+                stats.ins_events += 1;
+                stats.ins += val
+            }
+            Equal(val) => stats.equal += val,
+            Diff(val) => stats.diff += val,
+            Match(val) => {
+                stats.diff += val;
+                stats.matches += val
+            }
+            _ => (),
+        }
+    }
+
+    // make the summary stats
+    stats.id_by_all =
+        100.0 * stats.equal as f32 / (stats.equal + stats.diff + stats.del + stats.ins) as f32;
+    stats.id_by_events = 100.0 * stats.equal as f32
+        / (stats.equal + stats.diff + stats.del_events + stats.ins_events) as f32;
+    stats.id_by_matches = 100.0 * stats.equal as f32 / (stats.equal + stats.diff) as f32;
+
+    // print warnings if the cigar does not use =/X
+    if stats.matches > 0 {
+        eprint!(
+            "\r{} {} {}{}",
+            "\u{26A0} warning:".bold().yellow(),
+            "cigar string contains".yellow(),
+            "'M'".bold().red(),
+            ", assuming mismatch.".yellow()
+        );
     }
 }
 
@@ -58,7 +93,7 @@ pub fn cigar_stats(mut rec: Record) -> Stats {
         q_len: 0,
         q_st: 0,
         q_en: 0,
-        strand: rec.strand(),
+        strand: rec.strand().strand_symbol().to_string(),
         equal: 0,
         diff: 0,
         ins: 0,
@@ -86,42 +121,9 @@ pub fn cigar_stats(mut rec: Record) -> Stats {
         stats.q_en = stats.q_len - temp;
     }
 
-    // count up the cigar operations
-    for opt in &cigar {
-        match opt {
-            Del(val) => {
-                stats.del_events += 1;
-                stats.del += val
-            }
-            Ins(val) => {
-                stats.ins_events += 1;
-                stats.ins += val
-            }
-            Equal(val) => stats.equal += val,
-            Diff(val) => stats.diff += val,
-            Match(val) => {
-                stats.diff += val;
-                stats.matches += val
-            }
-            _ => (),
-        }
-    }
+    // read the cigar string and add in the stats
+    add_stats_from_cigar(&cigar, &mut stats);
 
-    stats.id_by_all =
-        100.0 * stats.equal as f32 / (stats.equal + stats.diff + stats.del + stats.ins) as f32;
-    stats.id_by_events = 100.0 * stats.equal as f32
-        / (stats.equal + stats.diff + stats.del_events + stats.ins_events) as f32;
-    stats.id_by_matches = 100.0 * stats.equal as f32 / (stats.equal + stats.diff) as f32;
-
-    if stats.matches > 0 {
-        eprint!(
-            "\r{} {} {}{}",
-            "\u{26A0} warning:".bold().yellow(),
-            "cigar string contains".yellow(),
-            "'M'".bold().red(),
-            ", assuming mismatch.".yellow()
-        );
-    }
     //eprintln!("{} {} {} {}", stats.equal, stats.diff, stats.ins, stats.del);
     // println!("{}", stats);
     stats
@@ -152,11 +154,11 @@ pub fn print_cigar_stats(stats: Stats, qbed: bool, header: &Header) {
             "{}\t{}\t{}\t{}\t",
             stats.q_nm, stats.q_st, stats.q_en, stats.q_len
         );
-        print!("{}\t", stats.strand.strand_symbol());
+        print!("{}\t", stats.strand);
         print!("{}\t{}\t{}\t{}\t", r_nm, stats.r_st, stats.r_en, r_len);
     } else {
         print!("{}\t{}\t{}\t{}\t", r_nm, stats.r_st, stats.r_en, r_len);
-        print!("{}\t", stats.strand.strand_symbol());
+        print!("{}\t", stats.strand);
         print!(
             "{}\t{}\t{}\t{}\t",
             stats.q_nm, stats.q_st, stats.q_en, stats.q_len
@@ -187,5 +189,14 @@ mod tests {
             let stats = cigar_stats(fetch.unwrap());
             print_cigar_stats(stats, false, &bam_header);
         }
+    }
+    #[test]
+    fn test_add_cigar_stats() {
+        use rust_htslib::bam::record::CigarString;
+        let cigar = CigarString::try_from("10=10X").unwrap();
+        let view = CigarStringView::new(cigar, 0);
+        let mut stats = Stats::default();
+        add_stats_from_cigar(&view, &mut stats);
+        assert_eq!(50.0, stats.id_by_all);
     }
 }
