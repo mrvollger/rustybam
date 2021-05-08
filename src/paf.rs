@@ -1,5 +1,5 @@
 use super::bed;
-use core::fmt;
+use core::{fmt, panic};
 use regex::Regex;
 use rust_htslib::bam::record::Cigar::*;
 use rust_htslib::bam::record::CigarString;
@@ -11,6 +11,7 @@ use std::str::FromStr;
 #[derive(Debug)]
 pub enum Error {
     PafParseCigar { msg: String },
+    PafParseCS { msg: String },
     ParseIntError { msg: String },
     ParsePafColumn {},
 }
@@ -274,21 +275,23 @@ pub fn read_paf_line(line: &str) -> PafResult<PafRecord> {
                             // collect all the tags if any
     let mut tags = "".to_string();
     // find the cigar if it is there
-    let mut cigar = "".to_string();
+    let mut cigar = CigarString(vec![]);
     let pattern = Regex::new("(..):(.):(.*)").unwrap();
     for token in t.iter().skip(12) {
         assert!(pattern.is_match(token));
         let caps = pattern.captures(token).unwrap();
         let tag = &caps[1];
         let value = &caps[3];
-        if tag == "cg" {
-            cigar = value.to_string();
+        if tag == "cs" {
+            cigar = cs_to_cigar(value)?;
+        } else if tag == "cg" {
+            cigar = cigar_from_str(value)?;
         } else {
             tags.push('\t');
             tags.push_str(token);
         }
     }
-    let cigar = cigar_from_str(cigar.as_str())?;
+
     // make the record
     let rec = PafRecord {
         q_name: t[0].to_string(),
@@ -334,6 +337,83 @@ pub fn read_paf(paf_file: Box<dyn BufRead>) -> Vec<PafRecord> {
 
 pub fn make_fake_paf_rec() -> PafRecord {
     read_paf_line("Q 10 2 10 - T 20 12 20 3 9 60 cg:Z:4M1I1D3=").unwrap()
+}
+/// # Example
+/// ```
+/// use rust_htslib::bam::record::Cigar::*;
+/// use rustybam::paf;
+/// let cigar = paf::cs_to_cigar(":10=ACGTN+acgtn-acgtn*at=A").unwrap();
+/// assert_eq!(cigar[0], Equal(10));
+/// assert_eq!(cigar[1], Equal(5));
+/// assert_eq!(cigar[2], Ins(5));
+/// assert_eq!(cigar[3], Del(5));
+/// assert_eq!(cigar[4], Diff(1));
+/// assert_eq!(cigar[5], Equal(1));
+/// ```
+pub fn cs_to_cigar(cs: &str) -> PafResult<CigarString> {
+    let bytes = cs.as_bytes();
+    let length = bytes.len();
+    let mut i = 0;
+    let mut cigar = vec![];
+    while i < length {
+        let cs_opt = bytes[i];
+        let mut l = 0;
+        // get past the opt and to the information
+        i += 1;
+        let opt = match cs_opt {
+            b'=' => {
+                while let b'A' | b'C' | b'G' | b'T' | b'N' = bytes[i] {
+                    i += 1;
+                    l += 1;
+                    if i == length {
+                        break;
+                    }
+                }
+                Cigar::Equal(l)
+            }
+            b':' => {
+                let mut j = i;
+                while j < length && bytes[j].is_ascii_digit() {
+                    j += 1;
+                }
+                l = u32::from_str(&cs[i..j]).map_err(|_| Error::ParseIntError {
+                    msg: format!("Expected integer, got {}", cs[i..j].to_string()),
+                })?;
+                i += j - 1;
+                Cigar::Equal(l)
+            }
+            b'*' => {
+                i += 2;
+                Cigar::Diff(1)
+            }
+            b'+' | b'-' => {
+                while let b'a' | b'c' | b'g' | b't' | b'n' = bytes[i] {
+                    i += 1;
+                    l += 1;
+                    if i == length {
+                        break;
+                    }
+                }
+                match cs_opt {
+                    b'+' => Cigar::Ins(l),
+                    b'-' => Cigar::Del(l),
+                    _ => panic!("should be impossible + or - needed"),
+                }
+            }
+            b'~' => {
+                return Err(Error::PafParseCS {
+                    msg: "Splice operations not yet supported.".to_string(),
+                });
+            }
+            _ => {
+                return Err(Error::PafParseCS {
+                    msg: format!("Unexpected operator in the cs string: {}", cs_opt as char),
+                });
+            }
+        };
+        cigar.push(opt);
+    }
+    Ok(CigarString(cigar))
 }
 
 #[cfg(test)]
