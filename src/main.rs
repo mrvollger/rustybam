@@ -43,9 +43,10 @@ pub fn run_stats(args: &clap::ArgMatches) {
             _ => Box::new(io::stdin()),
         };
         for (idx, line) in io::BufReader::new(file).lines().enumerate() {
-            eprint!("\rProcessing: {}", idx);
+            eprint!("\rProcessing: {}", idx + 1);
             let paf = paf::read_paf_line(&line.unwrap()).unwrap();
-            let _stats = bamstats::stats_from_paf(paf);
+            let stats = bamstats::stats_from_paf(paf);
+            bamstats::print_cigar_stats(stats, qbed);
         }
         eprintln!();
         return;
@@ -66,9 +67,9 @@ pub fn run_stats(args: &clap::ArgMatches) {
 
     // get stats
     for (idx, rec) in bam.records().enumerate() {
-        eprint!("\rProcessing: {}", idx);
-        let stats = bamstats::cigar_stats(rec.unwrap());
-        bamstats::print_cigar_stats(stats, qbed, &bam_header);
+        eprint!("\rProcessing: {}", idx + 1);
+        let stats = bamstats::cigar_stats(rec.unwrap(), &bam_header);
+        bamstats::print_cigar_stats(stats, qbed);
     }
     eprintln!();
 }

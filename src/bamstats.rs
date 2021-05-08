@@ -10,11 +10,12 @@ use std::fmt;
 use std::str;
 #[derive(Default)]
 pub struct Stats {
-    pub tid: i32,
     pub q_nm: String,
     pub q_len: i64,
     pub q_st: i64,
     pub q_en: i64,
+    pub r_nm: String,
+    pub r_len: i64,
     pub r_st: i64,
     pub r_en: i64,
     pub strand: char,
@@ -35,7 +36,7 @@ impl fmt::Display for Stats {
         write!(
             f,
             "{} {} {} {} {} {} {}",
-            self.tid, self.r_st, self.r_en, self.strand, self.q_nm, self.q_st, self.q_en
+            self.r_nm, self.r_st, self.r_en, self.strand, self.q_nm, self.q_st, self.q_en
         )
     }
 }
@@ -44,6 +45,15 @@ pub fn stats_from_paf(paf: paf::PafRecord) -> Stats {
     //let paf = paf::read_paf_line(line).unwrap();
     let mut stats = Stats::default();
     add_stats_from_cigar(&CigarStringView::new(paf.cigar, 0), &mut stats);
+    stats.r_nm = paf.t_name;
+    stats.r_len = paf.t_len as i64;
+    stats.r_st = paf.t_st as i64;
+    stats.r_en = paf.t_en as i64;
+    stats.q_nm = paf.q_name;
+    stats.q_len = paf.q_len as i64;
+    stats.q_st = paf.q_st as i64;
+    stats.q_en = paf.q_en as i64;
+    stats.strand = paf.strand;
     stats
 }
 
@@ -88,12 +98,16 @@ pub fn add_stats_from_cigar(cigar: &CigarStringView, stats: &mut Stats) {
     }
 }
 
-pub fn cigar_stats(mut rec: Record) -> Stats {
+pub fn cigar_stats(mut rec: Record, header: &Header) -> Stats {
     let cigar = rec.cigar();
+    let bam_head = HeaderView::from_header(header);
+    let r_nm = str::from_utf8(bam_head.tid2name(rec.tid() as u32)).unwrap();
+    let r_len = bam_head.target_len(rec.tid() as u32).unwrap();
 
     // initalize output information
     let mut stats = Stats {
-        tid: rec.tid(),
+        r_nm: r_nm.to_string(),
+        r_len: r_len as i64,
         r_st: rec.pos(),
         r_en: cigar.end_pos(),
         q_nm: std::str::from_utf8(rec.qname()).unwrap().to_string(),
@@ -156,20 +170,22 @@ pub fn print_cigar_stats_header(qbed: bool) {
 }
 
 /// print cigar stats from a bam
-pub fn print_cigar_stats(stats: Stats, qbed: bool, header: &Header) {
-    let bam_head = HeaderView::from_header(header);
-    let r_nm = str::from_utf8(bam_head.tid2name(stats.tid as u32)).unwrap();
-    let r_len = bam_head.target_len(stats.tid as u32).unwrap();
-
+pub fn print_cigar_stats(stats: Stats, qbed: bool) {
     if qbed {
         print!(
             "{}\t{}\t{}\t{}\t",
             stats.q_nm, stats.q_st, stats.q_en, stats.q_len
         );
         print!("{}\t", stats.strand);
-        print!("{}\t{}\t{}\t{}\t", r_nm, stats.r_st, stats.r_en, r_len);
+        print!(
+            "{}\t{}\t{}\t{}\t",
+            stats.r_nm, stats.r_st, stats.r_en, stats.r_len
+        );
     } else {
-        print!("{}\t{}\t{}\t{}\t", r_nm, stats.r_st, stats.r_en, r_len);
+        print!(
+            "{}\t{}\t{}\t{}\t",
+            stats.r_nm, stats.r_st, stats.r_en, stats.r_len
+        );
         print!("{}\t", stats.strand);
         print!(
             "{}\t{}\t{}\t{}\t",
@@ -198,8 +214,8 @@ mod tests {
         let bam_header = bam::Header::from_template(bam.header());
         bam.set_threads(4).unwrap();
         for fetch in bam.records() {
-            let stats = cigar_stats(fetch.unwrap());
-            print_cigar_stats(stats, false, &bam_header);
+            let stats = cigar_stats(fetch.unwrap(), &bam_header);
+            print_cigar_stats(stats, false);
         }
     }
     #[test]
