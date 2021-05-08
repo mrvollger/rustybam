@@ -9,7 +9,7 @@ args:
         global : true 
 subcommands:
     - stats:
-        about: Get percent identity stats from a sam/bam/cram (PAF coming soon)
+        about: Get percent identity stats from a sam/bam/cram or PAF (add --paf)
         args:
             - BAM:
                 about: sam/bam/cram file
@@ -18,6 +18,10 @@ subcommands:
                 short: q
                 long : qbed
                 help: Print query coordinates first 
+            - paf:
+                short: p
+                long : paf
+                help: The input is paf format (must have cg tag with extended cigar or cs tag). 
     - nucfreq:
         about: Get the freqs of each bp at each position. 
         args:

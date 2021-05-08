@@ -33,22 +33,40 @@ pub fn run_stats(args: &clap::ArgMatches) {
     // parse arguments
     let threads = args.value_of_t("threads").unwrap_or(8);
     eprintln!("Number of threads: {}", threads);
+    let qbed = args.is_present("qbed");
+    let paf = args.is_present("paf");
+    bamstats::print_cigar_stats_header(qbed);
+
+    if paf {
+        let file: Box<dyn io::Read> = match args.value_of("BAM") {
+            Some(input) => Box::new(fs::File::open(input).unwrap()),
+            _ => Box::new(io::stdin()),
+        };
+        for (idx, line) in io::BufReader::new(file).lines().enumerate(){
+            eprint!("\rProcessing: {}", idx);
+            let paf = paf::read_paf_line(&line.unwrap()).unwrap();
+            let _stats = bamstats::stats_from_paf(paf);
+        }
+        eprintln!();
+        return;
+    }
+    // Not a paf so lets read in the bam
+
+    // we want to do bam reading
     let mut bam = match args.value_of("BAM") {
         Some(bam_f) => {
             bam::Reader::from_path(bam_f).unwrap_or_else(|_| panic!("Failed to open {}", bam_f))
         }
         _ => bam::Reader::from_stdin().unwrap(),
     };
-    let qbed = args.is_present("qbed");
 
     // open bam
     bam.set_threads(threads).unwrap();
     let bam_header = bam::Header::from_template(bam.header());
 
     // get stats
-    bamstats::print_cigar_stats_header(qbed);
     for (idx, rec) in bam.records().enumerate() {
-        eprint!("\rProccesing: {}", idx);
+        eprint!("\rProcessing: {}", idx);
         let stats = bamstats::cigar_stats(rec.unwrap());
         bamstats::print_cigar_stats(stats, qbed, &bam_header);
     }

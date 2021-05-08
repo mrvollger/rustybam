@@ -7,7 +7,7 @@ use rust_htslib::bam::Record;
 use std::convert::TryFrom;
 use std::fmt;
 use std::str;
-
+use super::paf;
 #[derive(Default)]
 pub struct Stats {
     pub tid: i32,
@@ -17,7 +17,7 @@ pub struct Stats {
     pub q_en: i64,
     pub r_st: i64,
     pub r_en: i64,
-    pub strand: String,
+    pub strand: char,
     pub equal: u32,
     pub diff: u32,
     pub ins: u32,
@@ -38,6 +38,13 @@ impl fmt::Display for Stats {
             self.tid, self.r_st, self.r_en, self.strand, self.q_nm, self.q_st, self.q_en
         )
     }
+}
+
+pub fn stats_from_paf(paf : paf::PafRecord) -> Stats {
+    //let paf = paf::read_paf_line(line).unwrap();
+    let mut stats = Stats::default();
+    add_stats_from_cigar(&CigarStringView::new(paf.cigar, 0), &mut stats);
+    stats
 }
 
 pub fn add_stats_from_cigar(cigar: &CigarStringView, stats: &mut Stats) {
@@ -93,7 +100,7 @@ pub fn cigar_stats(mut rec: Record) -> Stats {
         q_len: 0,
         q_st: 0,
         q_en: 0,
-        strand: rec.strand().strand_symbol().to_string(),
+        strand: rec.strand().strand_symbol().chars().next().expect("string is empty"),
         equal: 0,
         diff: 0,
         ins: 0,
@@ -197,6 +204,6 @@ mod tests {
         let view = CigarStringView::new(cigar, 0);
         let mut stats = Stats::default();
         add_stats_from_cigar(&view, &mut stats);
-        assert_eq!(50.0 as f32, stats.id_by_all);
+        assert_eq!(50.0, stats.id_by_all);
     }
 }
