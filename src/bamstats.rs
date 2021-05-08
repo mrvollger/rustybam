@@ -1,3 +1,4 @@
+use super::paf;
 use bio_types::strand::ReqStrand::*;
 use colored::Colorize;
 use rust_htslib::bam::record::{Cigar::*, CigarStringView};
@@ -7,7 +8,6 @@ use rust_htslib::bam::Record;
 use std::convert::TryFrom;
 use std::fmt;
 use std::str;
-use super::paf;
 #[derive(Default)]
 pub struct Stats {
     pub tid: i32,
@@ -40,7 +40,7 @@ impl fmt::Display for Stats {
     }
 }
 
-pub fn stats_from_paf(paf : paf::PafRecord) -> Stats {
+pub fn stats_from_paf(paf: paf::PafRecord) -> Stats {
     //let paf = paf::read_paf_line(line).unwrap();
     let mut stats = Stats::default();
     add_stats_from_cigar(&CigarStringView::new(paf.cigar, 0), &mut stats);
@@ -100,7 +100,12 @@ pub fn cigar_stats(mut rec: Record) -> Stats {
         q_len: 0,
         q_st: 0,
         q_en: 0,
-        strand: rec.strand().strand_symbol().chars().next().expect("string is empty"),
+        strand: rec
+            .strand()
+            .strand_symbol()
+            .chars()
+            .next()
+            .expect("string is empty"),
         equal: 0,
         diff: 0,
         ins: 0,

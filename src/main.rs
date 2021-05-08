@@ -42,7 +42,7 @@ pub fn run_stats(args: &clap::ArgMatches) {
             Some(input) => Box::new(fs::File::open(input).unwrap()),
             _ => Box::new(io::stdin()),
         };
-        for (idx, line) in io::BufReader::new(file).lines().enumerate(){
+        for (idx, line) in io::BufReader::new(file).lines().enumerate() {
             eprint!("\rProcessing: {}", idx);
             let paf = paf::read_paf_line(&line.unwrap()).unwrap();
             let _stats = bamstats::stats_from_paf(paf);
