@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>D3 Miropeats</title>
+        <!-- Load d3.js -->
+        <script src="https://d3js.org/d3.v6.min.js"></script>
+    </head>
+    <style>
+        .svg-container {
+            display: inline-block;
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%; /* aspect ratio */
+            vertical-align: top;
+            overflow: hidden;
+        }
+        .svg-content-responsive {
+            display: inline-block;
+            position: absolute;
+            top: 10px;
+            left: 0;
+        }
+    </style>
+    <body>
+        <!-- Create a div where the graph will take place -->
+        <div id="chart"></div>
+        <script src="miropeats.js"></script>
+
+    </body>
+</html>
