@@ -7,8 +7,6 @@ use rustybam::nucfreq;
 use rustybam::paf;
 use rustybam::suns;
 use rustybam::{bamstats, paf::trim_paf_to_rgn};
-use std::fs;
-use std::io::{self, BufRead, BufReader};
 use std::time::Instant;
 
 fn main() {
@@ -38,15 +36,13 @@ pub fn run_stats(args: &clap::ArgMatches) {
     bamstats::print_cigar_stats_header(qbed);
 
     if paf {
-        let file: Box<dyn io::Read> = match args.value_of("BAM") {
-            Some(input) => Box::new(fs::File::open(input).unwrap()),
-            _ => Box::new(io::stdin()),
-        };
-        for (idx, line) in io::BufReader::new(file).lines().enumerate() {
-            eprint!("\rProcessing: {}", idx + 1);
-            let paf = paf::read_paf_line(&line.unwrap()).unwrap();
+        let file = args.value_of("BAM").unwrap_or("-");
+        let mut idx = 1;
+        for paf in paf::PAF::from_file(file).records {
+            eprint!("\rProcessing: {}", idx);
             let stats = bamstats::stats_from_paf(paf);
             bamstats::print_cigar_stats(stats, qbed);
+            idx += 1;
         }
         eprintln!();
         return;
@@ -146,16 +142,17 @@ pub fn run_suns(args: &clap::ArgMatches) {
 }
 
 pub fn run_liftover(args: &clap::ArgMatches) {
-    let paf_buff: Box<dyn BufRead> = match args.value_of("paf") {
-        Some(paf_f) => Box::new(BufReader::new(fs::File::open(paf_f).unwrap())),
-        _ => Box::new(BufReader::new(io::stdin())),
-    };
     let start = Instant::now();
+    // read in the bed
     let bed = args.value_of("bed").expect("Bed file required!");
-    let paf = paf::read_paf(paf_buff);
     let rgns = bed::parse_bed(bed);
+    // read in the file
+    let paf_file = args.value_of("paf").unwrap_or("-");
+    let paf = paf::PAF::from_file(paf_file);
+    // end timer
     let duration = start.elapsed();
     eprintln!("Time elapsed reading paf and bed: {:.3?}", duration);
+
     // whether the input bed is for the query.
     let mut invert_query = false;
     if args.is_present("qbed") {
@@ -164,7 +161,7 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     //
     let start = Instant::now();
     for mut rgn in rgns {
-        let new_paf = trim_paf_to_rgn(&rgn, &paf, invert_query);
+        let new_paf = trim_paf_to_rgn(&rgn, &paf.records, invert_query);
         for rec in new_paf {
             if rgn.id == "None" {
                 rgn.id = format!("{}_{}_{}", rgn.name, rgn.st, rgn.en)

@@ -4,6 +4,8 @@ use regex::Regex;
 use rust_htslib::bam::record::Cigar::*;
 use rust_htslib::bam::record::CigarString;
 use rust_htslib::bam::record::*;
+use std::fs;
+use std::io;
 use std::io::BufRead;
 //use std::convert::TryFrom;
 use std::str::FromStr;
@@ -16,6 +18,45 @@ pub enum Error {
     ParsePafColumn {},
 }
 type PafResult<T> = Result<T, crate::paf::Error>;
+
+#[derive(Debug)]
+pub struct PAF {
+    pub records: Vec<PafRecord>,
+}
+
+impl PAF {
+    fn new() -> PAF {
+        PAF {
+            records: Vec::new(),
+        }
+    }
+    /// read in the paf from a file pass "-" for stdin
+    /// # Example
+    /// ```
+    /// use rustybam::paf;
+    /// use std::fs::File;
+    /// use std::io::*;
+    /// let mut paf = paf::PAF::from_file("test/asm_small.paf");
+    /// assert_eq!(paf.records.len(), 249);
+    ///
+    /// ```
+    pub fn from_file(file_name: &str) -> PAF {
+        let paf_file: Box<dyn io::Read> = match file_name {
+            "-" => Box::new(io::stdin()),
+            _ => Box::new(fs::File::open(file_name).expect("Unable to open paf file")),
+        };
+        let mut paf = PAF::new();
+        for (index, line) in io::BufReader::new(paf_file).lines().enumerate() {
+            eprint!("\rReading PAF line: {}", index + 1);
+            match PafRecord::new(&line.unwrap()) {
+                Ok(rec) => paf.records.push(rec),
+                Err(_) => eprintln!("\nUnable to parse PAF record. Skipping line {}", index + 1),
+            }
+        }
+        eprintln!();
+        paf
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct PafRecord {
@@ -33,6 +74,59 @@ pub struct PafRecord {
     pub mapq: u64,
     pub cigar: CigarString,
     pub tags: String,
+}
+
+impl PafRecord {
+    /// # Example
+    /// ```
+    /// use rustybam::paf;
+    /// let _paf = paf::PafRecord::new("A 1 2 3 + B 1 2 3 10 11 60").unwrap();
+    /// let rec = paf::make_fake_paf_rec();
+    /// assert_eq!("4M1I1D3=", rec.cigar.to_string());
+    ///
+    /// ```
+    pub fn new(line: &str) -> PafResult<PafRecord> {
+        let t: Vec<&str> = line.split_ascii_whitespace().collect();
+        assert!(t.len() >= 12); // must have all required columns
+                                // collect all the tags if any
+        let mut tags = "".to_string();
+        // find the cigar if it is there
+        let mut cigar = CigarString(vec![]);
+        let pattern = Regex::new("(..):(.):(.*)").unwrap();
+        for token in t.iter().skip(12) {
+            assert!(pattern.is_match(token));
+            let caps = pattern.captures(token).unwrap();
+            let tag = &caps[1];
+            let value = &caps[3];
+            if tag == "cs" {
+                cigar = cs_to_cigar(value)?;
+            } else if tag == "cg" {
+                cigar = cigar_from_str(value)?;
+            } else {
+                tags.push('\t');
+                tags.push_str(token);
+            }
+        }
+
+        // make the record
+        let rec = PafRecord {
+            q_name: t[0].to_string(),
+            q_len: t[1].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
+            q_st: t[2].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
+            q_en: t[3].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
+            strand: t[4].parse::<char>().map_err(|_| Error::ParsePafColumn {})?,
+            t_name: t[5].to_string(),
+            t_len: t[6].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
+            t_st: t[7].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
+            t_en: t[8].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
+            nmatch: t[9].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
+            aln_len: t[10].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
+            mapq: t[11].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
+            cigar,
+            tags,
+        };
+        Ok(rec)
+    }
 }
 
 impl fmt::Display for PafRecord {
@@ -260,84 +354,10 @@ pub fn trim_paf_to_rgn(rgn: &bed::Region, paf: &[PafRecord], invert_query: bool)
     trimmed_paf
 }
 
-/// # Example
-/// ```
-/// use rustybam::paf;
-///
-/// paf::read_paf_line("A 1 2 3 + B 1 2 3 10 11 60").unwrap();
-/// let rec = paf::make_fake_paf_rec();
-/// assert_eq!("4M1I1D3=", rec.cigar.to_string());
-///
-/// ```
-pub fn read_paf_line(line: &str) -> PafResult<PafRecord> {
-    let t: Vec<&str> = line.split_ascii_whitespace().collect();
-    assert!(t.len() >= 12); // must have all required columns
-                            // collect all the tags if any
-    let mut tags = "".to_string();
-    // find the cigar if it is there
-    let mut cigar = CigarString(vec![]);
-    let pattern = Regex::new("(..):(.):(.*)").unwrap();
-    for token in t.iter().skip(12) {
-        assert!(pattern.is_match(token));
-        let caps = pattern.captures(token).unwrap();
-        let tag = &caps[1];
-        let value = &caps[3];
-        if tag == "cs" {
-            cigar = cs_to_cigar(value)?;
-        } else if tag == "cg" {
-            cigar = cigar_from_str(value)?;
-        } else {
-            tags.push('\t');
-            tags.push_str(token);
-        }
-    }
-
-    // make the record
-    let rec = PafRecord {
-        q_name: t[0].to_string(),
-        q_len: t[1].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
-        q_st: t[2].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
-        q_en: t[3].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
-        strand: t[4].parse::<char>().map_err(|_| Error::ParsePafColumn {})?,
-        t_name: t[5].to_string(),
-        t_len: t[6].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
-        t_st: t[7].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
-        t_en: t[8].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
-        nmatch: t[9].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
-        aln_len: t[10].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
-        mapq: t[11].parse::<u64>().map_err(|_| Error::ParsePafColumn {})?,
-        cigar,
-        tags,
-    };
-    Ok(rec)
-}
-
-/// # Example
-/// ```
-/// use rustybam::paf;
-/// use std::fs::File;
-/// use std::io::*;
-/// let paf_file = Box::new(BufReader::new(File::open("test/asm_small.paf").expect("Unable to open file")));
-/// let paf_recs = paf::read_paf(paf_file);
-/// assert_eq!(paf_recs.len(), 249);
-///
-/// ```
-pub fn read_paf(paf_file: Box<dyn BufRead>) -> Vec<PafRecord> {
-    let mut vec = Vec::new();
-    for (index, line) in paf_file.lines().enumerate() {
-        eprint!("\rReading PAF line: {}", index + 1);
-        match read_paf_line(&line.unwrap()) {
-            Ok(rec) => vec.push(rec),
-            Err(_) => eprintln!("\nUnable to parse PAF record. Skipping line {}", index + 1),
-        }
-    }
-    eprintln!();
-    vec
-}
-
 pub fn make_fake_paf_rec() -> PafRecord {
-    read_paf_line("Q 10 2 10 - T 20 12 20 3 9 60 cg:Z:4M1I1D3=").unwrap()
+    PafRecord::new("Q 10 2 10 - T 20 12 20 3 9 60 cg:Z:4M1I1D3=").unwrap()
 }
+
 /// # Example
 /// ```
 /// use rust_htslib::bam::record::Cigar::*;
