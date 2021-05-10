@@ -1,5 +1,5 @@
 name: ./rustybam
-about: Mitchell R. Vollger's bam utilities
+about: Mitchell R. Vollger's alignment utilities
 args:
     - threads :
         short : t
