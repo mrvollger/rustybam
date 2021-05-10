@@ -14,6 +14,84 @@ and the executable will be built here:
 ```
 target/release/rustybam 
 ```
+# Examples 
+> I have a `PAF` and I want to subset it for just a particular region in the reference. 
+
+With `rustybam` its easy:
+```
+./rustybam liftover \
+    --bed <(printf "chr1\t0\t250000000\n") \
+    input.paf > trimmed.paf 
+```
+> But I also want the alignment statistics for the region. 
+
+No problem, `rustybam liftover` does not just trim the coordinates but also the CIGAR
+so it is ready for `rustybam stats`:
+```
+./rustybam liftover \
+    --bed <(printf "chr1\t0\t250000000\n") \
+    input.paf \
+    | ./rustybam stats --paf \
+    > trimmed.stats.bed 
+```
+> Okay, but Evan asked for an "align slider" so I need to realign in chunks. 
+
+No need, just make your `bed` query to `rustybam liftoff` a set of sliding windows 
+and it will do the rest. 
+```
+./rustybam liftover \
+    --bed <(bedtools makewindows -w 100000 \
+                <(printf "chr1\t0\t250000000\n")
+            ) \
+    input.paf \
+    | ./rustybam stats --paf \
+    > trimmed.stats.bed 
+```
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>D3 Miropeats</title>
+        <!-- Load d3.js -->
+        <script src="https://d3js.org/d3.v6.min.js"></script>
+    </head>
+    <style>
+        .svg-container {
+            display: inline-block;
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%; /* aspect ratio */
+            vertical-align: top;
+            overflow: hidden;
+        }
+        .svg-content-responsive {
+            display: inline-block;
+            position: absolute;
+            top: 10px;
+            left: 0;
+        }
+        div.tooltip {	
+            position: absolute;			
+            text-align: center;			
+            width: 60px;	
+            height: 14px;					
+            padding: 2px;				
+            font: 12px sans-serif;		
+            pointer-events: none;			
+        }
+    </style>
+    <body>
+        <input type="file" id="uploader">
+        
+        <!-- Create a div where the graph will take place -->
+        <div id="chart"></div>
+        <script src="website/miropeats.js"></script>
+        <script>
+            upload_button("uploader", load_dataset);
+        </script>
+    </body>
+</html>
 
 # Usage 
 ```
