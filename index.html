@@ -11,12 +11,15 @@
             display: none;
         }
         .custom-file-upload {
-            margin: 0 auto;
-            width: 15%;
-            border: 3px solid rgb(2, 145, 170);
+            margin: auto;
+            width: 20%;
+            border: 2px solid rgb(2, 145, 170);
+            border-radius: 5px;
+            background-color: aliceblue;
             display: inline-block;
-            padding: 8px 8px;
+            padding: 3px;
             cursor: pointer;
+            font: 4px;		
             text-align: center;
         }
         .svg-container {
@@ -45,7 +48,7 @@
     </style>
     <body>
         <label class="custom-file-upload">
-            Load your own rustybam stats table
+            <code> Load your own <b><code>rustybam stats</b></code>
             <input type="file" id="uploader" name="Upload you rustybam stats table here.">
         </label>
         <!-- Create a div where the graph will take place -->

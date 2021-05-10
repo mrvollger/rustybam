@@ -1,9 +1,10 @@
 var margin = {top: 40, right: 40, bottom: 40, left: 80};
 
 var aln_data = [
-          {c1_nm: "Chr 1", c1_st: 0, c1_en: 100, c2_nm: "Chr 2", c2_st: 100, c2_en: 200, id: 90, strand: "+"},
-          {c1_nm: "Chr 1", c1_st: 100, c1_en: 300, c2_nm: "Chr 2", c2_st: 200, c2_en: 400, id: 50, strand: "-"},
-          {c1_nm: "Chr 1", c1_st: 300, c1_en: 400, c2_nm: "Chr 2", c2_st: 100, c2_en: 200, id: 20, strand: "+"},
+          {c1_nm: "Chr 1", c1_st: 0, c1_en: 100, c2_nm: "Chr 2", c2_st: 20, c2_en: 120, id: 90, strand: "+"},
+          {c1_nm: "Chr 1", c1_st: 100, c1_en: 300, c2_nm: "Chr 2", c2_st: 120, c2_en: 320, id: 50, strand: "-"},
+          {c1_nm: "Chr 1", c1_st: 300, c1_en: 400, c2_nm: "Chr 2", c2_st: 320, c2_en: 420, id: 20, strand: "+"},
+          {c1_nm: "Chr 1", c1_st: 400, c1_en: 450, c2_nm: "Chr 2", c2_st: 0, c2_en: 50, id: 100, strand: "-"},
       ];
 
 // load dataset and create table
