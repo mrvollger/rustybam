@@ -52,7 +52,7 @@ and it will do the rest.
 Try out 
 [Miropeats in D3](https://mrvollger.github.io/D3Miropeats/)!
 
-# Usage
+# General usage
 ```
 ./rustybam 0.0.1
 Mitchell R. Vollger's alignment utilities
@@ -73,4 +73,34 @@ SUBCOMMANDS:
     nucfreq     Get the freqs of each bp at each position.
     stats       Get percent identity stats from a sam/bam/cram or PAF (add --paf)
     suns        Extract the intervals in a genome (fasta) that are made up of SUNs
+```
+
+## More details on `liftover`
+This is a function for lifting over coordinates from a reference (`-bed`) to a query using a `PAF` file from `minimap2` or `unimap`. 
+`minimap2` (or `unimap`) must be run with `--cs` or `-c --eqx` and the output format must be `PAF` or else the liftover is not possible. 
+
+The returned file is a `PAF` file that is trimmed to the regions in the bed file. Even the cigar in the returned PAF file is trimmed so it can be used downstream! Additionally, a tag with the format `id:Z:<>` is added to the `PAF` where `<>` is either the 4th column of the input bed file or if not present `chr_start_end`.
+
+Want to liftover from the query to the reference? No problem, just pass the `-q` flag. Note, that this will make the query in the input `PAF` the target in the output `PAF`.
+
+```
+rustybam-liftover 
+liftover target sequence coordinates onto query sequence using a PAF
+
+USAGE:
+    rustybam liftover [FLAGS] [OPTIONS] --bed <bed> [paf]
+
+ARGS:
+    <paf>    PAF file from minimap2 or unimap. Must have the cg tag, and nmatches will be zero
+             unless the cigar uses =X.
+
+FLAGS:
+    -h, --help       Prints help information
+    -q, --qbed       The bed contains query coordinates to be lifted (note the query in the original
+                     PAF will become the target in the output)
+    -V, --version    Prints version information
+
+OPTIONS:
+    -b, --bed <bed>            Bed file of regions to liftover
+    -t, --threads <threads>    Number of threads to use for decompressing
 ```
