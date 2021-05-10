@@ -7,6 +7,18 @@
         <script src="https://d3js.org/d3.v6.min.js"></script>
     </head>
     <style>
+        input[type="file"] {
+            display: none;
+        }
+        .custom-file-upload {
+            margin: 0 auto;
+            width: 15%;
+            border: 3px solid rgb(2, 145, 170);
+            display: inline-block;
+            padding: 8px 8px;
+            cursor: pointer;
+            text-align: center;
+        }
         .svg-container {
             display: inline-block;
             position: relative;
@@ -32,8 +44,10 @@
         }
     </style>
     <body>
-        <input type="file" id="uploader">
-        
+        <label class="custom-file-upload">
+            Load your own rustybam stats table
+            <input type="file" id="uploader" name="Upload you rustybam stats table here.">
+        </label>
         <!-- Create a div where the graph will take place -->
         <div id="chart"></div>
         <script type ="text/javascript" src="D3miropeats.js"></script>
