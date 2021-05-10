@@ -20,13 +20,13 @@ pub enum Error {
 type PafResult<T> = Result<T, crate::paf::Error>;
 
 #[derive(Debug)]
-pub struct PAF {
+pub struct Paf {
     pub records: Vec<PafRecord>,
 }
 
-impl PAF {
-    fn new() -> PAF {
-        PAF {
+impl Paf {
+    fn new() -> Paf {
+        Paf {
             records: Vec::new(),
         }
     }
@@ -36,16 +36,16 @@ impl PAF {
     /// use rustybam::paf;
     /// use std::fs::File;
     /// use std::io::*;
-    /// let mut paf = paf::PAF::from_file("test/asm_small.paf");
+    /// let mut paf = paf::Paf::from_file("test/asm_small.paf");
     /// assert_eq!(paf.records.len(), 249);
     ///
     /// ```
-    pub fn from_file(file_name: &str) -> PAF {
+    pub fn from_file(file_name: &str) -> Paf {
         let paf_file: Box<dyn io::Read> = match file_name {
             "-" => Box::new(io::stdin()),
             _ => Box::new(fs::File::open(file_name).expect("Unable to open paf file")),
         };
-        let mut paf = PAF::new();
+        let mut paf = Paf::new();
         for (index, line) in io::BufReader::new(paf_file).lines().enumerate() {
             eprint!("\rReading PAF line: {}", index + 1);
             match PafRecord::new(&line.unwrap()) {
@@ -338,19 +338,26 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
     trimmed_paf
 }
 
-pub fn trim_paf_to_rgn(rgn: &bed::Region, paf: &[PafRecord], invert_query: bool) -> Vec<PafRecord> {
-    let mut trimmed_paf = Vec::new();
-    for rec in paf {
-        if invert_query {
-            //eprintln!("Inverting the PAF.");
-            let rec = &paf_swap_query_and_target(rec);
-            if paf_overlaps_target(rec, rgn) {
-                trimmed_paf.push(trim_paf_rec_to_rgn(rgn, rec));
-            }
-        } else if paf_overlaps_target(rec, rgn) {
-            trimmed_paf.push(trim_paf_rec_to_rgn(rgn, rec));
+pub fn trim_help(rgn: &bed::Region, rec: &PafRecord, invert_query: bool) -> PafResult<PafRecord> {
+    if invert_query {
+        //eprintln!("Inverting the PAF.");
+        let rec = &paf_swap_query_and_target(rec);
+        if paf_overlaps_target(rec, rgn) {
+            return Ok(trim_paf_rec_to_rgn(rgn, rec));
         }
+    } else if paf_overlaps_target(rec, rgn) {
+        return Ok(trim_paf_rec_to_rgn(rgn, rec));
     }
+    Err(Error::ParseIntError {
+        msg: "".to_string(),
+    })
+}
+
+pub fn trim_paf_to_rgn(rgn: &bed::Region, paf: &[PafRecord], invert_query: bool) -> Vec<PafRecord> {
+    let trimmed_paf: Vec<PafRecord> = paf
+        .iter()
+        .filter_map(|rec| trim_help(rgn, rec, invert_query).ok())
+        .collect();
     trimmed_paf
 }
 

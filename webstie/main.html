@@ -21,11 +21,24 @@
             top: 10px;
             left: 0;
         }
+        div.tooltip {	
+            position: absolute;			
+            text-align: center;			
+            width: 60px;	
+            height: 14px;					
+            padding: 2px;				
+            font: 12px sans-serif;		
+            pointer-events: none;			
+        }
     </style>
     <body>
+        <input type="file" id="uploader">
+        
         <!-- Create a div where the graph will take place -->
         <div id="chart"></div>
         <script src="miropeats.js"></script>
-
+        <script>
+            upload_button("uploader", load_dataset);
+        </script>
     </body>
 </html>

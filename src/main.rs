@@ -38,7 +38,7 @@ pub fn run_stats(args: &clap::ArgMatches) {
     if paf {
         let file = args.value_of("BAM").unwrap_or("-");
         let mut idx = 1;
-        for paf in paf::PAF::from_file(file).records {
+        for paf in paf::Paf::from_file(file).records {
             eprint!("\rProcessing: {}", idx);
             let stats = bamstats::stats_from_paf(paf);
             bamstats::print_cigar_stats(stats, qbed);
@@ -148,7 +148,7 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     let rgns = bed::parse_bed(bed);
     // read in the file
     let paf_file = args.value_of("paf").unwrap_or("-");
-    let paf = paf::PAF::from_file(paf_file);
+    let paf = paf::Paf::from_file(paf_file);
     // end timer
     let duration = start.elapsed();
     eprintln!("Time elapsed reading paf and bed: {:.3?}", duration);
