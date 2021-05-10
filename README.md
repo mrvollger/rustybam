@@ -3,7 +3,7 @@
 [![Actions Status](https://github.com/mrvollger/rustybam/workflows/Formatting/badge.svg)](https://github.com/mrvollger/rustybam/actions) 
 [![Actions Status](https://github.com/mrvollger/rustybam/workflows/Clippy/badge.svg)](https://github.com/mrvollger/rustybam/actions) 
 
-# Install
+## Install
 It is easy just make sure you have rust installed and then:
 ```
 git clone https://github.com/mrvollger/rustybam.git
@@ -14,7 +14,7 @@ and the executable will be built here:
 ```
 target/release/rustybam 
 ```
-# Examples 
+## Examples 
 > I have a `PAF` and I want to subset it for just a particular region in the reference. 
 
 With `rustybam` its easy:
@@ -52,7 +52,7 @@ and it will do the rest.
 Try out 
 [Miropeats in D3](https://mrvollger.github.io/D3Miropeats/)!
 
-# General usage
+## General usage
 ```
 ./rustybam 0.0.1
 Mitchell R. Vollger's alignment utilities
@@ -75,7 +75,7 @@ SUBCOMMANDS:
     suns        Extract the intervals in a genome (fasta) that are made up of SUNs
 ```
 
-## More details on `liftover`
+### More details on `liftover`
 This is a function for lifting over coordinates from a reference (`-bed`) to a query using a `PAF` file from `minimap2` or `unimap`. 
 `minimap2` (or `unimap`) must be run with `--cs` or `-c --eqx` and the output format must be `PAF` or else the liftover is not possible. 
 
