@@ -48,50 +48,42 @@ and it will do the rest.
     > trimmed.stats.bed 
 ```
 
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>D3 Miropeats</title>
-        <!-- Load d3.js -->
-        <script src="https://d3js.org/d3.v6.min.js"></script>
-    </head>
-    <style>
-        .svg-container {
-            display: inline-block;
-            position: relative;
-            width: 100%;
-            padding-bottom: 100%; /* aspect ratio */
-            vertical-align: top;
-            overflow: hidden;
-        }
-        .svg-content-responsive {
-            display: inline-block;
-            position: absolute;
-            top: 10px;
-            left: 0;
-        }
-        div.tooltip {	
-            position: absolute;			
-            text-align: center;			
-            width: 60px;	
-            height: 14px;					
-            padding: 2px;				
-            font: 12px sans-serif;		
-            pointer-events: none;			
-        }
-    </style>
-    <body>
-        <input type="file" id="uploader">
-        
-        <!-- Create a div where the graph will take place -->
-        <div id="chart"></div>
-        <script src="website/miropeats.js"></script>
-        <script>
-            upload_button("uploader", load_dataset);
-        </script>
-    </body>
-</html>
+<head>
+    <meta charset="UTF-8">
+    <title>D3 Miropeats</title>
+    <!-- Load d3.js -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<style>
+    .svg-container {
+        display: inline-block;
+        position: relative;
+        width: 100%;
+        padding-bottom: 100%; /* aspect ratio */
+        vertical-align: top;
+        overflow: hidden;
+    }
+    .svg-content-responsive {
+        display: inline-block;
+        position: absolute;
+        top: 10px;
+        left: 0;
+    }
+    div.tooltip {	
+        position: absolute;			
+        text-align: center;			
+        width: 60px;	
+        height: 14px;					
+        padding: 2px;				
+        font: 12px sans-serif;		
+        pointer-events: none;			
+    }
+</style>
+<body>
+    <!-- Create a div where the graph will take place -->
+    <div id="chart"></div>
+    <script src="website/miropeats.js"></script>
+</body>
 
 # Usage 
 ```
