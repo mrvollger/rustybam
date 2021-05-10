@@ -47,11 +47,10 @@ and it will do the rest.
     | ./rustybam stats --paf \
     > trimmed.stats.bed 
 ```
-> Yeah but what about the figure for align slider?
+> Yeah but how do I visualize the data?
 
 Try out 
-[Miropeats in D3](https://htmlpreview.github.io/?https://github.com/mrvollger/rustybam/blob/main/webstie/main.html)
-!
+[Miropeats in D3](https://mrvollger.github.io/rustybam/)!
 
 # Usage 
 ```
