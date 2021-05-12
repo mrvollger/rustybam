@@ -166,10 +166,10 @@ pub fn run_liftover(args: &clap::ArgMatches) {
             rgn.id = format!("{}_{}_{}", rgn.name, rgn.st, rgn.en)
         }
         let new_paf = trim_paf_to_rgn(&rgn, &paf.records, invert_query);
-        if largest && new_paf.len() > 0 {
-            let largest =  new_paf.iter().max_by_key(|p| p.q_en - p.q_st).unwrap();
+        if largest && !new_paf.is_empty() {
+            let largest = new_paf.iter().max_by_key(|p| p.q_en - p.q_st).unwrap();
             println!("{}\tid:Z:{}", largest, rgn.id);
-        } else { 
+        } else {
             for rec in new_paf {
                 println!("{}\tid:Z:{}", rec, rgn.id);
             }
