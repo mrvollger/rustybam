@@ -3,12 +3,20 @@ import sys
 import pandas as pd
 from snakemake.utils import min_version
 min_version("6.0")
+SMKDIR = os.path.dirname(workflow.snakefile)
+print(SMKDIR)
+shell.prefix("which python; ")
 
 configfile: "config/config.yaml"
 
 um_score = config.get("um_score", 10)
 df = pd.read_csv(config["tbl"], sep="\t")
 df.asm = df.asm.map(os.path.abspath)
+
+
+config["smkdir"]=SMKDIR
+
+config["rb"] = os.path.abspath(f"{SMKDIR}/../target/release/rustybam")
 
 ###################################################
 # START reference alignment

@@ -9,13 +9,10 @@ df["asm"] = df.asm.str.split(",")
 df = df.explode("asm")
 df["num"] = df.groupby(level=0).cumcount() + 1
 df.set_index(df["sample"] + "_" + df["num"].astype(str), inplace=True)
-
-print(df)
-
+shell("which python")
 
 wildcard_constraints:
     i="\d+",
-
 
 def get_asm(wc):
     return df.loc[str(wc.sm)].asm
@@ -40,7 +37,6 @@ rule clean_query:
                 seen.add(name)
                 out.write(f">{name} {rec.comment}\n{rec.sequence}\n")
         out.close()
-
 
 
 rule unimap_index:
@@ -80,7 +76,7 @@ rule compress_sam:
     output:
         aln="reference_alignment/bam/{sm}.bam",
         index="reference_alignment/bam/{sm}.bam.csi",
-    threads: 1 # dont increase this, it will break things randomly 
+    threads: 1  # dont increase this, it will break things randomly 
     shell:
         """
         samtools view -u {input.aln} \
@@ -93,9 +89,9 @@ rule sam_to_paf:
     input:
         aln=rules.compress_sam.output.aln,
     output:
-        paf="reference_alignment/paf/{sm}.paf.gz",
+        paf="reference_alignment/paf/{sm}.paf",
     shell:
-        "samtools view -h {input.aln} | paftools.js sam2paf - | gzip > {output.paf}"
+        "samtools view -h {input.aln} | paftools.js sam2paf - > {output.paf}"
 
 
 rule paf_to_bed:
@@ -104,18 +100,60 @@ rule paf_to_bed:
     output:
         bed="reference_alignment/bed/{sm}.bed",
     threads: 8
+    params:
+      rb = config["rb"]
     shell:
         """
-        printf "#t_nm\tt_st\tt_en\tq_nm\tq_st\tq_en\tstrand\tmapq\n" > {output.bed}
-        gunzip -c {input.paf} \
-            | awk -v OFS=$'\t' '{{print $6,$8,$9,$1,$3,$4,$5,$12}}' \
-            >> {output.bed}
+        {params.rb} stats --paf {input.paf} > {output.bed}
+        """
+
+
+rule query_ends:
+    input:
+        paf=rules.sam_to_paf.output.paf,
+    output:
+        bed=temp("reference_alignment/ends/tmp.{sm}.bed"),
+    params:
+      smkdir = config["smkdir"]
+    threads: 1
+    shell: "which python; {params.smkdir}/scripts/ends_from_paf.py --width 50000 {input.paf} > {output.bed}"
+
+
+rule find_contig_ends:
+    input:
+        paf=rules.sam_to_paf.output.paf,
+        bed=rules.query_ends.output.bed,
+    output:
+        bed="reference_alignment/ends/{sm}.bed",
+    threads: 1
+    params:
+      rb = config["rb"]
+    shell:
+        """
+        {params.rb} liftover --qbed --bed {input.bed} {input.paf} \
+          | {params.rb} stats --paf \
+          > {output.bed}
+        """
+
+
+rule collect_contig_ends:
+    input:
+        beds=expand(rules.find_contig_ends.output.bed, sm=df.index),
+    output:
+        bed="reference_alignment/ends/all.ends.bed",
+    threads: 1
+    shell:
+        """
+        head -n 1 {input.beds[0]} > {output.bed}
+        cat {input.beds} | grep -v "^#" >> {output.bed}
         """
 
 
 rule reference_alignment:
     input:
+        rules.collect_contig_ends.output,
         expand(rules.ra_sam_to_paf.output, sm=df.index),
         expand(rules.ra_paf_to_bed.output, sm=df.index),
+        expand(rules.find_contig_ends.output, sm=df.index),
     message:
         "Reference alignments complete"

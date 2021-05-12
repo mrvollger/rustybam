@@ -1,4 +1,7 @@
 #!/usr/bin/env Rscript
+options(repos=structure(c(CRAN="http://cran.us.r-project.org")))
+.libPaths(c("~/local/R/library", .libPaths()))
+
 if(! require("tidyverse")) install.packages("tidyverse")
 if(! require("ggnewscale")) install.packages("ggnewscale")
 if(! require("ggrepel")) install.packages("ggrepel")

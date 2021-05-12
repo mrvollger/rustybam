@@ -2,15 +2,14 @@ name: smk
 channels:
   - conda-forge
   - bioconda
-  - r
   - defaults
 dependencies:
   - unimap
   - minimap2 
   - snakemake
+  - snakefmt
   - pysam
   - samtools
-  - snakefmt
   - bioconductor-karyoploter
-  - r-tidyverse
+  - r::r-tidyverse
 prefix: /Users/mrvollger/miniconda3/envs/smk

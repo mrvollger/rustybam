@@ -1,3 +1,4 @@
-ref: test/large_ref.fa
+ref: /net/eichler/vol26/projects/chm13_t2t/nobackups/assemblies/chm13_v1.1_plus38Y.fasta
 tbl: config/table.asm.tbl
+aln_threads: 8
 
