@@ -78,4 +78,8 @@ subcommands:
                 short : q
                 long : qbed
                 help : The bed contains query coordinates to be lifted (note the query in the original PAF will become the target in the output)
+            - largest :
+                short : l
+                long : largest
+                help : Only return the largest liftover 
      

@@ -152,7 +152,8 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     // end timer
     let duration = start.elapsed();
     eprintln!("Time elapsed reading paf and bed: {:.3?}", duration);
-
+    //
+    let largest = args.is_present("largest");
     // whether the input bed is for the query.
     let mut invert_query = false;
     if args.is_present("qbed") {
@@ -161,12 +162,17 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     //
     let start = Instant::now();
     for mut rgn in rgns {
+        if rgn.id == "None" {
+            rgn.id = format!("{}_{}_{}", rgn.name, rgn.st, rgn.en)
+        }
         let new_paf = trim_paf_to_rgn(&rgn, &paf.records, invert_query);
-        for rec in new_paf {
-            if rgn.id == "None" {
-                rgn.id = format!("{}_{}_{}", rgn.name, rgn.st, rgn.en)
+        if largest && new_paf.len() > 0 {
+            let largest =  new_paf.iter().max_by_key(|p| p.q_en - p.q_st).unwrap();
+            println!("{}\tid:Z:{}", largest, rgn.id);
+        } else { 
+            for rec in new_paf {
+                println!("{}\tid:Z:{}", rec, rgn.id);
             }
-            println!("{}\tid:Z:{}", rec, rgn.id);
         }
     }
     let duration = start.elapsed();
