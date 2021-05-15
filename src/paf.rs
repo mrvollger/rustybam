@@ -1,12 +1,12 @@
 use super::bed;
 use core::{fmt, panic};
+use rayon::prelude::*;
 use regex::Regex;
 use rust_htslib::bam::record::Cigar::*;
 use rust_htslib::bam::record::CigarString;
 use rust_htslib::bam::record::*;
 use std::fs;
 use std::io;
-use rayon::prelude::*;  
 use std::io::BufRead;
 //use std::convert::TryFrom;
 use std::str::FromStr;
