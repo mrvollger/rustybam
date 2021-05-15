@@ -6,6 +6,7 @@ use rust_htslib::bam::record::CigarString;
 use rust_htslib::bam::record::*;
 use std::fs;
 use std::io;
+use rayon::prelude::*;  
 use std::io::BufRead;
 //use std::convert::TryFrom;
 use std::str::FromStr;
@@ -355,7 +356,8 @@ pub fn trim_help(rgn: &bed::Region, rec: &PafRecord, invert_query: bool) -> PafR
 
 pub fn trim_paf_to_rgn(rgn: &bed::Region, paf: &[PafRecord], invert_query: bool) -> Vec<PafRecord> {
     let trimmed_paf: Vec<PafRecord> = paf
-        .iter()
+        .into_par_iter()
+        //.iter()
         .filter_map(|rec| trim_help(rgn, rec, invert_query).ok())
         .collect();
     trimmed_paf
