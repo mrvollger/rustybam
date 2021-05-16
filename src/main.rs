@@ -177,7 +177,10 @@ pub fn run_liftover(args: &clap::ArgMatches) {
                 println!("{}\tid:Z:{}", rec, rgn.id);
             }
         }
-        eprint!("\rRegions trimmed: {:.8}%", idx / total * 100);
+        eprint!(
+            "\rRegions trimmed: {:.8}%",
+            (idx as f32) / (total as f32) * 100.0
+        );
     }
     let duration = start.elapsed();
     eprintln!("Time elapsed during liftover: {:.3?}", duration);
