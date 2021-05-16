@@ -48,7 +48,9 @@ impl Paf {
         };
         let mut paf = Paf::new();
         for (index, line) in io::BufReader::new(paf_file).lines().enumerate() {
-            eprint!("\rReading PAF line: {}", index + 1);
+            if index % 1000 == 0 {
+                eprint!("\rReading PAF line: {}", index + 1);
+            }
             match PafRecord::new(&line.unwrap()) {
                 Ok(rec) => paf.records.push(rec),
                 Err(_) => eprintln!("\nUnable to parse PAF record. Skipping line {}", index + 1),

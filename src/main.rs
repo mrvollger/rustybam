@@ -161,7 +161,10 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     }
     //
     let start = Instant::now();
+    let total = rgns.len();
+    let mut idx = 0;
     for mut rgn in rgns {
+        idx += 1;
         if rgn.id == "None" {
             rgn.id = format!("{}_{}_{}", rgn.name, rgn.st, rgn.en)
         }
@@ -174,6 +177,7 @@ pub fn run_liftover(args: &clap::ArgMatches) {
                 println!("{}\tid:Z:{}", rec, rgn.id);
             }
         }
+        eprint!("\rRegions trimmed: {:.3}%", idx / total * 100);
     }
     let duration = start.elapsed();
     eprintln!("Time elapsed during liftover: {:.3?}", duration);
