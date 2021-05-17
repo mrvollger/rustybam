@@ -50,7 +50,7 @@ and it will do the rest.
 > Yeah but how do I visualize the data?
 
 Try out 
-[Miropeats in D3](https://mrvollger.github.io/D3Miropeats/)!
+[SafFire](https://mrvollger.github.io/SafFire/)!
 
 ## General usage
 ```
