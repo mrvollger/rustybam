@@ -15,22 +15,28 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 if(! require("karyoploteR")) BiocManager::install("karyoploteR")
 if(! require("GenomicRanges")) BiocManager::install("GenomicRanges")
+if(! require("argparse")) BiocManager::install("argparse")
 
+dir = paste0(getwd(),"/workflow/scripts")
+print(dir)
+load(glue("{dir}/chm13.karyo.RData"))
 
 
 # create parser object
 indir="~/Desktop/EichlerVolumes/chm13_t2t/nobackups/assembly_alignments/rustybam/reference_alignment/bed/"
 parser <- ArgumentParser()
 parser$add_argument("-a", "--asm",  help="bed file with all the asm mapping", default = glue("{indir}/HG00733_1.bed"))
-parser$add_argument("-b", "--asm2",  help="bed file with a second asm mapping", default = glue("{indir}/HG00733_2.bed"))
+parser$add_argument("-b", "--asm2",  help="bed file with a second asm mapping")
 parser$add_argument("-k", "--karyotype",  help="karyotpye file for different genomes")
 parser$add_argument("-p", "--plot",  help="output plot, must have .pdf ext.", default = "~/Desktop/ideogram.pdf")
 args <- parser$parse_args()
 
 
 asmdf<- function(filename, colors){
-  asmvshg = read.table(filename, header=F)
-  names(asmvshg) = c("chr", "start", "end", "name", "xqual")
+  asmvshg = read.table(filename, header=T, comment.char = ">")
+  names(asmvshg)[1:3] = c("chr", "start", "end") #, "rlen", "strand", "name")
+  asmvshg$name = asmvshg$query_name
+  print(head(asmvshg))
   curcolor = 1
   lencolors = length(colors)
   precontig = ""
@@ -48,6 +54,7 @@ asmdf<- function(filename, colors){
   asmvshg$color = asmcolor
   asmvshg$y = y
   asmvshg$y1 = asmvshg$y + .25
+  print(head(asmvshg))
   return(asmvshg)
 }
 
@@ -80,3 +87,7 @@ if(!is.null(args$asm2)){
 
 dev.off()
 
+if(F){
+  dir ="~/Desktop/EichlerVolumes/chm13_t2t/nobackups/assembly_alignments/rustybam/workflow/scripts/"
+  save(GENOME, CYTOFULL, NOM, file = glue("{dir}/chm13.karyo.RData"))
+}
