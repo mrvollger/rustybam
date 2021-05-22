@@ -11,17 +11,23 @@ df["num"] = df.groupby(level=0).cumcount() + 1
 df.set_index(df["sample"] + "_" + df["num"].astype(str), inplace=True)
 shell("which python")
 print(df)
+
+
 wildcard_constraints:
     i="\d+",
+
 
 def get_asm(wc):
     return df.loc[str(wc.sm)].asm
 
+
 def get_ref(wc):
-  return(config.get("ref")[wc.ref])
+    return config.get("ref")[wc.ref]
+
 
 def get_fai(wc):
-  return(config.get("ref")[wc.ref] + ".fai")
+    return config.get("ref")[wc.ref] + ".fai"
+
 
 rule unimap_index:
     input:
@@ -85,11 +91,12 @@ rule paf_to_bed:
         bed="reference_alignment/{ref}/bed/{sm}.bed",
     threads: 8
     params:
-      rb = config["rb"]
+        rb=config["rb"],
     shell:
         """
         {params.rb} stats --paf {input.paf} > {output.bed}
         """
+
 
 rule bed_to_pdf:
     input:
@@ -99,7 +106,7 @@ rule bed_to_pdf:
         pdf="reference_alignment/{ref}/pdf/ideogram.{sm}.pdf",
     threads: 1
     params:
-      smkdir = config["smkdir"]
+        smkdir=config["smkdir"],
     shell:
         """
         Rscript {params.smkdir}/scripts/ideogram.R \
@@ -108,15 +115,16 @@ rule bed_to_pdf:
           --plot {output.pdf}
         """
 
+
 rule query_ends:
     input:
         paf=rules.sam_to_paf.output.paf,
     output:
         bed=temp("reference_alignment/{ref}/ends/tmp.{sm}.bed"),
     params:
-      smkdir = config["smkdir"]
+        smkdir=config["smkdir"],
     threads: 1
-    shell: 
+    shell:
         """
         {params.smkdir}/scripts/ends_from_paf.py \
           --minwidth 50000 \
@@ -133,7 +141,7 @@ rule find_contig_ends:
         bed="reference_alignment/{ref}/ends/{sm}.bed",
     threads: 1
     params:
-      rb = config["rb"]
+        rb=config["rb"],
     shell:
         """
         {params.rb} liftover --largest --qbed --bed {input.bed} {input.paf} \
@@ -157,7 +165,8 @@ rule collect_contig_ends:
           >> {output.bed}
         """
 
-rule windowed_ends: 
+
+rule windowed_ends:
     input:
         fai=get_fai,
         bed=rules.collect_contig_ends.output.bed,
@@ -212,19 +221,13 @@ rule reference_alignment:
         expand(rules.collect_contig_ends.output, ref=config.get("ref").keys()),
         expand(rules.end_content.output, ref=config.get("ref").keys()),
         expand(rules.windowed_ends.output, ref=config.get("ref").keys()),
-        expand(rules.ra_sam_to_paf.output, 
-            sm=df.index, 
-            ref=config.get("ref").keys()),
-        expand(rules.bed_to_pdf.output, 
-            sm=df["sample"].str.strip(), 
-            ref=config.get("ref").keys()),
-        expand(rules.ra_paf_to_bed.output, 
-            sm=df.index,  
-            ref=config.get("ref").keys()),
-        expand(rules.find_contig_ends.output, 
-            sm=df.index,
-            ref=config.get("ref").keys()),
+        expand(rules.ra_sam_to_paf.output, sm=df.index, ref=config.get("ref").keys()),
+        expand(
+            rules.bed_to_pdf.output,
+            sm=df["sample"].str.strip(),
+            ref=config.get("ref").keys(),
+        ),
+        expand(rules.ra_paf_to_bed.output, sm=df.index, ref=config.get("ref").keys()),
+        expand(rules.find_contig_ends.output, sm=df.index, ref=config.get("ref").keys()),
     message:
         "Reference alignments complete"
-
-
