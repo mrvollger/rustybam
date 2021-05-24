@@ -9,8 +9,6 @@ df["asm"] = df.asm.str.split(",")
 df = df.explode("asm")
 df["num"] = df.groupby(level=0).cumcount() + 1
 df.set_index(df["sample"] + "_" + df["num"].astype(str), inplace=True)
-shell("which python")
-print(df)
 
 
 wildcard_constraints:
@@ -35,6 +33,8 @@ rule unimap_index:
     output:
         umi="reference_alignment/{ref}/{ref}.umi",
     threads: 8
+    conda:
+        "envs/environment.yml"
     shell:
         "unimap -t {threads} -ax asm20 -d {output.umi} {input.ref}"
 
@@ -49,6 +49,8 @@ rule unimap:
         "log/unimap.{ref}_{sm}.log",
     benchmark:
         "log/unimap.{ref}_{sm}.benchmark.txt"
+    conda:
+        "envs/environment.yml"
     threads: config.get("aln_threads", 4)
     shell:
         """
@@ -66,7 +68,9 @@ rule compress_sam:
     output:
         aln="reference_alignment/{ref}/bam/{sm}.bam",
         index="reference_alignment/{ref}/bam/{sm}.bam.csi",
-    threads: 1  # dont increase this, it will break things randomly 
+    threads: 1 # dont increase this, it will break things randomly 
+    conda:
+        "envs/environment.yml"
     shell:
         """
         samtools view -u {input.aln} \
@@ -80,6 +84,8 @@ rule sam_to_paf:
         aln=rules.compress_sam.output.aln,
     output:
         paf="reference_alignment/{ref}/paf/{sm}.paf",
+    conda:
+        "envs/environment.yml"
     shell:
         "samtools view -h {input.aln} | paftools.js sam2paf - > {output.paf}"
 
@@ -90,6 +96,8 @@ rule paf_to_bed:
     output:
         bed="reference_alignment/{ref}/bed/{sm}.bed",
     threads: 8
+    conda:
+        "envs/environment.yml"
     params:
         rb=config["rb"],
     shell:
@@ -105,6 +113,8 @@ rule bed_to_pdf:
     output:
         pdf="reference_alignment/{ref}/pdf/ideogram.{sm}.pdf",
     threads: 1
+    conda:
+        "envs/environment.yml"
     params:
         smkdir=config["smkdir"],
     shell:
@@ -123,6 +133,8 @@ rule query_ends:
         bed=temp("reference_alignment/{ref}/ends/tmp.{sm}.bed"),
     params:
         smkdir=config["smkdir"],
+    conda:
+        "envs/environment.yml"
     threads: 1
     shell:
         """
@@ -140,6 +152,8 @@ rule find_contig_ends:
     output:
         bed="reference_alignment/{ref}/ends/{sm}.bed",
     threads: 1
+    conda:
+        "envs/environment.yml"
     params:
         rb=config["rb"],
     shell:
@@ -156,6 +170,8 @@ rule collect_contig_ends:
     output:
         bed="reference_alignment/{ref}/ends/all.ends.bed",
     threads: 1
+    conda:
+        "envs/environment.yml"
     shell:
         """
         head -n 1 {input.beds[0]} > {output.bed}
@@ -173,6 +189,8 @@ rule windowed_ends:
     output:
         bed="reference_alignment/{ref}/ends/windowed.all.ends.bed",
     threads: 1
+    conda:
+        "envs/environment.yml"
     shell:
         """
         bedtools intersect -wa -wb -header \
@@ -191,6 +209,8 @@ rule pre_end_content:
     output:
         allbed="reference_alignment/{ref}/ends/all.nuc.content.bed",
     threads: 1
+    conda:
+        "envs/environment.yml"
     shell:
         """
         bedtools nuc \
@@ -208,6 +228,8 @@ rule end_content:
     output:
         bed="reference_alignment/{ref}/ends/all.ends.nuc.content.bed",
     threads: 1
+    conda:
+        "envs/environment.yml"
     shell:
         """
         bedtools intersect -header -u -a {input.allbed} \

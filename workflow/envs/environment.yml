@@ -11,5 +11,13 @@ dependencies:
   - pysam
   - samtools
   - bioconductor-karyoploter
+  - bioconductor-genomicranges
   - r::r-tidyverse
-prefix: /Users/mrvollger/miniconda3/envs/smk
+  - r::r-rcolorbrewer
+  - r::r-scales
+  - r-data.table
+  - r-ggrepel
+  - r-cowplot
+  - r-argparse
+  - r-glue
+  - r-ggnewscale
