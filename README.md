@@ -104,3 +104,6 @@ OPTIONS:
     -b, --bed <bed>            Bed file of regions to liftover
     -t, --threads <threads>    Number of threads to use for decompressing
 ```
+
+### Alignment workflow 
+This repository also includes a snakemake workflow for aligning genome assemblies to a reference. The config file  `config/config.yaml` should be configured to your use case and the file `config/table.asm.tbl` should be configured for your input assemblies. The `Snakefile` can be found under the `workflow` directory.
