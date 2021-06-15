@@ -148,9 +148,9 @@ pub fn run_longest_repeats(args: &clap::ArgMatches) {
     let fastafile = args.value_of("fasta").expect("Fasta file required!");
     let genome = suns::Genome::from_file(fastafile);
     let unique_intervals = genome.get_longest_perfect_repeats(minsize);
-    println!("#chr\tstart\trepeat_length");
+    println!("#chr\tstart\tend\trepeat_length");
     for (chr, start, length) in &unique_intervals {
-        println!("{}\t{}\t{}", chr, start, length - 1,);
+        println!("{}\t{}\t{}\t{}", chr, start, start + length, length - 1,);
     }
 }
 

@@ -97,20 +97,15 @@ impl Genome {
             if idx >= self.length {
                 break;
             }
-            match x {
-                Some(val) => {
-                    if val >= min_length {
-                        match self.convert_from_idx(idx) {
-                            Some((name, pos)) => vec.push((name, pos, val)),
-                            _ => (),
-                        }
+            if let Some(val) = x {
+                if val >= min_length {
+                    if let Some((name, pos)) = self.convert_from_idx(idx) {
+                        vec.push((name, pos, val))
                     }
                 }
-                _ => (),
             }
         }
-        //eprintln!("{:#?}", vec);
-        //println!("{:#?}", std::str::from_utf8(&self.seq));
+        eprintln!("{:?}", vec);
         vec
     }
 
