@@ -31,11 +31,13 @@ impl Genome {
             genome.names.push(rec.id().to_string());
             // add the sequence
             seq.append(&mut rec.seq().to_ascii_uppercase());
-            seq.push(END_CHAR);
+            // mark the end
             genome.ends.push(seq.len());
+            // add sep character
+            seq.push(END_CHAR);
         }
         genome.length = seq.len();
-        seq.append(&mut revcomp(&seq));
+        seq.append(&mut revcomp(&seq[..seq.len() - 1]));
         seq.push(END_CHAR);
         genome.seq = seq;
         eprintln!("Done reading in the genome.");
@@ -77,6 +79,41 @@ impl Genome {
         // calculate shortest unique substrings
         shortest_unique_substrings(&pos, &lcp)
     }
+
+    // find unique substrings of certain lengths
+    /// # Example
+    /// ```
+    /// use rustybam::suns::*;
+    /// let genome = Genome::from_file("test/test.fa");
+    /// genome.get_longest_perfect_repeats(5);
+    /// ```
+    pub fn get_longest_perfect_repeats(&self, min_length: usize) -> Vec<(&String, usize, usize)> {
+        let mut vec = Vec::new();
+        for (idx, x) in Genome::get_shortest_subseq_size(&self.seq)
+            .into_iter()
+            .enumerate()
+        {
+            // break at the end of the genome
+            if idx >= self.length {
+                break;
+            }
+            match x {
+                Some(val) => {
+                    if val >= min_length {
+                        match self.convert_from_idx(idx) {
+                            Some((name, pos)) => vec.push((name, pos, val)),
+                            _ => (),
+                        }
+                    }
+                }
+                _ => (),
+            }
+        }
+        //eprintln!("{:#?}", vec);
+        //println!("{:#?}", std::str::from_utf8(&self.seq));
+        vec
+    }
+
     /// Returns a vector of start and end coordiantes that are 100% made of SUNs
     /// Coordinates are bed style [).
     /// this is raw intervals in Genome.seq
@@ -107,7 +144,28 @@ impl Genome {
         vec
     }
 
-    /// Get back the chromosome possition from the flattened sequence
+    // find unique substrings of certain lengths
+    /// # Example
+    /// ```
+    /// use rustybam::suns::*;
+    /// let genome = Genome::from_file("test/test.fa");
+    /// eprintln!("{:?}", genome.seq);
+    /// let rtn = genome.convert_from_idx(20).unwrap();
+    /// assert_eq!((&"chr2".to_string(), 0), rtn);
+    /// ```
+    pub fn convert_from_idx(&self, idx: usize) -> Option<(&String, usize)> {
+        //eprintln!("{:?}, {}", self.ends, idx);
+        let mut i = 0;
+        while idx >= self.ends[i] {
+            if idx == self.ends[i] {
+                return None;
+            }
+            i += 1;
+        }
+        //assert!(idx <= self.ends[i] && idx >= self.starts[i]);
+        Some((&self.names[i], idx - self.starts[i]))
+    }
+    /// Get back the chromosome position from the flattened sequence
     fn convert_from_raw(
         &self,
         raw_intervals: Vec<(usize, usize)>,
@@ -224,5 +282,21 @@ mod tests {
         let kmer_size = 5;
         let intervals = genome.find_sun_intervals(kmer_size);
         validate_suns(&genome, &intervals, kmer_size);
+    }
+
+    #[test]
+    fn test_convert() {
+        let genome = Genome::from_file("test/test.fa");
+
+        let idx_to_test = 21;
+        let rtn = genome.convert_from_idx(idx_to_test).unwrap();
+        //println!("{}", genome.seq[idx_to_test] as char);
+        assert_eq!((&"chr2".to_string(), 1), rtn);
+
+        let rtn2 = genome.convert_from_idx(10).unwrap();
+        println!("{}", genome.seq[10] as char);
+        assert_eq!((&"chr1".to_string(), 10), rtn2);
+
+        genome.get_longest_perfect_repeats(4);
     }
 }

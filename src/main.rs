@@ -24,6 +24,8 @@ fn main() {
         run_suns(matches);
     } else if let Some(matches) = matches.subcommand_matches("liftover") {
         run_liftover(matches);
+    } else if let Some(matches) = matches.subcommand_matches("repeat") {
+        run_longest_repeats(matches);
     }
 }
 
@@ -121,7 +123,7 @@ pub fn run_nucfreq(args: &clap::ArgMatches) {
 pub fn run_suns(args: &clap::ArgMatches) {
     let kmer_size = args.value_of_t("kmersize").unwrap_or(21);
     let max_interval = args.value_of_t("maxsize").unwrap_or(std::usize::MAX);
-    let fastafile = args.value_of("fasta").expect("Fasta file reuqired!");
+    let fastafile = args.value_of("fasta").expect("Fasta file required!");
     let genome = suns::Genome::from_file(fastafile);
     let sun_intervals = genome.find_sun_intervals(kmer_size);
     println!("#chr\tstart\tend\tsun_seq");
@@ -138,6 +140,17 @@ pub fn run_suns(args: &clap::ArgMatches) {
     }
     if args.is_present("validate") {
         suns::validate_suns(&genome, &sun_intervals, kmer_size);
+    }
+}
+
+pub fn run_longest_repeats(args: &clap::ArgMatches) {
+    let minsize = args.value_of_t("min").unwrap_or(21);
+    let fastafile = args.value_of("fasta").expect("Fasta file required!");
+    let genome = suns::Genome::from_file(fastafile);
+    let unique_intervals = genome.get_longest_perfect_repeats(minsize);
+    println!("#chr\tstart\trepeat_length");
+    for (chr, start, length) in &unique_intervals {
+        println!("{}\t{}\t{}", chr, start, length - 1,);
     }
 }
 

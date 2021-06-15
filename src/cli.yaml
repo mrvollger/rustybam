@@ -62,6 +62,17 @@ subcommands:
                 short: v
                 long : validate
                 help: Confirm all the SUNs (very slow) only for debugging. 
+    - repeat:
+        about: Report the longest repeat length at every position in a fasta.
+        args:
+            - min:
+                short: m
+                long : min
+                takes_value : true
+                help: The smallest repeat length to report
+            - fasta:
+                about: a fasta file 
+                index : 1
     - liftover:
         about: liftover target sequence coordinates onto query sequence using a PAF
         args:
