@@ -1,43 +1,55 @@
 # rustybam
-[![Actions Status](https://github.com/mrvollger/rustybam/workflows/Test%20and%20Build/badge.svg)](https://github.com/mrvollger/rustybam/actions) 
-[![Actions Status](https://github.com/mrvollger/rustybam/workflows/Formatting/badge.svg)](https://github.com/mrvollger/rustybam/actions) 
-[![Actions Status](https://github.com/mrvollger/rustybam/workflows/Clippy/badge.svg)](https://github.com/mrvollger/rustybam/actions) 
+
+[![Actions Status](https://github.com/mrvollger/rustybam/workflows/Test%20and%20Build/badge.svg)](https://github.com/mrvollger/rustybam/actions)
+[![Actions Status](https://github.com/mrvollger/rustybam/workflows/Formatting/badge.svg)](https://github.com/mrvollger/rustybam/actions)
+[![Actions Status](https://github.com/mrvollger/rustybam/workflows/Clippy/badge.svg)](https://github.com/mrvollger/rustybam/actions)
 
 ## Install
+
 It is easy just make sure you have rust installed and then:
+
 ```
 git clone https://github.com/mrvollger/rustybam.git
-cd rustybam 
-cargo build --release 
+cd rustybam
+cargo build --release
 ```
+
 and the executable will be built here:
+
 ```
-target/release/rustybam 
+target/release/rustybam
 ```
-## Examples 
-> I have a `PAF` and I want to subset it for just a particular region in the reference. 
+
+## Examples
+
+> I have a `PAF` and I want to subset it for just a particular region in the reference.
 
 With `rustybam` its easy:
+
 ```
 ./rustybam liftover \
     --bed <(printf "chr1\t0\t250000000\n") \
-    input.paf > trimmed.paf 
+    input.paf > trimmed.paf
 ```
-> But I also want the alignment statistics for the region. 
+
+> But I also want the alignment statistics for the region.
 
 No problem, `rustybam liftover` does not just trim the coordinates but also the CIGAR
 so it is ready for `rustybam stats`:
+
 ```
 ./rustybam liftover \
     --bed <(printf "chr1\t0\t250000000\n") \
     input.paf \
     | ./rustybam stats --paf \
-    > trimmed.stats.bed 
+    > trimmed.stats.bed
 ```
-> Okay, but Evan asked for an "align slider" so I need to realign in chunks. 
 
-No need, just make your `bed` query to `rustybam liftoff` a set of sliding windows 
-and it will do the rest. 
+> Okay, but Evan asked for an "align slider" so I need to realign in chunks.
+
+No need, just make your `bed` query to `rustybam liftoff` a set of sliding windows
+and it will do the rest.
+
 ```
 ./rustybam liftover \
     --bed <(bedtools makewindows -w 100000 \
@@ -45,14 +57,16 @@ and it will do the rest.
             ) \
     input.paf \
     | ./rustybam stats --paf \
-    > trimmed.stats.bed 
+    > trimmed.stats.bed
 ```
+
 > Yeah but how do I visualize the data?
 
-Try out 
+Try out
 [SafFire](https://mrvollger.github.io/SafFire/)!
 
 ## General usage
+
 ```
 ./rustybam 0.0.1
 Mitchell R. Vollger's alignment utilities
@@ -76,15 +90,16 @@ SUBCOMMANDS:
 ```
 
 ### More details on `liftover`
-This is a function for lifting over coordinates from a reference (`-bed`) to a query using a `PAF` file from `minimap2` or `unimap`. 
-`minimap2` (or `unimap`) must be run with `--cs` or `-c --eqx` and the output format must be `PAF` or else the liftover is not possible. 
+
+This is a function for lifting over coordinates from a reference (`-bed`) to a query using a `PAF` file from `minimap2` or `unimap`.
+`minimap2` (or `unimap`) must be run with `--cs` or `-c --eqx` and the output format must be `PAF` or else the liftover is not possible.
 
 The returned file is a `PAF` file that is trimmed to the regions in the bed file. Even the cigar in the returned PAF file is trimmed so it can be used downstream! Additionally, a tag with the format `id:Z:<>` is added to the `PAF` where `<>` is either the 4th column of the input bed file or if not present `chr_start_end`.
 
 Want to liftover from the query to the reference? No problem, just pass the `-q` flag. Note, that this will make the query in the input `PAF` the target in the output `PAF`.
 
 ```
-rustybam-liftover 
+rustybam-liftover
 liftover target sequence coordinates onto query sequence using a PAF
 
 USAGE:
@@ -105,5 +120,12 @@ OPTIONS:
     -t, --threads <threads>    Number of threads to use for decompressing
 ```
 
-### Alignment workflow 
-This repository also includes a snakemake workflow for aligning genome assemblies to a reference. The config file  `config/config.yaml` should be configured to your use case and the file `config/table.asm.tbl` should be configured for your input assemblies. The `Snakefile` can be found under the `workflow` directory.
+### Alignment workflow
+
+This repository also includes a snakemake workflow for aligning genome assemblies to a reference. The config file `config/config.yaml` should be configured to your use case and the file `config/table.asm.tbl` should be configured for your input assemblies. The `Snakefile` can be found under the `workflow` directory.
+
+Once you have modified `table.asm.tbl` to have your assemblies and `config.yaml` with your references you can run the snakemake with:
+
+```
+snakemake all --cores 160 --use-conda  {any extra snakemake options}
+```
