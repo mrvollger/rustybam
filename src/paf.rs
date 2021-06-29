@@ -244,7 +244,6 @@ impl PafRecord {
     pub fn subset_cigar(&self, start_idx: usize, end_idx: usize) -> CigarString {
         // update the cigar string
         let mut new_cigar = vec![];
-        eprintln!("[{}-{})", start_idx, end_idx + 1);
         for opt in &self.long_cigar.0[start_idx..end_idx + 1] {
             new_cigar.push(*opt);
         }
