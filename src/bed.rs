@@ -58,12 +58,15 @@ pub fn parse_region(region: &str) -> Region {
     let re = Regex::new(r"(.+):([0-9]+)-([0-9]+)").unwrap();
     let caps = re.captures(region).expect("Failed to parse region string.");
 
-    Region {
-        name: caps.get(1).unwrap().as_str().to_string(),
-        st: caps.get(2).unwrap().as_str().parse::<u64>().unwrap() - 1,
-        en: caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295), // this is 2^32-1
-        id: "None".to_string(),
-    }
+    let name = caps.get(1).unwrap().as_str().to_string();
+    let st = caps.get(2).unwrap().as_str().parse::<u64>().unwrap() - 1;
+    let en = caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295); //this is 2^32-1
+    let id = caps
+        .get(4)
+        .map_or(format!("{}:{}-{}", name, st + 1, en), |m| {
+            m.as_str().to_string()
+        });
+    Region { name, st, en, id }
 }
 
 /// parse bed strings
@@ -77,18 +80,21 @@ pub fn parse_region(region: &str) -> Region {
 ///
 /// let rgn2 = rustybam::bed::parse_bed_rec("chr1\t2\t2000");
 /// assert_eq!("chr1", rgn2.name);
-/// assert_eq!("None", rgn2.id);
+/// assert_eq!("chr1:3-2000", rgn2.id);
 /// ```
 pub fn parse_bed_rec(region: &str) -> Region {
     let re = Regex::new(r"([^\s]+)\t([0-9]+)\t([0-9]+)\t?([^\s]+)?.*").unwrap();
     let caps = re.captures(region).expect("Failed to parse region string.");
 
-    Region {
-        name: caps.get(1).unwrap().as_str().to_string(),
-        st: caps.get(2).unwrap().as_str().parse::<u64>().unwrap(),
-        en: caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295), // this is 2^32-1
-        id: caps.get(4).map_or("None", |m| m.as_str()).to_string(),
-    }
+    let name = caps.get(1).unwrap().as_str().to_string();
+    let st = caps.get(2).unwrap().as_str().parse::<u64>().unwrap();
+    let en = caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295); //this is 2^32-1
+    let id = caps
+        .get(4)
+        .map_or(format!("{}:{}-{}", name, st + 1, en), |m| {
+            m.as_str().to_string()
+        });
+    Region { name, st, en, id }
 }
 
 /// parse bed file

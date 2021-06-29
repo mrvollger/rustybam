@@ -2,11 +2,12 @@ use clap::{crate_version, load_yaml, App, AppSettings};
 use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
+use rustybam::bamstats;
 use rustybam::bed;
+use rustybam::liftover;
 use rustybam::nucfreq;
 use rustybam::paf;
 use rustybam::suns;
-use rustybam::{bamstats, paf::trim_paf_to_rgn};
 use std::time::Instant;
 
 fn main() {
@@ -166,7 +167,7 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     let duration = start.elapsed();
     eprintln!("Time elapsed reading paf and bed: {:.3?}", duration);
     //
-    let largest = args.is_present("largest");
+    let _largest = args.is_present("largest");
     // whether the input bed is for the query.
     let mut invert_query = false;
     if args.is_present("qbed") {
@@ -174,26 +175,9 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     }
     //
     let start = Instant::now();
-    let total = rgns.len();
-    let mut idx = 0;
-    for mut rgn in rgns {
-        idx += 1;
-        if rgn.id == "None" {
-            rgn.id = format!("{}_{}_{}", rgn.name, rgn.st, rgn.en)
-        }
-        let new_paf = trim_paf_to_rgn(&rgn, &paf.records, invert_query);
-        if largest && !new_paf.is_empty() {
-            let largest = new_paf.iter().max_by_key(|p| p.q_en - p.q_st).unwrap();
-            println!("{}\tid:Z:{}", largest, rgn.id);
-        } else {
-            for rec in new_paf {
-                println!("{}\tid:Z:{}", rec, rgn.id);
-            }
-        }
-        eprint!(
-            "\rRegions trimmed: {:.8}%",
-            (idx as f32) / (total as f32) * 100.0
-        );
+    let new_recs = liftover::trim_paf_by_rgns(&rgns, &paf.records, invert_query);
+    for rec in new_recs {
+        println!("{}", rec);
     }
     let duration = start.elapsed();
     eprintln!("Time elapsed during liftover: {:.3?}", duration);
