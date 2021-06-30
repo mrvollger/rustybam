@@ -54,10 +54,14 @@ impl<'a> Paf<'a> {
         // read the paf recs into a vector
         for (index, line) in io::BufReader::new(paf_file).lines().enumerate() {
             match PafRecord::new(&line.unwrap()) {
-                Ok(rec) => records.push(rec),
+                Ok(rec) => {
+                    eprint!("\rReading PAF entry # {}", index);
+                    records.push(rec)
+                }
                 Err(_) => eprintln!("\nUnable to parse PAF record. Skipping line {}", index + 1),
             }
         }
+        eprintln!();
         paf.records = records;
         paf
     }

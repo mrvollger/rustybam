@@ -17,6 +17,9 @@ fn main() {
         .setting(AppSettings::SubcommandRequiredElseHelp);
     let matches = app.get_matches();
 
+    let threads = matches.value_of_t("threads").unwrap_or(8);
+    std::env::set_var("RAYON_NUM_THREADS", threads.to_string());
+
     if let Some(matches) = matches.subcommand_matches("stats") {
         run_stats(matches);
     } else if let Some(matches) = matches.subcommand_matches("nucfreq") {

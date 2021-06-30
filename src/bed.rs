@@ -108,10 +108,12 @@ pub fn parse_bed(filename: &str) -> Vec<Region> {
     let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
     let mut vec = Vec::new();
-    for (_index, line) in reader.lines().enumerate() {
+    for (idx, line) in reader.lines().enumerate() {
+        eprint!("\rReading bed line: {}", idx + 1);
         let line = line.unwrap(); // Ignore errors.
         vec.push(parse_bed_rec(&line));
     }
+    eprintln!();
     vec
 }
 
