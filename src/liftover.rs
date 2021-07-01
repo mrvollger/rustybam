@@ -127,7 +127,7 @@ mod tests {
             "
             /// Example alignment
             /// 14-18         XXXXX
-            /// 012345678901234556789
+            /// 0123456789012345567890....
             /// ACTGACTGAAACTGAC-TAGA
             /// ------------||||I|D||
             ///             TGACGT-AC
@@ -136,9 +136,9 @@ mod tests {
             ///             98765433210 (reverse)
             "
         );
-        let mut f_paf = PafRecord::new("Q 10 2 10 + T 20 12 20 3 9 60 cg:Z:4M1I1=1D2=").unwrap();
+        let mut f_paf = PafRecord::new("Q 10 2 10 + T 40 12 20 3 9 60 cg:Z:4M1I1=1D2=").unwrap();
         f_paf.aligned_pairs();
-        let mut r_paf = PafRecord::new("Q 10 2 10 - T 20 12 20 3 9 60 cg:Z:4M1I1=1D2=").unwrap();
+        let mut r_paf = PafRecord::new("Q 10 2 10 - T 40 12 20 3 9 60 cg:Z:4M1I1=1D2=").unwrap();
         r_paf.aligned_pairs();
 
         let rgn = Region {
@@ -159,11 +159,32 @@ mod tests {
             en: 20,
             id: "".to_string(),
         };
+        // test right extend
+        let rgn4 = Region {
+            name: "T".to_string(),
+            st: 12,
+            en: 30,
+            id: "".to_string(),
+        };
+        // test left extend
+        let rgn5 = Region {
+            name: "T".to_string(),
+            st: 5,
+            en: 20,
+            id: "".to_string(),
+        };
+        // test both extend
+        let rgn6 = Region {
+            name: "T".to_string(),
+            st: 5,
+            en: 30,
+            id: "".to_string(),
+        };
 
-        let sts = vec![4, 7, 4, 4, 2, 2];
-        let ens = vec![5, 8, 8, 8, 10, 10];
+        let sts = vec![4, 7, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2];
+        let ens = vec![5, 8, 8, 8, 10, 10, 10, 10, 10, 10, 10, 10];
         let mut idx = 0;
-        for r in [rgn, rgn2, rgn3] {
+        for r in [rgn, rgn2, rgn3, rgn4, rgn5, rgn6] {
             let trim = trim_paf_rec_to_rgn(&r, &f_paf);
             eprintln!("{}", trim);
             eprintln!("{:?}", f_paf.tpos_aln);
