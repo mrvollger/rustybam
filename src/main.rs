@@ -1,4 +1,5 @@
 use clap::{crate_version, load_yaml, App, AppSettings};
+use itertools::Itertools;
 use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
@@ -169,8 +170,6 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     // end timer
     let duration = start.elapsed();
     eprintln!("Time elapsed reading paf and bed: {:.3?}", duration);
-    //
-    let _largest = args.is_present("largest");
     // whether the input bed is for the query.
     let mut invert_query = false;
     if args.is_present("qbed") {
@@ -179,9 +178,24 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     //
     let start = Instant::now();
     let new_recs = liftover::trim_paf_by_rgns(&rgns, &paf.records, invert_query);
-    for rec in new_recs {
-        println!("{}", rec);
+
+    // if largest set report only the largest alignment for the record
+    let largest = args.is_present("largest");
+    if largest {
+        for (_key, group) in &new_recs
+            .into_iter()
+            .sorted_by_key(|pac_rec| pac_rec.id.clone())
+            .group_by(|paf_rec| paf_rec.id.clone())
+        {
+            let largest_rec = group.max_by_key(|p| (p.t_en - p.t_st)).unwrap();
+            println!("{}", largest_rec);
+        }
+    } else {
+        for rec in new_recs {
+            println!("{}", rec);
+        }
     }
+
     let duration = start.elapsed();
     eprintln!("Time elapsed during liftover: {:.3?}", duration);
 }
