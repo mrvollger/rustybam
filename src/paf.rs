@@ -201,8 +201,8 @@ impl PafRecord {
         }
 
         for opt in self.cigar.into_iter() {
-            let moves_t = consumes_reference(&opt);
-            let moves_q = consumes_query(&opt);
+            let moves_t = consumes_reference(opt);
+            let moves_q = consumes_query(opt);
             let opt_len = opt.len() as u64;
             // incrment the ref and or query
             for _i in 0..opt_len {
@@ -458,8 +458,8 @@ pub fn old_trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord 
     trimmed_paf.nmatch = 0;
     trimmed_paf.aln_len = 0;
     for opt in paf.cigar.into_iter() {
-        let moves_t = consumes_reference(&opt);
-        let moves_q = consumes_query(&opt);
+        let moves_t = consumes_reference(opt);
+        let moves_q = consumes_query(opt);
         let opt_len = opt.len() as u64;
         let mut new_opt_len = 0;
         let mut done = false;
