@@ -1,4 +1,3 @@
-# This is a basic workflow to help you get started with Actions
 name: Test and Build
 
 # Controls when the action will run. 
@@ -26,6 +25,9 @@ jobs:
           - { rust: stable,           os: ubuntu-latest }
           - { rust: beta,             os: ubuntu-latest }
           - { rust: nightly,          os: ubuntu-latest }
+          - { rust: stable,           os: ubuntu-18.04 }
+          - { rust: stable,           os: macos-latest }
+          - { rust: stable,           os: windows-latest }
     steps:
       - uses: actions/checkout@v2
       - uses: hecrj/setup-rust-action@v1
