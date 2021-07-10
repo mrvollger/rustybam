@@ -39,7 +39,7 @@ impl<'a> Paf<'a> {
     /// use rustybam::paf;
     /// use std::fs::File;
     /// use std::io::*;
-    /// let mut paf = paf::Paf::from_file("test/asm_small.paf");
+    /// let mut paf = paf::Paf::from_file(".test/asm_small.paf");
     /// assert_eq!(paf.records.len(), 249);
     ///
     /// ```

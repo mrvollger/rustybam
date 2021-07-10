@@ -49,7 +49,7 @@ impl Genome {
     /// # Example
     /// ```
     /// use rustybam::suns::*;
-    /// let genome = Genome::from_file("test/test.fa");
+    /// let genome = Genome::from_file(".test/test.fa");
     /// ```
     pub fn from_file(fastafile: &str) -> Genome {
         let records = fasta::Reader::from_file(fastafile)
@@ -84,7 +84,7 @@ impl Genome {
     /// # Example
     /// ```
     /// use rustybam::suns::*;
-    /// let genome = Genome::from_file("test/test.fa");
+    /// let genome = Genome::from_file(".test/test.fa");
     /// genome.get_longest_perfect_repeats(5);
     /// ```
     pub fn get_longest_perfect_repeats(&self, min_length: usize) -> Vec<(&String, usize, usize)> {
@@ -143,7 +143,7 @@ impl Genome {
     /// # Example
     /// ```
     /// use rustybam::suns::*;
-    /// let genome = Genome::from_file("test/test.fa");
+    /// let genome = Genome::from_file(".test/test.fa");
     /// eprintln!("{:?}", genome.seq);
     /// let rtn = genome.convert_from_idx(20).unwrap();
     /// assert_eq!((&"chr2".to_string(), 0), rtn);
@@ -260,7 +260,7 @@ mod tests {
     use super::*;
     #[test]
     fn test_sun_finding() {
-        let genome = Genome::from_file("test/test.fa");
+        let genome = Genome::from_file(".test/test.fa");
 
         let kmer_size = 2;
         let intervals = genome.find_sun_intervals(kmer_size);
@@ -281,7 +281,7 @@ mod tests {
 
     #[test]
     fn test_convert() {
-        let genome = Genome::from_file("test/test.fa");
+        let genome = Genome::from_file(".test/test.fa");
 
         let idx_to_test = 21;
         let rtn = genome.convert_from_idx(idx_to_test).unwrap();

@@ -40,7 +40,7 @@ pub struct NucList {
 /// # Example
 /// ```
 /// use rust_htslib::{bam, bam::Read};
-/// let mut bam = bam::IndexedReader::from_path("test/test_nucfreq.bam").unwrap();
+/// let mut bam = bam::IndexedReader::from_path(".test/test_nucfreq.bam").unwrap();
 /// let rgn = rustybam::bed::Region {
 ///     name : "CHROMOSOME_I".to_string(),
 ///     st :  1,
@@ -100,7 +100,7 @@ pub fn nucfreq(bam: &mut rust_htslib::bam::IndexedReader, rgn: &Region) -> Vec<N
 /// use rustybam::nucfreq::*;
 /// use rustybam::bed::*;
 ///
-/// let mut bam = "test/asm_small.bam";
+/// let mut bam = ".test/asm_small.bam";
 ///
 /// let vec  = region_nucfreq( bam, &parse_region("chr22:1-1000"), 1);
 /// let vec2 = region_nucfreq( bam, &parse_region("chr21:8-8000"), 4);

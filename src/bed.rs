@@ -101,7 +101,7 @@ pub fn parse_bed_rec(region: &str) -> Region {
 /// # Example
 /// ```
 /// use rustybam::bed::*;
-/// let vec = parse_bed("test/asm_small.bed");
+/// let vec = parse_bed(".test/asm_small.bed");
 /// assert_eq!(vec.len(), 10);
 /// ```
 pub fn parse_bed(filename: &str) -> Vec<Region> {
@@ -120,7 +120,7 @@ pub fn parse_bed(filename: &str) -> Vec<Region> {
 /// # Example
 /// ```
 /// use rust_htslib::{bam, bam::Read};
-/// let mut bam = bam::IndexedReader::from_path("test/test_nucfreq.bam").unwrap();
+/// let mut bam = bam::IndexedReader::from_path(".test/test_nucfreq.bam").unwrap();
 /// let rgn = rustybam::bed::Region {
 ///     name : "CHROMOSOME_I".to_string(),
 ///     st :  0,

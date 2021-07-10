@@ -210,7 +210,7 @@ mod tests {
     #[test]
     fn test_cigar_stats_from_test_file() {
         use rust_htslib::{bam, bam::Read};
-        let mut bam = bam::Reader::from_path("test/asm_small.bam").unwrap();
+        let mut bam = bam::Reader::from_path(".test/asm_small.bam").unwrap();
         let bam_header = bam::Header::from_template(bam.header());
         bam.set_threads(4).unwrap();
         for fetch in bam.records() {
