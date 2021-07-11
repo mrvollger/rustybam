@@ -90,7 +90,7 @@ OPTIONS:
 SUBCOMMANDS:
     help        Prints this message or the help of the given subcommand(s)
     liftover    liftover target sequence coordinates onto query sequence using a PAF
-    nucfreq     Get the freqs of each bp at each position.
+    nucfreq     Get the frequencies of each bp at each position.
     repeat      Report the longest repeat length at every position in a fasta.
     stats       Get percent identity stats from a sam/bam/cram or PAF (add --paf)
     suns        Extract the intervals in a genome (fasta) that are made up of SUNs
@@ -113,7 +113,7 @@ USAGE:
     rustybam liftover [FLAGS] [OPTIONS] --bed <bed> [paf]
 
 ARGS:
-    <paf>    PAF file from minimap2 or unimap. Must have the cg tag, and nmatches will be zero
+    <paf>    PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero
              unless the cigar uses =X.
 
 FLAGS:

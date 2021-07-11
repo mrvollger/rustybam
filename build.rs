@@ -1,6 +1,9 @@
 // in build.rs
 use clap::{crate_version, load_yaml, App, AppSettings};
-use clap_generate::{generate, generators::Bash};
+use clap_generate::{
+    generate,
+    generators::{Bash, Zsh},
+};
 use std::io;
 
 fn main() {
@@ -10,8 +13,9 @@ fn main() {
         .setting(AppSettings::SubcommandRequiredElseHelp);
 
     generate::<Bash, _>(&mut app, "rustybam", &mut io::stdout());
-    /*
-    for man in gen_manuals(&app) {
+    generate::<Zsh, _>(&mut app, "rustybam", &mut io::stdout());
+
+    /*for man in clap_generate::gen gen_manuals(&app) {
         let name = "rustybam.1";
         let mut out = std::fs::File::create(name).unwrap();
         use std::io::Write;

@@ -23,7 +23,7 @@ subcommands:
                 long : paf
                 help: The input is paf format (must have cg tag with extended cigar or cs tag). 
     - nucfreq:
-        about: Get the freqs of each bp at each position. 
+        about: Get the frequencies of each bp at each position. 
         args:
             - BAM:
                 about: sam/bam/cram file
@@ -45,14 +45,14 @@ subcommands:
     - suns:
         about: Extract the intervals in a genome (fasta) that are made up of SUNs
         args:
-            - kmersize:
+            - kmer-size:
                 short: k
-                long : kmersize
+                long : kmer-size
                 takes_value : true
                 help: The size of the required unique kmer
-            - maxsize:
+            - max-size:
                 short: m
-                long : maxsize
+                long : max-size
                 takes_value : true
                 help: The maximum size SUN interval to report
             - fasta:
@@ -77,7 +77,7 @@ subcommands:
         about: liftover target sequence coordinates onto query sequence using a PAF
         args:
             - paf:
-                about: PAF file from minimap2 or unimap. Must have the cg tag, and nmatches will be zero unless the cigar uses =X. 
+                about: PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X. 
                 index : 1
             - bed:
                 required: true
