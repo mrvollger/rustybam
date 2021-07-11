@@ -13,16 +13,16 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bimap = "*"
-bio = "*"
-bio-types = "*"
+bimap = "0.6.1"
+bio = "0.34.0"
+bio-types = "0.11.0"
 calm_io = "0.1.1"
 clap = {version = "3.0.0-beta.2", features = ["yaml"]}
-colored = "*"
+colored = "2.0.0"
 itertools = "0.10.0"
 rayon = "1.5"
-regex = "*"
-rust-htslib = "*"
+regex = "1.5.4"
+rust-htslib = "0.36.0"
 
 [build-dependencies]
 clap = "3.0.0-beta.2"
