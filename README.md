@@ -68,7 +68,7 @@ Try out
 ## General usage
 
 ```
-./rustybam 0.0.1
+./rustybam 0.1.0
 Mitchell R. Vollger's alignment utilities
 
 USAGE:
@@ -85,6 +85,7 @@ SUBCOMMANDS:
     help        Prints this message or the help of the given subcommand(s)
     liftover    liftover target sequence coordinates onto query sequence using a PAF
     nucfreq     Get the freqs of each bp at each position.
+    repeat      Report the longest repeat length at every position in a fasta.
     stats       Get percent identity stats from a sam/bam/cram or PAF (add --paf)
     suns        Extract the intervals in a genome (fasta) that are made up of SUNs
 ```
