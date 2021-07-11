@@ -6,7 +6,13 @@
 
 ## Install
 
-It is easy just make sure you have rust installed and then:
+It is easy just make sure you have rust and cargo installed and then:
+
+```
+cargo install rustybam
+```
+
+Alternatively to build from the latest source code:
 
 ```
 git clone https://github.com/mrvollger/rustybam.git
