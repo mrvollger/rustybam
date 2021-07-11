@@ -1064,7 +1064,7 @@ dependencies = [
 
 [[package]]
 name = "rustybam"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "bimap",
  "bio",
