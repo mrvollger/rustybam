@@ -68,7 +68,7 @@ Try out
 ## General usage
 
 ```
-./rustybam 0.1.0
+./rustybam 0.1.1
 Mitchell R. Vollger's alignment utilities
 
 USAGE:
