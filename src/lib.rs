@@ -1,3 +1,4 @@
+pub mod annotate;
 pub mod bamstats;
 pub mod bed;
 pub mod liftover;
