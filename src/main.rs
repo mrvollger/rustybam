@@ -31,6 +31,8 @@ fn main() {
         run_liftover(matches);
     } else if let Some(matches) = matches.subcommand_matches("repeat") {
         run_longest_repeats(matches);
+    } else if let Some(matches) = matches.subcommand_matches("bedlength") {
+        run_bedlength(matches);
     }
 }
 
@@ -198,4 +200,15 @@ pub fn run_liftover(args: &clap::ArgMatches) {
 
     let duration = start.elapsed();
     eprintln!("Time elapsed during liftover: {:.3?}", duration);
+}
+
+pub fn run_bedlength(args: &clap::ArgMatches) {
+    let start = Instant::now();
+    // read in the bed
+    let bed = args.value_of("bed").expect("Bed file required!");
+    let rgns = bed::parse_bed(bed);
+    let count: u64 = rgns.into_iter().map(|rgn| rgn.en - rgn.st).sum();
+    println!("{}", count);
+    let duration = start.elapsed();
+    eprintln!("Time elapsed during bedlength: {:.3?}", duration);
 }

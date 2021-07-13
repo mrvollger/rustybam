@@ -93,4 +93,9 @@ subcommands:
                 short : l
                 long : largest
                 help : Only return the largest liftover 
+    - bedlength:
+        about: count basepairs in a bed file
+        args:
+            - bed:
+                index : 1
      
