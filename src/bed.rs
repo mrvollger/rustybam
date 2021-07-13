@@ -111,7 +111,7 @@ pub fn parse_bed(filename: &str) -> Vec<Region> {
     for (idx, line) in reader.lines().enumerate() {
         eprint!("\rReading bed line: {}", idx + 1);
         let line = line.unwrap(); // Ignore errors.
-        if line.chars().nth(0).unwrap_or('#') == '#' {
+        if line.chars().next().unwrap_or('#') == '#' {
             continue;
         }
         vec.push(parse_bed_rec(&line));
