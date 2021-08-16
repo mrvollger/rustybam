@@ -4,7 +4,7 @@ args:
   - threads:
       short: t
       long: threads
-      help: Number of threads to use for decompressing
+      about: Number of threads to use for decompressing
       takes_value: true
       global: true
 subcommands:
@@ -17,11 +17,11 @@ subcommands:
         - qbed:
             short: q
             long: qbed
-            help: Print query coordinates first
+            about: Print query coordinates first
         - paf:
             short: p
             long: paf
-            help: The input is paf format (must have cg tag with extended cigar or cs tag).
+            about: The input is paf format (must have cg tag with extended cigar or cs tag).
   - nucfreq:
       about: Get the frequencies of each bp at each position.
       args:
@@ -32,16 +32,16 @@ subcommands:
             short: r
             long: region
             takes_value: true
-            help: Print nucfreq info from the input region e.g "chr1:1-1000"
+            about: Print nucfreq info from the input region e.g "chr1:1-1000"
         - bed:
             short: b
             long: bed
             takes_value: true
-            help: Print nucfreq info from regions in the bed file, output is optionally tagged using the 4th column
+            about: Print nucfreq info from regions in the bed file, output is optionally tagged using the 4th column
         - small:
             short: s
             long: small
-            help: smaller output format
+            about: smaller output format
   - suns:
       about: Extract the intervals in a genome (fasta) that are made up of SUNs
       args:
@@ -49,19 +49,19 @@ subcommands:
             short: k
             long: kmer-size
             takes_value: true
-            help: The size of the required unique kmer
+            about: The size of the required unique kmer
         - max-size:
             short: m
             long: max-size
             takes_value: true
-            help: The maximum size SUN interval to report
+            about: The maximum size SUN interval to report
         - fasta:
             about: a fasta file
             index: 1
         - validate:
             short: v
             long: validate
-            help: Confirm all the SUNs (very slow) only for debugging.
+            about: Confirm all the SUNs (very slow) only for debugging.
   - repeat:
       about: Report the longest repeat length at every position in a fasta.
       args:
@@ -69,7 +69,7 @@ subcommands:
             short: m
             long: min
             takes_value: true
-            help: The smallest repeat length to report
+            about: The smallest repeat length to report
         - fasta:
             about: a fasta file
             index: 1
@@ -84,15 +84,15 @@ subcommands:
             short: b
             long: bed
             takes_value: true
-            help: Bed file of regions to liftover
+            about: Bed file of regions to liftover
         - qbed:
             short: q
             long: qbed
-            help: The bed contains query coordinates to be lifted (note the query in the original PAF will become the target in the output)
+            about: The bed contains query coordinates to be lifted (note the query in the original PAF will become the target in the output)
         - largest:
             short: l
             long: largest
-            help: Only return the largest liftover
+            about: Only return the largest liftover
   - bedlength:
       about: count basepairs in a bed file
       args:
