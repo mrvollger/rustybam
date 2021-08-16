@@ -55,7 +55,7 @@ rule unimap:
     shell:
         """
         minimap2 -K 8G -t {threads} \
-            -r 200000 -ax asm20 \
+            -ax asm20 \
             --secondary=no --eqx -s 25000 \
                     {input.ref} {input.query} > {output.aln} \
                         2> {log}
