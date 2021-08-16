@@ -36,7 +36,7 @@ rule unimap_index:
     conda:
         "envs/environment.yml"
     shell:
-        "unimap -t {threads} -ax asm20 -d {output.umi} {input.ref}"
+        "minimap2 -t {threads} -ax asm20 -d {output.umi} {input.ref}"
 
 
 rule unimap:
