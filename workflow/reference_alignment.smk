@@ -54,7 +54,7 @@ rule unimap:
     threads: config.get("aln_threads", 4)
     shell:
         """
-        unimap -K 8G -t {threads} \
+        minimap2 -K 8G -t {threads} \
             -r 200000 -ax asm20 \
             --secondary=no --eqx -s 25000 \
                     {input.ref} {input.query} > {output.aln} \
@@ -68,7 +68,7 @@ rule compress_sam:
     output:
         aln="reference_alignment/{ref}/bam/{sm}.bam",
         index="reference_alignment/{ref}/bam/{sm}.bam.csi",
-    threads: 1 # dont increase this, it will break things randomly 
+    threads: 1  # dont increase this, it will break things randomly 
     conda:
         "envs/environment.yml"
     shell:
