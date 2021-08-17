@@ -28,7 +28,7 @@ def get_fai(wc):
     return config.get("ref")[wc.ref] + ".fai"
 
 
-rule unimap_index:
+rule alignment_index:
     input:
         ref=get_ref,
     output:
@@ -40,16 +40,16 @@ rule unimap_index:
         "minimap2 -t {threads} -ax asm20 -d {output.umi} {input.ref}"
 
 
-rule unimap:
+rule alignment:
     input:
-        ref=rules.unimap_index.output.umi,
+        ref=rules.alignment_index.output.umi,
         query=get_asm,
     output:
         aln=pipe("reference_alignment/{ref}/{sm}.sam"),
     log:
-        "log/unimap.{ref}_{sm}.log",
+        "log/alignment.{ref}_{sm}.log",
     benchmark:
-        "log/unimap.{ref}_{sm}.benchmark.txt"
+        "log/alignment.{ref}_{sm}.benchmark.txt"
     conda:
         "envs/environment.yml"
     threads: config.get("aln_threads", 4)
@@ -66,7 +66,7 @@ rule unimap:
 
 rule compress_sam:
     input:
-        aln=rules.unimap.output.aln,
+        aln=rules.alignment.output.aln,
     output:
         aln="reference_alignment/{ref}/bam/{sm}.bam",
         index="reference_alignment/{ref}/bam/{sm}.bam.csi",
