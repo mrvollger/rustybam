@@ -13,6 +13,7 @@ df.set_index(df["sample"] + "_" + df["num"].astype(str), inplace=True)
 
 wildcard_constraints:
     i="\d+",
+    sm="|".join(df.index),
 
 
 def get_asm(wc):
