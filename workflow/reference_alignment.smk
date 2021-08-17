@@ -56,6 +56,7 @@ rule unimap:
         """
         minimap2 -K 8G -t {threads} \
             -ax asm20 \
+            -r 200k \
             --secondary=no --eqx -s 25000 \
                     {input.ref} {input.query} > {output.aln} \
                         2> {log}
