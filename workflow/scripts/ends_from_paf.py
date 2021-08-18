@@ -52,7 +52,9 @@ if __name__ == "__main__":
             print(outfmt.format(name, mmin, mmax, name + "_full", length, "full"))
         else:
             print(
-                outfmt.format(name, mmin, args.width, name + "_start", length, "start")
+                outfmt.format(
+                    name, mmin, mmin + args.width, name + "_start", length, "start"
+                )
             )
             print(
                 outfmt.format(
