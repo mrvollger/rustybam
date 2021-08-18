@@ -141,8 +141,8 @@ rule query_ends:
     shell:
         """
         {params.smkdir}/scripts/ends_from_paf.py \
-          --minwidth 50000 \
-          --width 1000 \
+          --minwidth 10 \
+          --width 1 \
           {input.paf} > {output.bed}
         """
 
