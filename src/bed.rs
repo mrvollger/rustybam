@@ -66,6 +66,11 @@ pub fn parse_region(region: &str) -> Region {
         .map_or(format!("{}:{}-{}", name, st + 1, en), |m| {
             m.as_str().to_string()
         });
+
+    if st > en {
+        panic!("Region start must be less than end.\n{}", region);
+    }
+
     Region { name, st, en, id }
 }
 
@@ -94,6 +99,11 @@ pub fn parse_bed_rec(region: &str) -> Region {
         .map_or(format!("{}:{}-{}", name, st + 1, en), |m| {
             m.as_str().to_string()
         });
+
+    if st > en {
+        panic!("Region start must be less than end.\n{}", region);
+    }
+
     Region { name, st, en, id }
 }
 
