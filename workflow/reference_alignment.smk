@@ -2,6 +2,7 @@ import os
 import sys
 import pandas as pd
 
+shell.prefix(f"set -eo pipefail;")
 
 df = pd.read_csv(config.get("tbl"), sep="\t")
 df.asm = df.asm.map(os.path.abspath)
