@@ -4,3 +4,4 @@ log/**
 target/**
 .snakemake/**
 .test/unit/**
+plots/**
