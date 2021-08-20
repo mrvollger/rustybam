@@ -158,9 +158,9 @@ if (T) {
 
   dfr <- fread(glue("{pre}/ends/windowed.all.ends.bed"))
 
-  save.image(file = "contig_ends.RData")
+  save.image(file = "plots/contig_ends.RData")
 } else {
-  load("contig_ends.RData")
+  load("plots/contig_ends.RData")
 }
 ########################################################################
 
