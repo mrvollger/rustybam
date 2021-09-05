@@ -66,6 +66,17 @@ and it will do the rest.
     > trimmed.stats.bed
 ```
 
+You can also use `rustybam breakpaf` to break up the paf records of indels above a certain size to
+get more "miropeats" like intervals.
+
+```
+./rustybam breakpaf --max-size 1000 input.paf \
+    | ./rustybam liftover \
+        --bed <(printf "chr1\t0\t250000000\n") \
+    | ./rustybam stats --paf \
+    > trimmed.stats.bed
+```
+
 > Yeah but how do I visualize the data?
 
 Try out
