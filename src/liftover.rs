@@ -15,6 +15,7 @@ pub enum Error {
 type LiftoverResult<T> = Result<T, crate::liftover::Error>;
 
 pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
+    eprintln!("{}", rgn);
     // initialize a trimmed paf record
     let mut trimmed_paf = paf.small_copy();
     trimmed_paf.id = rgn.id.clone();
