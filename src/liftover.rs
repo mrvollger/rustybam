@@ -4,6 +4,7 @@ use colored::Colorize;
 use itertools::Itertools;
 use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
+use rust_htslib::bam::record::Cigar::*;
 use std::cmp;
 pub enum Error {
     PafParseCigar { msg: String },
@@ -45,7 +46,7 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
     }
     // make end index not inclusive
     trimmed_paf.q_en += 1;
-
+    trimmed_paf.remove_trailing_indels();
     trimmed_paf
 }
 
@@ -114,6 +115,52 @@ pub fn trim_paf_by_rgns(
     }
     eprintln!();
     trimmed_paf
+}
+
+/// # Example
+/// ```
+/// use rustybam::paf;
+/// use rustybam::liftover;
+/// let mut rec = paf::PafRecord::new("Q 10 0 10 + T 15 0 15 9 15 60 cg:Z:5=5D5=").unwrap();
+/// let mut rec = paf::PafRecord::new("Q 15 0 15 + T 10 0 10 9 15 60 cg:Z:5=5I5=").unwrap();
+/// let mut rec = paf::PafRecord::new("Q 15 0 15 - T 10 0 10 9 15 60 cg:Z:5=5I5=").unwrap();
+/// rec.aligned_pairs();
+/// for paf in liftover::break_paf_on_indels(&rec, 0){
+///     assert!(paf.t_en - paf.t_st == 5, "Incorrect size.");   
+/// }   
+///
+/// ```
+pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord> {
+    let mut rtn = Vec::new();
+    let mut cur_tpos = paf.t_st;
+    let mut pre_tpos = paf.t_st;
+    for opt in paf.cigar.into_iter() {
+        let opt_len = opt.len();
+        if opt_len > break_length && matches!(opt, Del(_i) | Ins(_i)) {
+            let rgn = bed::Region {
+                name: paf.t_name.clone(),
+                st: pre_tpos,
+                en: cur_tpos,
+                id: paf.id.clone(),
+            };
+            rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
+            pre_tpos = cur_tpos;
+            if consumes_reference(opt) {
+                pre_tpos += opt_len as u64;
+            }
+        }
+        if consumes_reference(opt) {
+            cur_tpos += opt_len as u64;
+        }
+    }
+    let rgn = bed::Region {
+        name: paf.t_name.clone(),
+        st: pre_tpos,
+        en: cur_tpos,
+        id: paf.id.clone(),
+    };
+    rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
+    rtn
 }
 
 #[cfg(test)]

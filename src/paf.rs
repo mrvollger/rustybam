@@ -193,11 +193,11 @@ impl PafRecord {
 
     /// This function adds matching alignment positions and cigar operations
     pub fn aligned_pairs(&mut self) {
-        let mut t_pos = self.t_st - 1;
-        let mut q_pos = self.q_st - 1;
+        let mut t_pos = self.t_st as i64 - 1;
+        let mut q_pos = self.q_st as i64 - 1;
         let mut long_cigar = Vec::new();
         if self.strand == '-' {
-            q_pos = self.q_en; // ends are not inclusive
+            q_pos = self.q_en as i64; // ends are not inclusive
         }
 
         for opt in self.cigar.into_iter() {
@@ -216,8 +216,8 @@ impl PafRecord {
                 if moves_q && self.strand == '-' {
                     q_pos -= 1;
                 }
-                self.tpos_aln.push(t_pos);
-                self.qpos_aln.push(q_pos);
+                self.tpos_aln.push(t_pos as u64);
+                self.qpos_aln.push(q_pos as u64);
             }
         }
 
@@ -279,6 +279,36 @@ impl PafRecord {
             return false;
         }
         self.t_en > rgn.st && self.t_st < rgn.en
+    }
+
+    pub fn remove_trailing_indels(&mut self) {
+        let st_opt = *self.cigar.first().unwrap();
+        let en_opt = *self.cigar.last().unwrap();
+
+        let mut remove_st = 0;
+        if matches!(st_opt, Ins(_) | Del(_)) {
+            remove_st = st_opt.len();
+            self.cigar = CigarString(self.cigar.0[1..].to_vec());
+        }
+        let mut remove_en = 0;
+        if matches!(en_opt, Ins(_) | Del(_)) {
+            remove_en = en_opt.len();
+            self.cigar = CigarString(self.cigar.0[0..self.cigar.len() - 1].to_vec());
+        }
+
+        if matches!(st_opt, Del(_)) || matches!(en_opt, Del(_)) {
+            self.t_st += remove_st as u64;
+            self.t_en -= remove_en as u64;
+        }
+        // change the qpos removal
+        if self.strand == '-' {
+            std::mem::swap(&mut remove_st, &mut remove_en);
+        }
+        // fix the query positions that need to be
+        if matches!(st_opt, Ins(_)) || matches!(en_opt, Ins(_)) {
+            self.q_st += remove_st as u64;
+            self.q_en -= remove_en as u64;
+        }
     }
 }
 
