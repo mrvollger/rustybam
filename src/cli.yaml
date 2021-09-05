@@ -98,3 +98,13 @@ subcommands:
       args:
         - bed:
             index: 1
+  - breakpaf:
+      about: break up paf on indels of a certain size
+      args:
+        - paf:
+            index: 1
+        - max-size:
+            short: s
+            long: max-size
+            about: Maximum indel size to keep in the paf
+            takes_value: true

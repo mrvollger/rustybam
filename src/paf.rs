@@ -293,7 +293,8 @@ impl PafRecord {
         let mut remove_en = 0;
         if matches!(en_opt, Ins(_) | Del(_)) {
             remove_en = en_opt.len();
-            self.cigar = CigarString(self.cigar.0[0..self.cigar.len() - 1].to_vec());
+            //self.cigar = CigarString(self.cigar.0[0..self.cigar.len() - 1].to_vec());
+            self.cigar.0.truncate(self.cigar.len() - 1);
         }
 
         if matches!(st_opt, Del(_)) || matches!(en_opt, Del(_)) {

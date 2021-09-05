@@ -33,6 +33,8 @@ fn main() {
         run_longest_repeats(matches);
     } else if let Some(matches) = matches.subcommand_matches("bedlength") {
         run_bedlength(matches);
+    } else if let Some(matches) = matches.subcommand_matches("breakpaf") {
+        run_break_paf(matches);
     }
 }
 
@@ -211,4 +213,24 @@ pub fn run_bedlength(args: &clap::ArgMatches) {
     println!("{}", count);
     let duration = start.elapsed();
     eprintln!("Time elapsed during bedlength: {:.3?}", duration);
+}
+
+pub fn run_break_paf(args: &clap::ArgMatches) {
+    let start = Instant::now();
+    // break length
+    let break_length = args.value_of_t("max-size").unwrap_or(100);
+    // read in the file
+    let paf_file = args.value_of("paf").unwrap_or("-");
+    let paf = paf::Paf::from_file(paf_file);
+
+    for mut paf in paf.records {
+        paf.aligned_pairs();
+        let pafs = liftover::break_paf_on_indels(&paf, break_length);
+        for trimed_paf in pafs {
+            println!("{}", trimed_paf);
+        }
+    }
+    // end timer
+    let duration = start.elapsed();
+    eprintln!("Time elapsed breaking paf on indels: {:.3?}", duration);
 }

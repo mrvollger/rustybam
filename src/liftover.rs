@@ -126,9 +126,9 @@ pub fn trim_paf_by_rgns(
 /// let mut rec = paf::PafRecord::new("Q 15 0 15 - T 10 0 10 9 15 60 cg:Z:5=5I5=").unwrap();
 /// rec.aligned_pairs();
 /// for paf in liftover::break_paf_on_indels(&rec, 0){
+///     eprintln!("{}", paf);
 ///     assert!(paf.t_en - paf.t_st == 5, "Incorrect size.");   
 /// }   
-///
 /// ```
 pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord> {
     let mut rtn = Vec::new();
