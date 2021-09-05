@@ -15,7 +15,6 @@ pub enum Error {
 type LiftoverResult<T> = Result<T, crate::liftover::Error>;
 
 pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
-    eprintln!("{}", rgn);
     // initialize a trimmed paf record
     let mut trimmed_paf = paf.small_copy();
     trimmed_paf.id = rgn.id.clone();
@@ -138,13 +137,15 @@ pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord>
     for opt in paf.cigar.into_iter() {
         let opt_len = opt.len();
         if opt_len > break_length && matches!(opt, Del(_i) | Ins(_i)) {
-            let rgn = bed::Region {
-                name: paf.t_name.clone(),
-                st: pre_tpos,
-                en: cur_tpos,
-                id: paf.id.clone(),
-            };
-            rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
+            if cur_tpos > pre_tpos {
+                let rgn = bed::Region {
+                    name: paf.t_name.clone(),
+                    st: pre_tpos,
+                    en: cur_tpos,
+                    id: paf.id.clone(),
+                };
+                rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
+            }
             pre_tpos = cur_tpos;
             if consumes_reference(opt) {
                 pre_tpos += opt_len as u64;
@@ -153,14 +154,17 @@ pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord>
         if consumes_reference(opt) {
             cur_tpos += opt_len as u64;
         }
+        //eprintln!("{} {} {:?}", pre_tpos, cur_tpos, opt);
     }
-    let rgn = bed::Region {
-        name: paf.t_name.clone(),
-        st: pre_tpos,
-        en: cur_tpos,
-        id: paf.id.clone(),
-    };
-    rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
+    if cur_tpos > pre_tpos {
+        let rgn = bed::Region {
+            name: paf.t_name.clone(),
+            st: pre_tpos,
+            en: cur_tpos,
+            id: paf.id.clone(),
+        };
+        rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
+    }
     rtn
 }
 
