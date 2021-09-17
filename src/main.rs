@@ -1,3 +1,5 @@
+use bio::io::fasta;
+use bio::io::fastq;
 use clap::{crate_version, load_yaml, App, AppSettings};
 use itertools::Itertools;
 use rayon::prelude::*;
@@ -6,9 +8,11 @@ use rust_htslib::bam::Read;
 use rustybam::bamstats;
 use rustybam::bed;
 use rustybam::liftover;
+use rustybam::myio;
 use rustybam::nucfreq;
 use rustybam::paf;
 use rustybam::suns;
+use std::io;
 use std::time::Instant;
 
 fn main() {
@@ -35,6 +39,10 @@ fn main() {
         run_bedlength(matches);
     } else if let Some(matches) = matches.subcommand_matches("breakpaf") {
         run_break_paf(matches);
+    } else if let Some(matches) = matches.subcommand_matches("fastq") {
+        run_split_fastq(matches);
+    } else if let Some(matches) = matches.subcommand_matches("fasta") {
+        run_split_fasta(matches);
     }
 }
 
@@ -233,4 +241,56 @@ pub fn run_break_paf(args: &clap::ArgMatches) {
     // end timer
     let duration = start.elapsed();
     eprintln!("Time elapsed breaking paf on indels: {:.3?}", duration);
+}
+
+pub fn run_split_fastq(args: &clap::ArgMatches) {
+    let start = Instant::now();
+    let files: Vec<_> = args.values_of("fastq").unwrap().collect();
+
+    let mut outs = Vec::new();
+    for f in files {
+        let handle = myio::writer(f);
+        outs.push(fastq::Writer::new(handle));
+    }
+
+    let mut records = fastq::Reader::new(io::stdin()).records();
+    let mut out_idx = 0;
+    while let Some(Ok(record)) = records.next() {
+        outs[out_idx]
+            .write_record(&record)
+            .expect("Error writing record.");
+        out_idx += 1;
+        if out_idx == outs.len() {
+            out_idx = 0;
+        }
+    }
+    // end timer
+    let duration = start.elapsed();
+    eprintln!("Time elapsed splitting fastq: {:.3?}", duration);
+}
+
+pub fn run_split_fasta(args: &clap::ArgMatches) {
+    let start = Instant::now();
+    let files: Vec<_> = args.values_of("fasta").unwrap().collect();
+
+    let mut outs = Vec::new();
+    for f in files {
+        let handle = myio::writer(f);
+        outs.push(fasta::Writer::new(handle));
+    }
+
+    let mut records = fasta::Reader::new(io::stdin()).records();
+    let mut out_idx = 0;
+    while let Some(Ok(record)) = records.next() {
+        outs[out_idx]
+            .write_record(&record)
+            .expect("Error writing record.");
+        out_idx += 1;
+        if out_idx == outs.len() {
+            out_idx = 0;
+        }
+    }
+    // end timer
+    let duration = start.elapsed();
+    eprintln!("Time elapsed splitting fasta: {:.3?}", duration);
 }

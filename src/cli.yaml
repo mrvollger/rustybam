@@ -108,3 +108,13 @@ subcommands:
             long: max-size
             about: Maximum indel size to keep in the paf
             takes_value: true
+  - fastq:
+      about: reads in a fastq from stdin and divides into files (can compress by adding .gz)
+      args:
+        - fastq:
+            min_values: 1
+  - fasta:
+      about: reads in a fasta from stdin and divides into files (can compress by adding .gz)
+      args:
+        - fasta:
+            min_values: 1
