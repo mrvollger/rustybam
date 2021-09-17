@@ -23,6 +23,7 @@ libdeflate = ["gzp/libdeflate"]
 any_zlib = [] # internal feature flag
 
 [dependencies]
+anyhow = "*"
 bimap = "0.6.1"
 bio = "0.34.0"
 bio-types = "0.12.0"
