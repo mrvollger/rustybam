@@ -8,7 +8,7 @@ license = "MIT"
 name = "rustybam"
 readme = "README.md"
 repository = "https://github.com/mrvollger/rustybam"
-version = "0.1.6"
+version = "0.1.7"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -37,9 +37,6 @@ itertools = "0.10.0"
 rayon = "1.5"
 regex = "1.5.4"
 rust-htslib = "0.36.0"
-snap = {version = "1.0.5", optional = true}
-strum = {version = "0.21.0", features = ["derive"]}
-strum_macros = "0.21"
 
 [build-dependencies]
 clap = "3.0.0-beta.2"
