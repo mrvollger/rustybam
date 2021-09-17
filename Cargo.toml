@@ -13,16 +13,14 @@ version = "0.1.7"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["deflate_zlib_ng", "snap_default", "libdeflate"]
+default = ["deflate_zlib_ng", "libdeflate"]
 
 deflate_rust = ["gzp/deflate_rust", "flate2/rust_backend"]
 deflate_zlib = ["gzp/deflate_zlib", "flate2/zlib", "any_zlib"]
 deflate_zlib_ng = ["gzp/deflate_zlib_ng", "flate2/zlib-ng-compat", "any_zlib"]
 libdeflate = ["gzp/libdeflate"]
-snap_default = ["gzp/snappy_default", "snap", "snappy"]
 
 any_zlib = [] # internal feature flag
-snappy = [] # internal feature flag
 
 [dependencies]
 bimap = "0.6.1"
