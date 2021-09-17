@@ -1,16 +1,16 @@
 name: Test and Build
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  
+
 env:
   RUST_BACKTRACE: 1
 
@@ -22,11 +22,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { rust: stable,           os: ubuntu-latest }
-          - { rust: beta,             os: ubuntu-latest }
-          - { rust: nightly,          os: ubuntu-latest }
-          - { rust: stable,           os: ubuntu-18.04 }
-          - { rust: stable,           os: macos-latest }
+          - { rust: stable, os: ubuntu-latest }
+          - { rust: beta, os: ubuntu-latest }
+          - { rust: nightly, os: ubuntu-latest }
+          - { rust: stable, os: ubuntu-18.04 }
     steps:
       - uses: actions/checkout@v2
       - uses: hecrj/setup-rust-action@v1
@@ -35,4 +34,3 @@ jobs:
       - run: cargo test --verbose --workspace
       - run: cargo test --verbose --workspace --all-features
       - run: cargo test --verbose --workspace --no-default-features
-
