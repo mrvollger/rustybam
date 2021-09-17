@@ -39,9 +39,9 @@ fn main() {
         run_bedlength(matches);
     } else if let Some(matches) = matches.subcommand_matches("breakpaf") {
         run_break_paf(matches);
-    } else if let Some(matches) = matches.subcommand_matches("fastq") {
+    } else if let Some(matches) = matches.subcommand_matches("fastq-split") {
         run_split_fastq(matches);
-    } else if let Some(matches) = matches.subcommand_matches("fasta") {
+    } else if let Some(matches) = matches.subcommand_matches("fasta-split") {
         run_split_fasta(matches);
     }
 }
