@@ -1,10 +1,10 @@
 // in build.rs
 use clap::{crate_version, load_yaml, App, AppSettings};
 use clap_generate::{
-    generate,
+    generate, generate_to,
     generators::{Bash, Zsh},
 };
-use std::io;
+
 
 fn main() {
     let yaml = load_yaml!("src/cli.yaml");
@@ -12,13 +12,11 @@ fn main() {
         .version(crate_version!())
         .setting(AppSettings::SubcommandRequiredElseHelp);
 
-    generate::<Bash, _>(&mut app, "rustybam", &mut io::stdout());
-    generate::<Zsh, _>(&mut app, "rustybam", &mut io::stdout());
+    app.set_bin_name("rustybam");
+    let outdir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("completions/");
 
-    /*for man in clap_generate::gen gen_manuals(&app) {
-        let name = "rustybam.1";
-        let mut out = std::fs::File::create(name).unwrap();
-        use std::io::Write;
-        out.write_all(man.render().as_bytes()).unwrap();
-    }*/
+    generate_to::<Bash, _, _>(&mut app, "rustybam", &outdir)
+        .expect("Failed to generate bash completions");
+    generate_to::<Zsh, _, _>(&mut app, "rustybam", &outdir)
+        .expect("Failed to generate zsh completions");
 }
