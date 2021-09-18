@@ -25,4 +25,3 @@ jobs:
           toolchain: nightly
       - run: cargo test --verbose --workspace
       - run: cargo test --verbose --workspace --all-features
-      - run: cargo test --verbose --workspace --no-default-features
