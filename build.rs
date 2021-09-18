@@ -1,10 +1,9 @@
 // in build.rs
 use clap::{crate_version, load_yaml, App, AppSettings};
 use clap_generate::{
-    generate, generate_to,
+    generate_to,
     generators::{Bash, Zsh},
 };
-
 
 fn main() {
     let yaml = load_yaml!("src/cli.yaml");
