@@ -14,8 +14,7 @@ fn main() {
 
     app.set_bin_name("rustybam");
     //let out_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("completions/");
-    let out_dir = env::var("OUT_DIR").unwrap();
-
+    let out_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
     generate_to::<Bash, _, _>(&mut app, "rustybam", &out_dir)
         .expect("Failed to generate bash completions");
