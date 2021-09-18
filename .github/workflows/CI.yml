@@ -15,22 +15,14 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  test:
-    name: Test Rust ${{ matrix.rust }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { rust: stable, os: ubuntu-latest }
-          - { rust: beta, os: ubuntu-latest }
-          - { rust: nightly, os: ubuntu-latest }
-          - { rust: stable, os: ubuntu-18.04 }
+  build_and_test:
+    name: Rustybam CI
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: hecrj/setup-rust-action@v1
+      - uses: actions-rs/toolchain@v1
         with:
-          rust-version: ${{ matrix.rust }}
+          toolchain: stable
       - run: cargo test --verbose --workspace
       - run: cargo test --verbose --workspace --all-features
       - run: cargo test --verbose --workspace --no-default-features
