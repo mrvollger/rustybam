@@ -5,3 +5,5 @@ target/**
 .snakemake/**
 .test/unit/**
 plots/**
+completions/_rustybam
+completions/rustybam.bash
