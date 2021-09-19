@@ -18,6 +18,7 @@ fn main() {
     //let out_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("completions/");
     let out_dir = env::var("OUT_DIR").unwrap();
 
+    eprintln!("{}", out_dir);
     let mut file = File::create("foo.txt").expect("unable to open");
     file.write(out_dir.as_bytes()).expect("unable to write");
 
