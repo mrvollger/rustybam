@@ -1,9 +1,11 @@
 [package]
 authors = ["mrvollger <mrvollger@gmail.com>"]
 build = "build.rs"
+categories = ["command-line-utilities"]
 description = "Mitchell Vollger's utilities for alignments"
 edition = "2018"
 homepage = "https://mrvollger.github.io/rustybam/"
+keywords = ["cli", "bam", "sam", "paf", "liftover", "bed"]
 license = "MIT"
 name = "rustybam"
 readme = "README.md"
