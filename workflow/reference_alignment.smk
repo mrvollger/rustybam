@@ -49,9 +49,9 @@ rule alignment:
     output:
         aln="reference_alignment/{ref}/{sm}.sam",
     log:
-        "log/alignment.{ref}_{sm}.log",
+        "logs/alignment.{ref}_{sm}.log",
     benchmark:
-        "log/alignment.{ref}_{sm}.benchmark.txt"
+        "logs/alignment.{ref}_{sm}.benchmark.txt"
     conda:
         "envs/environment.yml"
     threads: config.get("aln_threads", 4)
