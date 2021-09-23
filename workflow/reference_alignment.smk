@@ -94,7 +94,7 @@ rule compress_sam:
     shell:
         """
         samtools view -u {input.aln} \
-            | samtools sort -m 20G --write-index \
+            | samtools sort -m 8G --write-index \
                  -o {output.aln}
         """
 
