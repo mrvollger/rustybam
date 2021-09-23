@@ -77,7 +77,8 @@ rule alignment:
                 -n "N" {input.query} \
             ) \
             | samtools view \
-            >> {output.aln}
+            >> {output.aln} \
+            2>> {log}
         """
 
 
