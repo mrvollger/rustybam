@@ -43,10 +43,11 @@ rule alignment_index:
 
 rule alignment:
     input:
-        ref=rules.alignment_index.output.umi,
+        #ref=rules.alignment_index.output.umi,
+        ref=get_ref,
         query=get_asm,
     output:
-        aln=pipe("reference_alignment/{ref}/{sm}.sam"),
+        aln="reference_alignment/{ref}/{sm}.sam",
     log:
         "log/alignment.{ref}_{sm}.log",
     benchmark:
@@ -62,6 +63,21 @@ rule alignment:
             --secondary=no --eqx -s 25000 \
                     {input.ref} {input.query} > {output.aln} \
                         2> {log}
+
+        minimap2 -K 8G -t {threads} \
+            -ax asm20 \
+            -r 100k,200k \
+            --secondary=no --eqx -s 25000 \
+            <(seqtk seq \
+                -M <(cut -f 6,8,9 {output.aln} | bedtools sort -i -) \
+                -n "N" {input.ref} \
+            ) \
+            <(seqtk seq \
+                -M <(cut -f 1,3,4 {output.aln} | bedtools sort -i -) \
+                -n "N" {input.query} \
+            ) \
+            | samtools view \
+            >> {output.aln}
         """
 
 

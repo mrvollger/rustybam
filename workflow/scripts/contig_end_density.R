@@ -18,7 +18,7 @@ library(ggplotify)
 library(ggridges)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-if (T) {
+if (F) {
   load("~/Desktop/Rdata/plotutils.data")
   fai_file <- "/Users/mrvollger/Desktop/EichlerVolumes/chm13_t2t/nobackups/assemblies/chm13_v1.1_plus38Y.fasta.fai"
   FAI <<- fread(fai_file, col.names = c("chr", "chrlen", "x", "y", "z"))
@@ -44,7 +44,7 @@ if (T) {
 
   ### load seq content
   seq_content <- readbed(
-    glue("{pre}/ends/all.ends.nuc.content.bed"),
+    glue("{pre}/ends/all.ends.nuc.content.bed.gz"),
     tag = "nuc"
   )
   colnames(seq_content) <- gsub("\\d+_", "", colnames(seq_content))
@@ -56,7 +56,7 @@ if (T) {
     data.table()
  
   nuc <- readbed(
-    glue("{pre}/ends/all.nuc.content.bed"),
+    glue("{pre}/ends/all.nuc.content.bed.gz"),
     tag = "nuc"
   )
     ################################################
@@ -158,9 +158,9 @@ if (T) {
 
   dfr <- fread(glue("{pre}/ends/windowed.all.ends.bed"))
 
-  save.image(file = "plots/contig_ends.RData")
+  save.image(file = "../../plots/contig_ends.RData")
 } else {
-  load("plots/contig_ends.RData")
+  load("../../plots/contig_ends.RData")
 }
 ########################################################################
 
@@ -397,7 +397,7 @@ large_sd_blocks <- add_genes(large_sd_blocks, genelist = simple_genes)[, c(1:3, 
   group_by(chr, start, end) %>%
   summarise(genes = list(sort(unique(gene)))) %>%
   data.table()
-
+unique(df$sample)
 large_sd_blocks_with_ends <- add_contig_ends(large_sd_blocks, df) %>%
   mutate(
     Mbp = (end - start) / 1e6,
@@ -408,7 +408,30 @@ large_sd_blocks_with_ends <- add_contig_ends(large_sd_blocks, df) %>%
   relocate(genes, .after = last_col()) %>%
   data.table()
 
+
 large_sd_blocks_with_ends
+save(file="~/Desktop/large_sd_blocks.Rdata", large_sd_blocks_with_ends)
+load(file="~/Desktop/large_sd_blocks.Rdata")
+large_sd_blocks_with_ends$length = large_sd_blocks_with_ends$end - large_sd_blocks_with_ends$start
+large_sd_blocks_with_ends$y=(large_sd_blocks_with_ends$length)
+large_sd_blocks_with_ends$x=(large_sd_blocks_with_ends$`# contig ends`)
+large_sd_blocks_with_ends$top_context = gsub(":.*", "", large_sd_blocks_with_ends$sequence_context)
+library(ggpubr)
+p.len_vs_n_samples = ggplot(data=large_sd_blocks_with_ends,
+                            aes(x=x, y=y)
+                            ) +
+  geom_point()+
+  scale_y_continuous(trans="log10", labels = comma)+
+  scale_x_continuous(trans="log10", labels = comma)+
+  annotation_logticks(sides = "l")+
+  geom_smooth(se=FALSE, method = "lm")+
+  #facet_wrap(~top_context)+
+  stat_cor( method="pearson")+
+  theme_cowplot()+
+  xlab("# of conting ends across the 47 HPRC samples")+
+  ylab("Length of the SD locus")
+  
+ggsave(file="~/Desktop/len_vs_nsamples.pdf", plot=p.len_vs_n_samples, height=8, width=8)
 
 #----------------------- windowed anlysis -----------------------------------#
 myseqlengths <- FAI_v1.1$chrlen
