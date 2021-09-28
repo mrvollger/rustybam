@@ -86,11 +86,11 @@ rule alignment2:
             -ax asm20 \
             --secondary=no --eqx -s 25000 \
             <(seqtk seq \
-                -M <(paftools.js sam2paf {input.aln} | cut -f 6,8,9 | bedtools sort -i -) \
+                -M <(samtools view -h {input.aln} | paftools.js sam2paf - | cut -f 6,8,9 | bedtools sort -i -) \
                 -n "N" {input.ref} \
             ) \
             <(seqtk seq \
-                -M <(paftools.js sam2paf {input.aln} | cut -f 1,3,4 | bedtools sort -i -) \
+                -M <(samtools view -h {input.aln} | paftools.js sam2paf - | cut -f 1,3,4 | bedtools sort -i -) \
                 -n "N" {input.query} \
             ) \
             | samtools view -b - \
