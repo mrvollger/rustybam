@@ -13,10 +13,22 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) {
 }
 if (!require("karyoploteR")) BiocManager::install("karyoploteR")
 if (!require("GenomicRanges")) BiocManager::install("GenomicRanges")
+if (!require("HelloRanges")) BiocManager::install("HelloRanges")
+
 library(openxlsx)
 library(ggplotify)
 library(ggridges)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+odir <<- "../../plots"
+my_ggsave <- function(filename, plot = last_plot(), ...){
+  filename=glue(filename)
+  ggsave(filename, plot=plot, ...)
+  basename = tools::file_path_sans_ext(filename)
+  table_out = paste0(basename, ".datatable.tsv")
+  data=apply(plot$data,2,as.character)
+  print(head(data))
+  write.table(data, file=table_out, sep="\t", row.names = F, quote = F)
+}
 
 if (F) {
   load("~/Desktop/Rdata/plotutils.data")
@@ -29,7 +41,8 @@ if (F) {
   )
 
   pre <- "~/Desktop/EichlerVolumes/assembly_breaks/nobackups/rustybam_2021-08-16/reference_alignment/CHM13_V1.1"
-
+  pre <- "~/Desktop/EichlerVolumes/assembly_breaks/nobackups/rustybam_2021-09-23/reference_alignment/CHM13_V1.1"
+  
   hs <- createStyle(
     textDecoration = "BOLD", fontColour = "#000000", fontSize = 12,
     border = "bottom", borderStyle = "medium", halign = "center"
@@ -158,9 +171,9 @@ if (F) {
 
   dfr <- fread(glue("{pre}/ends/windowed.all.ends.bed"))
 
-  save.image(file = "../../plots/contig_ends.RData")
+  save.image(file = glue("{odir}/contig_ends.RData"))
 } else {
-  load("../../plots/contig_ends.RData")
+  load(glue("{odir}/contig_ends.RData"))
 }
 ########################################################################
 
@@ -225,8 +238,8 @@ ideo
 df$simple_seq_content <- recode(df$sequence_context,
   `Chromosome end` = "Chromosome end or Poisson",
   `Poisson breaks` = "Chromosome end or Poisson",
-  `SD and High GA/TC (80%)` = "SD",
-  `SD` = "SD",
+  `SD and High GA/TC (80%)` = "SD and High GA/TC (80%)",
+  `SD` = "SD and High GA/TC (80%)",
   `Alpha` = "Satellite",
   `Satellite` = "Satellite",
   `10% Low Complexity` = "Satellite",
@@ -235,13 +248,14 @@ df$simple_seq_content <- recode(df$sequence_context,
   `other` = "other"
 )
 simple_colors <- c(
-  SD = NEWCOLOR,
+  `SD and High GA/TC (80%)` = NEWCOLOR,
   Satellite = "darkblue",
   `Chromosome end or Poisson` = "lightgreen",
   `High GA/TC (80%)` = "darkgreen",
   other = OLDCOLOR
 )
 df$simple_seq_content <- factor(df$simple_seq_content, levels = rev(names(simple_colors)))
+
 
 simple_p <- ggplot(data = df, aes(y = simple_seq_content, fill = simple_seq_content)) +
   geom_bar(alpha = 0.9) +
@@ -257,7 +271,7 @@ simple_p <- ggplot(data = df, aes(y = simple_seq_content, fill = simple_seq_cont
   coord_cartesian(clip = "off") +
   ggtitle("Contig ends (gaps) in HPRC Hifiasm assemblies")
 simple_p
-ggsave("plots/simple_hifiasm_contig_ends_hist.pdf", height = 4, width = 8, plot = simple_p)
+my_ggsave("{odir}/simple_hifiasm_contig_ends_hist.pdf", height = 4, width = 8, plot = simple_p)
 
 
 p <- ggplot(data = df, aes(y = sequence_context, fill = sequence_context)) +
@@ -268,9 +282,11 @@ p <- ggplot(data = df, aes(y = sequence_context, fill = sequence_context)) +
   xlab("Number of contig ends") +
   theme_cowplot() +
   theme(legend.position = "none") +
-  coord_cartesian(clip = "off") +
+  coord_cartesian(clip = "off") + 
+  theme(plot.margin=margin(r=1, unit="in")) +
   ggtitle("Contig ends (gaps) in HPRC Hifiasm assemblies")
 p
+my_ggsave(plot=p, height=9/2, width=16/2, file="{odir}/hifiasm_contig_ends_hist.pdf")
 
 pp <- ggplot(data = df) +
   geom_bar(aes(y = paste(sample, hap), fill = Superpopulation)) +
@@ -280,19 +296,20 @@ pp <- ggplot(data = df) +
   ylab("") +
   xlab("Number of contig ends per sample")
 pp
+my_ggsave(plot=pp, height=12, width=8, file="{odir}/num_hprc_contig_ends.pdf")
 
 z <- cowplot::plot_grid(p, pp, rel_heights = c(1, 3), ncol = 1)
-
+z
 f <- cowplot::plot_grid(z, ideo, ncol = 2, rel_widths = c(1, 2))
 f
-ggsave("plots/1_hifiasm_contig_ends.pdf", height = 16, width = 24, plot = f)
+ggsave(glue("{odir}/1_hifiasm_contig_ends.pdf"), height = 16, width = 24, plot = f)
 
 
 #-----------------------AFR-----------------------------------#
 
 afr <- make_karyoplot(gdf[df$Superpopulation == "AFR"], gdf[df$Superpopulation != "AFR"], c1 = "orange", c2 = "blue") +
   theme_map(font_size = 16) + ggtitle("African contig end vs non-African")
-ggsave("plots/4_afr_contig_ends.pdf", height = 12, width = 12)
+my_ggsave("{odir}/4_afr_contig_ends.pdf", height = 12, width = 12)
 
 #-----------------------TABLE-----------------------------------#
 
@@ -332,7 +349,7 @@ ncol = 1
 )
 other_ideo <- make_karyoplot(gdf[df$sequence_context == "other"], GRanges(), c1 = OLDCOLOR, window.size = 5e5, ym = 10) +
   ggtitle("Position of contig ends that were 'other'")
-ggsave(file = "plots/3_annotations_in_other_contig_ends.pdf", height = 12, width = 16, plot = cowplot::plot_grid(zz, other_ideo, ncol = 2))
+ggsave(file = glue("{odir}/3_annotations_in_other_contig_ends.pdf"), height = 12, width = 16, plot = cowplot::plot_grid(zz, other_ideo, ncol = 2))
 
 
 ofemale <- gdf[!is.na(df$Sex) & df$sequence_context == "other" & df$Sex == "female"]
@@ -365,6 +382,7 @@ add_contig_ends <- function(q.df, end.df, slop = 0) {
     summarise(
       `# contig ends` = n(),
       n_samples = length(unique(sample)),
+      n_haplotypes = length(unique(paste(sample,hap))),
       sequence_context = mycount(sequence_context)
     ) %>%
     ungroup() %>%
@@ -410,28 +428,30 @@ large_sd_blocks_with_ends <- add_contig_ends(large_sd_blocks, df) %>%
 
 
 large_sd_blocks_with_ends
-save(file="~/Desktop/large_sd_blocks.Rdata", large_sd_blocks_with_ends)
-load(file="~/Desktop/large_sd_blocks.Rdata")
+#save(file="~/Desktop/large_sd_blocks.Rdata", large_sd_blocks_with_ends)
+#load(file="~/Desktop/large_sd_blocks.Rdata")
 large_sd_blocks_with_ends$length = large_sd_blocks_with_ends$end - large_sd_blocks_with_ends$start
 large_sd_blocks_with_ends$y=(large_sd_blocks_with_ends$length)
 large_sd_blocks_with_ends$x=(large_sd_blocks_with_ends$`# contig ends`)
 large_sd_blocks_with_ends$top_context = gsub(":.*", "", large_sd_blocks_with_ends$sequence_context)
+large_sd_blocks_with_ends$genes=sapply(large_sd_blocks_with_ends$genes, paste, collapse=",")
+dim(large_sd_blocks_with_ends)
 library(ggpubr)
 p.len_vs_n_samples = ggplot(data=large_sd_blocks_with_ends,
-                            aes(x=x, y=y)
+                            aes(x=n_haplotypes, y=y)
                             ) +
   geom_point()+
   scale_y_continuous(trans="log10", labels = comma)+
-  scale_x_continuous(trans="log10", labels = comma)+
+  #scale_x_continuous(trans="log10", labels = comma)+
   annotation_logticks(sides = "l")+
   geom_smooth(se=FALSE, method = "lm")+
   #facet_wrap(~top_context)+
   stat_cor( method="pearson")+
   theme_cowplot()+
-  xlab("# of conting ends across the 47 HPRC samples")+
+  xlab("# broken assemblies in SD loci across the 94 HPRC haplotypes")+
   ylab("Length of the SD locus")
-  
-ggsave(file="~/Desktop/len_vs_nsamples.pdf", plot=p.len_vs_n_samples, height=8, width=8)
+p.len_vs_n_samples  
+my_ggsave(file="{odir}/len_vs_nsamples.pdf", plot=p.len_vs_n_samples, height=8, width=8)
 
 #----------------------- windowed anlysis -----------------------------------#
 myseqlengths <- FAI_v1.1$chrlen
@@ -461,13 +481,13 @@ openxlsx::write.xlsx(
     `Contig ends within genes` =  gene_break_summary,
     `1 Mbp windows with contig ends` = windows_with_ends
   ),
-  headerStyle = hs, numFmt = "COMMA", colWidths = "auto", gridLines = FALSE, colNames = TRUE,
-  "plots/contig_ends.xlsx"
+  headerStyle = hs, numFmt = "COMMA", colWidths = "auto", gridLines = FALSE, colNames = TRUE, overwrite = TRUE,
+  glue("{odir}/contig_ends.xlsx")
 )
 
 #----------------------- Seq content genome wide -----------------------------------#
 if (F) {
-  if (F) {
+  if (T) {
     colnames(nuc) <- gsub("\\d+_", "", colnames(nuc))
     nuc$pct_ga <- (nuc$num_A + nuc$num_G) / nuc$seq_len
     nuc$pct_tc <- (nuc$num_T + nuc$num_C) / nuc$seq_len
@@ -501,7 +521,7 @@ if (F) {
     theme(legend.position = "none") +
     ggtitle("Simulation of sequnece content in 1,000 bp widnows (n=100,000)")
   p_seq_content
-  ggsave("plots/2_simulation_of_sequence_content.pdf", plot = p_seq_content, height = 9, width = 12)
+  my_ggsave("{odir}/2_simulation_of_sequence_content.pdf", plot = p_seq_content, height = 9, width = 12)
 }
 
 
@@ -547,12 +567,22 @@ if (F) {
       sum(overlaps(smalldf, othersat, mincov = 0.1)),
       sum(overlaps(smalldf, toGRanges(high_nuc) + 10e3))
     )
-  )
-
+  ) %>% merge(sim_median) %>%
+  mutate( observation = value, `fold increase`=value/median_simulation) %>%
+  data.table()
+  obs
+  library(gridExtra)
   p_sd_content <- ggplot(data = sim) +
     geom_density_ridges(aes(x = value, y = name, fill = name), alpha = 0.5) +
     geom_point(data = obs, aes(x = value, y = name, color = name), size = 3) +
-    geom_text(data = obs, aes(x = value, y = name, label = comma(value), color = name), size = 3, vjust = -1) +
+    geom_text(
+      data = obs, aes(x = value, y = name, label = comma(value), color = name),
+      vjust = -1
+      ) +
+    geom_text(data = obs, 
+              aes(x = (value+median_simulation)/2, y = name, label= paste0("fold increase = ", round(`fold increase`, 2)), color = name),
+              vjust=-3
+              )+
     ylab("Sequence content") +
     xlab("# of windows with the annotation") +
     theme_minimal_grid() +
@@ -561,10 +591,13 @@ if (F) {
     scale_color_manual(values = mycolors) +
     scale_x_continuous(labels = comma) +
     coord_cartesian(xlim = c(1, NA)) +
-    annotation_custom(tableGrob(sim_median), xmin = 7e3, xmax = 20e3, ymin = "SD", ymax = "SD") +
+    annotation_custom(tableGrob(obs %>% dplyr::select(-value), 
+                                theme=ttheme_minimal(), rows = NULL),
+                      xmin = 10e3, xmax = 20e3, ymin = "Satellite", ymax = "Satellite") +
     ggtitle(glue("Simulation showing the number of windows (1 kbp width) out of {nrow(df)}\nthat overlap with seq class (n=10,000)"))
   p_sd_content
-  ggsave("plots/2_simulation_of_SDs.pdf", plot = p_sd_content, height = 9, width = 12)
+  obs
+  my_ggsave("{odir}/2_simulation_of_SDs.pdf", plot = p_sd_content, height = 9, width = 12)
 }
 
 
@@ -605,7 +638,7 @@ summary <- sd.plot.df %>%
 sd_col <- c(NEWCOLOR, OLDCOLOR)
 names(sd_col) <- c(TRUE, FALSE)
 sd_density <- ggplot(data = sd.plot.df, aes(x = matchB, y = fracMatch * 100, color = ContigEnd, fill = ContigEnd)) +
-  annotation_custom(tableGrob(t(summary)), xmin = 6, xmax = 7, ymin = 91, ymax = 93) +
+  annotation_custom(tableGrob(t(summary), theme=ttheme_minimal()), xmin = 6, xmax = 7, ymin = 91, ymax = 93) +
   geom_point(alpha = 0.25, size = 0.1) +
   geom_density_2d(size = 0.5, alpha = 0.75) +
   scale_fill_manual(values = sd_col) +
@@ -616,7 +649,7 @@ sd_density <- ggplot(data = sd.plot.df, aes(x = matchB, y = fracMatch * 100, col
   annotation_logticks(sides = "b") +
   ggtitle("Distribution of SD length and identity\nin contig ends vs whole genome") +
   theme_cowplot(font_size = 18)
-ggsave("plots/5_SD_length_frac_density.pdf", height = 4 * 1.5, width = 6 * 1.5, plot = sd_density)
+my_ggsave("{odir}/5_SD_length_frac_density.pdf", height = 4 * 1.5, width = 6 * 1.5, plot = sd_density)
 sd_density
 
 
@@ -656,47 +689,52 @@ df[, c(1:3, 7, 6, 5, 1:3)]
 
 #----------------------- contig ends vs coverage -----------------------------------#
 problems <- c(
-  #"SD and High GA/TC (80%)"
+  "SD and High GA/TC (80%)",
   "High GA/TC (80%)"
  )
 
 ends_and_depht <- df %>%
-  group_by(sample) %>%
+  filter(sequence_context %in% problems) %>%
+  group_by(sample, sequence_context) %>%
   summarise(Number_of_GA_TC_breaks = sum(sequence_context %in% problems), Sex = unique(Sex), Superpopulation = unique(Superpopulation)) %>%
   merge(read_data, by.x = "sample", by.y = "sample_id") %>%
-  data.table()
-
+  mutate(sequence_context = as.character(sequence_context)) %>%
+  data.table() 
+library(ggforce)
 p.cov.breaks <- ggplot(
   data = ends_and_depht,
   aes(
     x = total_Gbp, 
-    y = Number_of_GA_TC_breaks, 
-    #color = Superpopulation
+    y = Number_of_GA_TC_breaks
     )
   ) +
   geom_point() +
   geom_smooth(method = "lm", alpha = 0.20, size = 0.25, se=FALSE) +
   geom_text_repel(aes(label=sample))+
   theme_cowplot() +
-  facet_zoom(x = total_Gbp < 200, show.area=TRUE)+
+  scale_x_log10()+scale_y_log10()+annotation_logticks()+
+  #facet_zoom(x = total_Gbp < 200, show.area=TRUE)+
+  facet_row(~sequence_context, scales = "free")+
   ggtitle("Number of contig ends in high GA/TC (80%) vs total Gbp of sequencing") +
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") + 
+  xlab("Total Gbp of Hifi data") + ylab("# of GA/TC (80%) associated contig ends")
 p.cov.breaks
-ggsave("plots/7_sample_coverage_and_breaks.pdf", height = 9, width = 9, plot = p.cov.breaks)
+my_ggsave("{odir}/7_sample_coverage_and_breaks.pdf", height = 6, width = 12, plot = p.cov.breaks)
 
 read_data
 
 p.read.n50 = ggplot(
-  data = read_data,#[sample_id != "HG002"],
+  data = read_data[sample_id != "HG002"],
   aes(x = total_Gbp, y = N50)
   ) +
   geom_point() +
   geom_smooth(method = "lm", alpha = 0.20, size = 0.25, se=F) +
   theme_cowplot() +
-  facet_zoom(x = total_Gbp < 200, show.area=TRUE)+
+  #facet_zoom(x = total_Gbp < 200, show.area=TRUE)+
   ggtitle("Read N50 vs total Gbp of sequencing")
+p.read.n50
 # facet_row(~Sex);p.cov.breaks
-ggsave("plots/8_read_n50_vs_total_gbp.pdf", height = 9, width = 16, plot = p.read.n50)
+my_ggsave("{odir}/8_read_n50_vs_total_gbp.pdf", height = 9, width = 16, plot = p.read.n50)
 
 
 #----------------------- collapsed bases -----------------------------------#
@@ -726,4 +764,4 @@ col.plot <- ggplot(data = col_sum, aes(y = sample, x = value, fill = name)) +
   ylab("") +
   xlab("Number of collapsed bp")
 col.plot
-ggsave("plots/collapses.pdf", height = 8, width = 12, plot = col.plot)
+my_ggsave("{odir}/collapses.pdf", height = 8, width = 12, plot = col.plot)

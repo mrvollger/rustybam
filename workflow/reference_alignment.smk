@@ -59,14 +59,12 @@ rule alignment:
         """
         minimap2 -K 8G -t {threads} \
             -ax asm20 \
-            -r 100k,200k \
             --secondary=no --eqx -s 25000 \
-                    {input.ref} {input.query} > {output.aln} \
-                        2> {log}
+            {input.ref} {input.query} > {output.aln} \
+            2> {log}
 
         minimap2 -K 8G -t {threads} \
             -ax asm20 \
-            -r 100k,200k \
             --secondary=no --eqx -s 25000 \
             <(seqtk seq \
                 -M <(cut -f 6,8,9 {output.aln} | bedtools sort -i -) \

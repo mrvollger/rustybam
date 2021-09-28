@@ -5,8 +5,8 @@ use clap_generate::{
     generators::{Bash, Zsh},
 };
 use std::env;
-use std::fs::File;
-use std::io::prelude::*;
+//use std::fs::File;
+//use std::io::prelude::*;
 
 fn main() {
     let yaml = load_yaml!("src/cli.yaml");
@@ -17,11 +17,11 @@ fn main() {
     app.set_bin_name("rustybam");
     //let out_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("completions/");
     let out_dir = env::var("OUT_DIR").unwrap();
-
-    eprintln!("{}", out_dir);
-    let mut file = File::create("foo.txt").expect("unable to open");
-    file.write(out_dir.as_bytes()).expect("unable to write");
-
+    /*
+        eprintln!("{}", out_dir);
+        let mut file = File::create("foo.txt").expect("unable to open");
+        file.write(out_dir.as_bytes()).expect("unable to write");
+    */
     generate_to::<Bash, _, _>(&mut app, "rustybam", &out_dir)
         .expect("Failed to generate bash completions");
     generate_to::<Zsh, _, _>(&mut app, "rustybam", &out_dir)
