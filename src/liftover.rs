@@ -40,9 +40,7 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
     trimmed_paf.cigar = PafRecord::collapse_long_cigar(&paf.subset_cigar(start_idx, end_idx));
 
     if paf.strand == '-' {
-        let tmp = trimmed_paf.q_en;
-        trimmed_paf.q_en = trimmed_paf.q_st;
-        trimmed_paf.q_st = tmp;
+        std::mem::swap(&mut trimmed_paf.q_en, &mut trimmed_paf.q_st);
     }
     // make end index not inclusive
     trimmed_paf.q_en += 1;

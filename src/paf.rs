@@ -459,9 +459,7 @@ pub fn paf_swap_query_and_target(paf: &PafRecord) -> PafRecord {
     flipped.q_en = paf.t_en;
 
     // flip the index
-    let temp = flipped.qpos_aln;
-    flipped.qpos_aln = flipped.tpos_aln;
-    flipped.tpos_aln = temp;
+    std::mem::swap(&mut flipped.qpos_aln, &mut flipped.tpos_aln);
 
     if paf.strand == '-' {
         flipped.qpos_aln.reverse();
