@@ -47,7 +47,7 @@ rule alignment:
         ref=get_ref,
         query=get_asm,
     output:
-        aln="reference_alignment/{ref}/{sm}.sam",
+        aln=temp("reference_alignment/{ref}/{sm}.bam"),
     log:
         "logs/alignment.{ref}_{sm}.log",
     benchmark:
@@ -60,29 +60,48 @@ rule alignment:
         minimap2 -K 8G -t {threads} \
             -ax asm20 \
             --secondary=no --eqx -s 25000 \
-            {input.ref} {input.query} > {output.aln} \
-            2> {log}
+            {input.ref} {input.query} \
+            | samtools view -b - \
+            > {output.aln} 2> {log}
+        """
 
+
+rule alignment2:
+    input:
+        ref=get_ref,
+        query=get_asm,
+        aln=rules.alignment.output.aln,
+    output:
+        aln=temp("reference_alignment/{ref}/{sm}.2.bam"),
+    log:
+        "logs/alignment.{ref}_{sm}.2.log",
+    benchmark:
+        "logs/alignment.{ref}_{sm}.2.benchmark.txt"
+    conda:
+        "envs/environment.yml"
+    threads: config.get("aln_threads", 4)
+    shell:
+        """
         minimap2 -K 8G -t {threads} \
             -ax asm20 \
             --secondary=no --eqx -s 25000 \
             <(seqtk seq \
-                -M <(cut -f 6,8,9 {output.aln} | bedtools sort -i -) \
+                -M <(paftools.js sam2paf {input.aln} | cut -f 6,8,9 | bedtools sort -i -) \
                 -n "N" {input.ref} \
             ) \
             <(seqtk seq \
-                -M <(cut -f 1,3,4 {output.aln} | bedtools sort -i -) \
+                -M <(paftools.js sam2paf {input.aln} | cut -f 1,3,4 | bedtools sort -i -) \
                 -n "N" {input.query} \
             ) \
-            | samtools view \
-            >> {output.aln} \
-            2>> {log}
+            | samtools view -b - \
+            > {output.aln} 2> {log}
         """
 
 
 rule compress_sam:
     input:
         aln=rules.alignment.output.aln,
+        aln2=rules.alignment2.output.aln,
     output:
         aln="reference_alignment/{ref}/bam/{sm}.bam",
         index="reference_alignment/{ref}/bam/{sm}.bam.csi",
@@ -91,7 +110,7 @@ rule compress_sam:
         "envs/environment.yml"
     shell:
         """
-        samtools view -u {input.aln} \
+        samtools cat {input.aln} {input.aln2} \
             | samtools sort -m 8G --write-index \
                  -o {output.aln}
         """
