@@ -33,18 +33,17 @@ rule alignment_index:
     input:
         ref=get_ref,
     output:
-        umi="reference_alignment/{ref}/{ref}.umi",
+        mmi="reference_alignment/{ref}/{ref}.mmi",
     threads: 8
     conda:
         "envs/environment.yml"
     shell:
-        "minimap2 -t {threads} -ax asm20 -d {output.umi} {input.ref}"
+        "minimap2 -t {threads} -ax asm20 -d {output.mmi} {input.ref}"
 
 
 rule alignment:
     input:
-        #ref=rules.alignment_index.output.umi,
-        ref=get_ref,
+        ref=rules.alignment_index.output.mmi,
         query=get_asm,
     output:
         aln=temp("reference_alignment/{ref}/{sm}.bam"),
@@ -68,7 +67,7 @@ rule alignment:
 
 rule alignment2:
     input:
-        ref=get_ref,
+        ref_fasta=get_ref,
         query=get_asm,
         aln=rules.alignment.output.aln,
     output:
@@ -86,8 +85,8 @@ rule alignment2:
             -ax asm20 \
             --secondary=no --eqx -s 25000 \
             <(seqtk seq \
-                -M <(samtools view -h {input.aln} | paftools.js sam2paf - | cut -f 6,8,9 | bedtools sort -i -) \
-                -n "N" {input.ref} \
+                -M <(paftools.js sam2paf {input.aln} | cut -f 6,8,9 | bedtools sort -i -) \
+                -n "N" {input.ref_fasta} \
             ) \
             <(seqtk seq \
                 -M <(samtools view -h {input.aln} | paftools.js sam2paf - | cut -f 1,3,4 | bedtools sort -i -) \
