@@ -195,6 +195,7 @@ rule collect_contig_ends:
         head -n 1 {input.beds[0]} > {output.bed}
         cat {input.beds} \
           | grep -v "^#" \
+          | awk '$2 > $3 {{ temp = $3; $3 = $2; $2 = temp }} 1' OFS='\t' \
           | bedtools sort -i - \
           >> {output.bed}
         """
