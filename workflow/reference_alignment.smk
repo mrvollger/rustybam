@@ -245,7 +245,7 @@ rule pre_end_content:
         ref=get_ref,
         fai=get_fai,
     output:
-        allbed="reference_alignment/{ref}/ends/all.nuc.content.bed",
+        allbed="reference_alignment/{ref}/ends/all.nuc.content.bed.gz",
     threads: 1
     conda:
         "envs/environment.yml"
@@ -254,6 +254,7 @@ rule pre_end_content:
         bedtools nuc \
           -fi {input.ref} \
           -bed <(bedtools makewindows -s 100 -w 1000 -g {input.fai} ) \
+          | pigz \
           > {output.allbed}
         """
 
@@ -264,7 +265,7 @@ rule end_content:
         allbed=rules.pre_end_content.output.allbed,
         fai=get_fai,
     output:
-        bed="reference_alignment/{ref}/ends/all.ends.nuc.content.bed",
+        bed="reference_alignment/{ref}/ends/all.ends.nuc.content.bed.gz",
     threads: 1
     conda:
         "envs/environment.yml"
@@ -272,6 +273,7 @@ rule end_content:
         """
         bedtools intersect -header -u -a {input.allbed} \
           -b <(bedtools slop -b 10000 -g {input.fai} -i {input.bed}) \
+          | pigz \
           > {output.bed}
         """
 

@@ -18,6 +18,10 @@ if (!require("HelloRanges")) BiocManager::install("HelloRanges")
 library(openxlsx)
 library(ggplotify)
 library(ggridges)
+library(ggpmisc)
+library(ggforce)
+library(ggpubr)
+
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 odir <<- "../../plots"
 my_ggsave <- function(filename, plot = last_plot(), ...){
@@ -42,7 +46,9 @@ if (F) {
 
   pre <- "~/Desktop/EichlerVolumes/assembly_breaks/nobackups/rustybam_2021-08-16/reference_alignment/CHM13_V1.1"
   pre <- "~/Desktop/EichlerVolumes/assembly_breaks/nobackups/rustybam_2021-09-23/reference_alignment/CHM13_V1.1"
-  
+  inversions=readbed(glue("{pre}/../../variants_freeze4inv_sv_inv_chm13_processed_arbigent_filtered_PAVgenAdded_onlyINVs_v1.0tov1.1.bed"), tag="INV")
+  inversion2=fread(glue("{pre}/../../variants_freeze4inv_sv_inv_chm13_processed_arbigent_filtered_PAVgenAdded_onlyINVs_v1.0tov1.1_mCNVoverlap.tsv"))
+  inversion2
   hs <- createStyle(
     textDecoration = "BOLD", fontColour = "#000000", fontSize = 12,
     border = "bottom", borderStyle = "medium", halign = "center"
@@ -57,7 +63,7 @@ if (F) {
 
   ### load seq content
   seq_content <- readbed(
-    glue("{pre}/ends/all.ends.nuc.content.bed.gz"),
+    glue("{pre}/ends/all.ends.nuc.content.bed"),
     tag = "nuc"
   )
   colnames(seq_content) <- gsub("\\d+_", "", colnames(seq_content))
@@ -69,7 +75,7 @@ if (F) {
     data.table()
  
   nuc <- readbed(
-    glue("{pre}/ends/all.nuc.content.bed.gz"),
+    glue("{pre}/ends/all.nuc.content.bed"),
     tag = "nuc"
   )
     ################################################
@@ -130,6 +136,7 @@ if (F) {
   df$acro_p <- is_achro(data.table(chr = df$`#query_name`, start = df$query_start, end = df$query_end))
 
   # add in the number of breaks in the regions to deinfe the liekely possion breaks
+  # gdf <- toGRanges(df[, c("#query_name", "query_start", "query_end", "NID")])
   df$n_contig_ends_in_region <- countOverlaps(gdf + 1e5, gdf)
   sum(df$n_contig_ends_in_region <= 2)
 
@@ -425,7 +432,13 @@ large_sd_blocks_with_ends <- add_contig_ends(large_sd_blocks, df) %>%
   arrange(-`# contig ends`) %>%
   relocate(genes, .after = last_col()) %>%
   data.table()
-
+large_sd_blocks_with_ends$`Contains inversions` = (overlaps(large_sd_blocks_with_ends, inversions, mincov = 0.1))
+large_sd_blocks_with_ends$`Flanks inversions` = (overlaps(large_sd_blocks_with_ends, inversions))
+large_sd_blocks_with_ends$mCNV = overlaps(large_sd_blocks_with_ends, inversion2[inversion2$mCNV_maxgap50kb_overlap,])
+large_sd_blocks_with_ends$`SD locus`  = case_when(large_sd_blocks_with_ends$`Contains inversions` ~ "Has inversions",
+                                                 large_sd_blocks_with_ends$`Flanks inversions` ~ "Flanks inversions",
+                                                 TRUE ~ "No inversions"
+                                                 )
 
 large_sd_blocks_with_ends
 #save(file="~/Desktop/large_sd_blocks.Rdata", large_sd_blocks_with_ends)
@@ -436,20 +449,23 @@ large_sd_blocks_with_ends$x=(large_sd_blocks_with_ends$`# contig ends`)
 large_sd_blocks_with_ends$top_context = gsub(":.*", "", large_sd_blocks_with_ends$sequence_context)
 large_sd_blocks_with_ends$genes=sapply(large_sd_blocks_with_ends$genes, paste, collapse=",")
 dim(large_sd_blocks_with_ends)
-library(ggpubr)
+
+
 p.len_vs_n_samples = ggplot(data=large_sd_blocks_with_ends,
                             aes(x=n_haplotypes, y=y)
                             ) +
-  geom_point()+
+  geom_point(aes(color=`SD locus`))+
   scale_y_continuous(trans="log10", labels = comma)+
   #scale_x_continuous(trans="log10", labels = comma)+
   annotation_logticks(sides = "l")+
   geom_smooth(se=FALSE, method = "lm")+
   #facet_wrap(~top_context)+
   stat_cor( method="pearson")+
+  scale_color_manual(values=c("purple",NEWCOLOR,OLDCOLOR))+
   theme_cowplot()+
-  xlab("# broken assemblies in SD loci across the 94 HPRC haplotypes")+
-  ylab("Length of the SD locus")
+  xlab("# broken haplotype assemblies across the SD locus")+
+  geom_vline(aes(xintercept=94), color="black", linetype="dashed")+
+  ylab("Length of the SD locus") + theme(legend.position = "top")
 p.len_vs_n_samples  
 my_ggsave(file="{odir}/len_vs_nsamples.pdf", plot=p.len_vs_n_samples, height=8, width=8)
 
@@ -690,7 +706,8 @@ df[, c(1:3, 7, 6, 5, 1:3)]
 #----------------------- contig ends vs coverage -----------------------------------#
 problems <- c(
   "SD and High GA/TC (80%)",
-  "High GA/TC (80%)"
+  "High GA/TC (80%)", 
+  "SD"
  )
 
 ends_and_depht <- df %>%
@@ -699,42 +716,55 @@ ends_and_depht <- df %>%
   summarise(Number_of_GA_TC_breaks = sum(sequence_context %in% problems), Sex = unique(Sex), Superpopulation = unique(Superpopulation)) %>%
   merge(read_data, by.x = "sample", by.y = "sample_id") %>%
   mutate(sequence_context = as.character(sequence_context)) %>%
+  filter(sample != "HG002") %>%
   data.table() 
 library(ggforce)
 p.cov.breaks <- ggplot(
-  data = ends_and_depht,
+  data = ends_and_depht %>% filter(sequence_context!="SD"),
   aes(
-    x = total_Gbp, 
-    y = Number_of_GA_TC_breaks
+    x = total_Gbp/3.1, 
+    y = Number_of_GA_TC_breaks,
+    label=paste(sample, 
+                paste("Fold coverage:", round(total_Gbp/3.1,1)),
+                paste("# Contig ends:", Number_of_GA_TC_breaks),
+                sep="\n")
     )
   ) +
   geom_point() +
   geom_smooth(method = "lm", alpha = 0.20, size = 0.25, se=FALSE) +
-  geom_text_repel(aes(label=sample))+
+  stat_cor( method="pearson", label.x.npc = "left")+
+  stat_dens2d_filter_g(group="Number_of_GA_TC_breaks", geom="label_repel", nudge_y=-20, box.padding = 2, keep.fraction = 0.10, alpha=0.75, min.segment.length = unit(0, 'lines'))+
   theme_cowplot() +
-  scale_x_log10()+scale_y_log10()+annotation_logticks()+
+  scale_x_continuous() + 
+  scale_y_continuous() + 
+  #annotation_logticks()+
   #facet_zoom(x = total_Gbp < 200, show.area=TRUE)+
   facet_row(~sequence_context, scales = "free")+
-  ggtitle("Number of contig ends in high GA/TC (80%) vs total Gbp of sequencing") +
+  ggtitle("Number of contig ends in high GA/TC regions vs coverage") +
   theme(legend.position="bottom") + 
-  xlab("Total Gbp of Hifi data") + ylab("# of GA/TC (80%) associated contig ends")
+  xlab("Fold coverage of Hifi data") + ylab("# of GA/TC (80%) associated contig ends")
+my_ggsave("{odir}/7_sample_coverage_and_breaks.pdf", height = 8, width = 16, plot = p.cov.breaks)
 p.cov.breaks
-my_ggsave("{odir}/7_sample_coverage_and_breaks.pdf", height = 6, width = 12, plot = p.cov.breaks)
 
 read_data
 
 p.read.n50 = ggplot(
-  data = read_data[sample_id != "HG002"],
-  aes(x = total_Gbp, y = N50)
+  data = ends_and_depht,
+  aes(x = N50, y = Number_of_GA_TC_breaks)
   ) +
   geom_point() +
   geom_smooth(method = "lm", alpha = 0.20, size = 0.25, se=F) +
+  stat_cor(method = "pearson") +
+  facet_row(~sequence_context, scales = "free")+
   theme_cowplot() +
+  xlab("Read N50 per sample") +
+  scale_x_continuous(label=comma) + 
+  ylab("Number of contig ends") +
   #facet_zoom(x = total_Gbp < 200, show.area=TRUE)+
-  ggtitle("Read N50 vs total Gbp of sequencing")
+  ggtitle("Number of contig ends vs read N50")
 p.read.n50
 # facet_row(~Sex);p.cov.breaks
-my_ggsave("{odir}/8_read_n50_vs_total_gbp.pdf", height = 9, width = 16, plot = p.read.n50)
+my_ggsave("{odir}/8_read_n50_vs_numer_of_breaks.pdf", height = 6, width = 12, plot = p.read.n50)
 
 
 #----------------------- collapsed bases -----------------------------------#
