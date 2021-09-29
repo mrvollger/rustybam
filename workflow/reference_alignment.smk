@@ -126,9 +126,10 @@ rule sam_to_paf:
         "samtools view -h {input.aln} | paftools.js sam2paf - > {output.paf}"
 
 
-rule paf_to_bed:
+rule aln_to_bed:
     input:
-        paf=rules.sam_to_paf.output.paf,
+        #paf=rules.sam_to_paf.output.paf,
+        aln=rules.compress_sam.output.aln,
     output:
         bed="reference_alignment/{ref}/bed/{sm}.bed",
     threads: 8
@@ -138,7 +139,7 @@ rule paf_to_bed:
         rb=config["rb"],
     shell:
         """
-        {params.rb} stats --paf {input.paf} > {output.bed}
+        {params.rb} stats {input.aln} > {output.bed}
         """
 
 
@@ -286,7 +287,7 @@ rule reference_alignment:
         #    sm=df["sample"].str.strip(),
         #    ref=config.get("ref").keys(),
         #),
-        expand(rules.ra_paf_to_bed.output, sm=df.index, ref=config.get("ref").keys()),
+        expand(rules.ra_aln_to_bed.output, sm=df.index, ref=config.get("ref").keys()),
         expand(rules.find_contig_ends.output, sm=df.index, ref=config.get("ref").keys()),
     message:
         "Reference alignments complete"
