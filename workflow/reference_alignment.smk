@@ -137,9 +137,10 @@ rule aln_to_bed:
         "envs/environment.yml"
     params:
         rb=config["rb"],
+    threads: 1
     shell:
         """
-        {params.rb} stats {input.aln} > {output.bed}
+        {params.rb} stats --threads {threads} {input.aln} > {output.bed}
         """
 
 
