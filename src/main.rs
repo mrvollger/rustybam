@@ -83,8 +83,11 @@ pub fn run_stats(args: &clap::ArgMatches) {
     // get stats
     for (idx, rec) in bam.records().enumerate() {
         eprint!("\rProcessing: {}", idx + 1);
-        let stats = bamstats::cigar_stats(rec.unwrap(), &bam_header);
-        bamstats::print_cigar_stats(stats, qbed);
+        let rec = rec.unwrap();
+        if !rec.is_unmapped() {
+            let stats = bamstats::cigar_stats(rec, &bam_header);
+            bamstats::print_cigar_stats(stats, qbed);
+        }
     }
     eprintln!();
 }
