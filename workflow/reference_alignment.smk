@@ -60,7 +60,7 @@ rule alignment:
             -ax asm20 \
             --secondary=no --eqx -s 25000 \
             {input.ref} {input.query} \
-            | samtools view -b - \
+            | samtools view -F 4 -b - \
             > {output.aln} 2> {log}
         """
 
@@ -92,7 +92,7 @@ rule alignment2:
                 -M <(samtools view -h {input.aln} | paftools.js sam2paf - | cut -f 1,3,4 | bedtools sort -i -) \
                 -n "N" {input.query} \
             ) \
-            | samtools view -b - \
+            | samtools view -F 4 -b - \
             > {output.aln} 2> {log}
         """
 
