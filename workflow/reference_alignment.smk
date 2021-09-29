@@ -132,7 +132,6 @@ rule aln_to_bed:
         aln=rules.compress_sam.output.aln,
     output:
         bed="reference_alignment/{ref}/bed/{sm}.bed",
-    threads: 8
     conda:
         "envs/environment.yml"
     params:
