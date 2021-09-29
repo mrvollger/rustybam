@@ -34,7 +34,7 @@ rule alignment_index:
         ref=get_ref,
     output:
         mmi="reference_alignment/{ref}/{ref}.mmi",
-    threads: 8
+    threads: 4
     conda:
         "envs/environment.yml"
     shell:
