@@ -28,6 +28,8 @@ target/release/rustybam
 
 ## Examples
 
+### Manipulating PAFs and creating liftovers
+
 > I have a `PAF` and I want to subset it for just a particular region in the reference.
 
 With `rustybam` its easy:
@@ -82,29 +84,49 @@ get more "miropeats" like intervals.
 Try out
 [SafFire](https://mrvollger.github.io/SafFire/)!
 
+### Splitting up a fastx file
+
+Split a fasta file between `stdout` and two other files both compressed and uncompressed.
+
+```shell
+cat {input.fasta} | rustybam fasta-split - two.fa.gz three.fa
+```
+
+Split a fastq file between `stdout` and two other files both compressed and uncompressed.
+
+```shell
+cat {input.fastq} | rustybam fastq-split - two.fq.gz three.fq
+```
+
 ## General usage
 
 ```
-./rustybam 0.1.1
+./rustybam 0.1.8
+
 Mitchell R. Vollger's alignment utilities
 
 USAGE:
     rustybam [OPTIONS] <SUBCOMMAND>
 
 FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+    -h, --help       Print help information
+    -V, --version    Print version information
 
 OPTIONS:
     -t, --threads <threads>    Number of threads to use for decompressing
 
 SUBCOMMANDS:
-    help        Prints this message or the help of the given subcommand(s)
-    liftover    liftover target sequence coordinates onto query sequence using a PAF
-    nucfreq     Get the frequencies of each bp at each position.
-    repeat      Report the longest repeat length at every position in a fasta.
-    stats       Get percent identity stats from a sam/bam/cram or PAF (add --paf)
-    suns        Extract the intervals in a genome (fasta) that are made up of SUNs
+    bedlength      count basepairs in a bed file
+    breakpaf       break up paf on indels of a certain size
+    fasta-split    reads in a fasta from stdin and divides into files (can compress by adding
+                   .gz)
+    fastq-split    reads in a fastq from stdin and divides into files (can compress by adding
+                   .gz)
+    help           Print this message or the help of the given subcommand(s)
+    liftover       liftover target sequence coordinates onto query sequence using a PAF
+    nucfreq        Get the frequencies of each bp at each position.
+    repeat         Report the longest repeat length at every position in a fasta.
+    stats          Get percent identity stats from a sam/bam/cram or PAF (add --paf)
 ```
 
 ### More details on `liftover`
