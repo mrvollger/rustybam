@@ -135,10 +135,10 @@ impl PafRecord {
             let tag = &caps[1];
             let value = &caps[3];
             // TODO fix cs string parsing when both cigar and cs are there.
-            if tag == "cg" {
-                cigar = cigar_from_str(value)?;
-            } else if tag == "cs" && cigar.len() == 0 {
+            if tag == "cs" {
                 cigar = cs_to_cigar(value)?;
+            } else if tag == "cg" && cigar.len() == 0 {
+                cigar = cigar_from_str(value)?;
             } else {
                 tags.push('\t');
                 tags.push_str(token);
