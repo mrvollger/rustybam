@@ -273,7 +273,7 @@ large_sd_blocks_with_ends$`Flanks inversions` = (overlaps(large_sd_blocks_with_e
 large_sd_blocks_with_ends$mCNV = overlaps(large_sd_blocks_with_ends, inversion2[inversion2$mCNV_maxgap50kb_overlap,])
 large_sd_blocks_with_ends$`SD locus`  = case_when(
   large_sd_blocks_with_ends$`Contains inversions` ~ "Has inversions",
-  large_sd_blocks_with_ends$`Flanks inversions` ~ "Flanks inversions",
+  #large_sd_blocks_with_ends$`Flanks inversions` ~ "Flanks inversions",
   TRUE ~ "No inversions"
 )
 
@@ -291,7 +291,7 @@ dim(large_sd_blocks_with_ends)
 
 p.len_vs_n_samples = ggplot(data = large_sd_blocks_with_ends,
                             aes(x = n_haplotypes, y = y)) +
-  geom_point(aes(color = `SD locus`, shape = mCNV),
+  geom_point(aes(color = `SD locus`),#, shape = mCNV),
              size = 3,
              alpha = 0.75) +
   scale_y_continuous(trans = "log10", labels = comma) +
@@ -300,7 +300,7 @@ p.len_vs_n_samples = ggplot(data = large_sd_blocks_with_ends,
   geom_smooth(se = FALSE, method = "lm") +
   #facet_wrap(~top_context)+
   stat_cor(method = "pearson") +
-  scale_color_manual(values = c("purple", NEWCOLOR, OLDCOLOR)) +
+  scale_color_manual(values = c( NEWCOLOR, OLDCOLOR)) +#"purple",
   theme_cowplot() +
   xlab("# broken haplotype assemblies across the SD locus") +
   geom_vline(aes(xintercept = 94), color = "black", linetype = "dashed") +
@@ -676,7 +676,7 @@ p.cov.breaks <- ggplot(
   stat_cor(method = "pearson", label.x.npc = "left") +
   stat_dens2d_filter_g(
     group = "Number_of_GA_TC_breaks",
-    geom = "label_repel",
+    #geom = "label_repel",
     nudge_y = -20,
     box.padding = 2,
     keep.fraction = 0.10,
@@ -692,6 +692,7 @@ p.cov.breaks <- ggplot(
   ggtitle("Number of contig ends in high GA/TC regions vs coverage") +
   theme(legend.position = "bottom") +
   xlab("Fold coverage of Hifi data") + ylab("# of GA/TC (80%) associated contig ends")
+p.cov.breaks 
 my_ggsave(
   "{odir}/7_sample_coverage_and_breaks.pdf",
   height = 8,

@@ -134,13 +134,18 @@ pub fn cigar_stats(mut rec: Record, header: &Header) -> Stats {
 
     // get the query coordinates
     stats.q_st = cigar.leading_hardclips() + cigar.leading_softclips();
-    stats.q_en = cigar.leading_hardclips() + 1 + // the plus 1 is to make the end exclusive [x, y) format 
-                cigar.read_pos(stats.r_en as u32 - 1, false, false).unwrap().unwrap() as i64;
+    stats.q_en = cigar.leading_hardclips()
+        + 1
+        + cigar
+            .read_pos(stats.r_en as u32 - 1, false, false)
+            .unwrap()
+            .unwrap() as i64; // the plus 1 is to make the end exclusive [x, y) format
+
     stats.q_len = cigar.leading_hardclips()
         + i64::try_from(rec.seq_len()).unwrap()
         + cigar.trailing_hardclips();
-
     // fix query coordinates if rc
+    // todo, fix if hard clipped
     if rec.strand() == Reverse {
         let temp = stats.q_st;
         stats.q_st = stats.q_len - stats.q_en;
