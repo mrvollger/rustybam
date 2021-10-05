@@ -16,6 +16,10 @@ version = "0.1.10"
 name = "rb"
 path = "src/main.rs"
 
+[[bin]]
+name = "rustybam"
+path = "src/main.rs"
+
 [features]
 default = ["deflate_zlib_ng", "libdeflate"]
 
