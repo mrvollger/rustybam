@@ -35,7 +35,6 @@ colored = "2.0.0"
 flate2 = {version = "~1", default-features = false}
 gzp = {version = "0.8.2", default-features = false}
 itertools = "0.10.0"
-openssl = "0.10.36"
 rayon = "1.5"
 regex = "1.5.4"
 rust-htslib = "0.36.0"
