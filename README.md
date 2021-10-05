@@ -27,6 +27,12 @@ and the executable will be built here:
 target/release/rustybam
 ```
 
+There will also be an identical binary with the abbreviated name `rb`:
+
+```
+target/release/rb
+```
+
 ## Examples
 
 ### Manipulating PAFs and creating liftovers
