@@ -133,7 +133,7 @@ SUBCOMMANDS:
 ### More details on `liftover`
 
 This is a function for lifting over coordinates from a reference (`-bed`) to a query using a `PAF` file from `minimap2` or `unimap`.
-`minimap2` (or `unimap`) must be run with `--cs` or `-c --eqx` and the output format must be `PAF` or else the liftover is not possible.
+`minimap2` (or `unimap`) must be run with `-c --eqx` and the output format must be `PAF` or else the liftover is not possible.
 
 The returned file is a `PAF` file that is trimmed to the regions in the bed file. Even the cigar in the returned PAF file is trimmed so it can be used downstream! Additionally, a tag with the format `id:Z:<>` is added to the `PAF` where `<>` is either the 4th column of the input bed file or if not present `chr_start_end`.
 
