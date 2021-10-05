@@ -134,11 +134,11 @@ impl PafRecord {
             let caps = pattern.captures(token).unwrap();
             let tag = &caps[1];
             let value = &caps[3];
-            // TODO fix cs string parsing when both cigar and cs are there.
-            if tag == "cs" {
-                cigar = cs_to_cigar(value)?;
-                eprintln!("cs parsed");
-            } else if tag == "cg" && cigar.len() == 0 {
+            // TODO fix cs string parsing when both cigar and cs are there. breaks on real files
+            //if tag == "cs" {
+            //    cigar = cs_to_cigar(value)?;
+            //} else
+            if tag == "cg" && cigar.len() == 0 {
                 cigar = cigar_from_str(value)?;
             } else {
                 tags.push('\t');
