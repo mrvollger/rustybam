@@ -137,6 +137,7 @@ impl PafRecord {
             // TODO fix cs string parsing when both cigar and cs are there.
             if tag == "cs" {
                 cigar = cs_to_cigar(value)?;
+                eprintln!("cs parsed");
             } else if tag == "cg" && cigar.len() == 0 {
                 cigar = cigar_from_str(value)?;
             } else {
