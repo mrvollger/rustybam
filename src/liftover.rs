@@ -12,16 +12,16 @@ pub enum Error {
     ParseIntError { msg: String },
     ParsePafColumn {},
 }
-type LiftoverResult<T> = Result<T, crate::liftover::Error>;
+//type LiftoverResult<T> = Result<T, crate::liftover::Error>;
 
-pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
+pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafRecord> {
     // initialize a trimmed paf record
     let mut trimmed_paf = paf.small_copy();
     trimmed_paf.id = rgn.id.clone();
 
     // check if we can return right away
     if paf.t_st > rgn.st && paf.t_en < rgn.en {
-        return trimmed_paf;
+        return Some(trimmed_paf);
     }
 
     // index at the start of trimmed alignment
@@ -45,11 +45,14 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
     // make end index not inclusive
     trimmed_paf.q_en += 1;
     trimmed_paf.remove_trailing_indels();
-    trimmed_paf
+    if trimmed_paf.cigar.len() == 0 {
+        return None;
+    }
+    Some(trimmed_paf)
 }
 
-pub fn trim_help(rgn: &bed::Region, rec: &PafRecord) -> LiftoverResult<PafRecord> {
-    Ok(trim_paf_rec_to_rgn(rgn, rec))
+pub fn trim_help(rgn: &bed::Region, rec: &PafRecord) -> Option<PafRecord> {
+    trim_paf_rec_to_rgn(rgn, rec)
 }
 
 pub fn trim_help_2(name: &str, recs: &[PafRecord], rgns: &[bed::Region]) -> Vec<PafRecord> {
@@ -73,7 +76,7 @@ pub fn trim_help_2(name: &str, recs: &[PafRecord], rgns: &[bed::Region]) -> Vec<
         .cartesian_product(cur_rgns) // make all pairwise combs
         .par_bridge()
         .filter(|(paf, rgn)| paf.paf_overlaps_rgn(rgn)) //filter to overlaping pairs
-        .filter_map(|(paf, rgn)| trim_help(rgn, paf).ok())
+        .filter_map(|(paf, rgn)| trim_help(rgn, paf))
         .collect();
 
     cur_trimmed_paf
@@ -142,7 +145,11 @@ pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord>
                     en: cur_tpos,
                     id: paf.id.clone(),
                 };
-                rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
+                //rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
+                match trim_paf_rec_to_rgn(&rgn, paf) {
+                    Some(x) => rtn.push(x),
+                    None => (),
+                };
             }
             pre_tpos = cur_tpos;
             if consumes_reference(opt) {
@@ -161,7 +168,10 @@ pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord>
             en: cur_tpos,
             id: paf.id.clone(),
         };
-        rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
+        match trim_paf_rec_to_rgn(&rgn, paf) {
+            Some(x) => rtn.push(x),
+            None => (),
+        };
     }
     rtn
 }
@@ -235,7 +245,7 @@ mod tests {
         let ens = vec![5, 8, 8, 8, 10, 10, 10, 10, 10, 10, 10, 10];
         let mut idx = 0;
         for r in [rgn, rgn2, rgn3, rgn4, rgn5, rgn6] {
-            let trim = trim_paf_rec_to_rgn(&r, &f_paf);
+            let trim = trim_paf_rec_to_rgn(&r, &f_paf).unwrap();
             eprintln!("{}", trim);
             eprintln!("{:?}", f_paf.tpos_aln);
             eprintln!("{:?}", f_paf.qpos_aln);
@@ -245,9 +255,9 @@ mod tests {
             idx += 1;
 
             eprintln!();
-            let trim = trim_paf_rec_to_rgn(&r, &r_paf);
+            let trim = trim_paf_rec_to_rgn(&r, &r_paf).unwrap();
             eprintln!("{}", trim);
-            eprintln!("{}", trim_paf_rec_to_rgn(&r, &r_paf));
+            eprintln!("{}", trim_paf_rec_to_rgn(&r, &r_paf).unwrap());
             eprintln!("{:?}", r_paf.tpos_aln);
             eprintln!("{:?}", r_paf.qpos_aln);
             eprintln!("{:?}", f_paf.long_cigar.to_string());

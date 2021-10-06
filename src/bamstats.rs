@@ -145,7 +145,6 @@ pub fn cigar_stats(mut rec: Record, header: &Header) -> Stats {
         + i64::try_from(rec.seq_len()).unwrap()
         + cigar.trailing_hardclips();
     // fix query coordinates if rc
-    // todo, fix if hard clipped
     if rec.strand() == Reverse {
         let temp = stats.q_st;
         stats.q_st = stats.q_len - stats.q_en;
