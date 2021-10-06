@@ -146,10 +146,9 @@ pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord>
                     id: paf.id.clone(),
                 };
                 //rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
-                match trim_paf_rec_to_rgn(&rgn, paf) {
-                    Some(x) => rtn.push(x),
-                    None => (),
-                };
+                if let Some(x) = trim_paf_rec_to_rgn(&rgn, paf) {
+                    rtn.push(x)
+                }
             }
             pre_tpos = cur_tpos;
             if consumes_reference(opt) {
@@ -168,10 +167,9 @@ pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord>
             en: cur_tpos,
             id: paf.id.clone(),
         };
-        match trim_paf_rec_to_rgn(&rgn, paf) {
-            Some(x) => rtn.push(x),
-            None => (),
-        };
+        if let Some(x) = trim_paf_rec_to_rgn(&rgn, paf) {
+            rtn.push(x)
+        }
     }
     rtn
 }
