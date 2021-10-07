@@ -3,10 +3,10 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::fmt;
 use std::io::BufRead;
-use std::str; // 1.3.0
+use std::str;
 
 lazy_static! {
-    static ref BED_RE: Regex = Regex::new(r"(.+):([0-9]+)-([0-9]+)").unwrap();
+    static ref BED_RE: Regex = Regex::new(r"([^\s]+)\t([0-9]+)\t([0-9]+)\t?([^\s]+)?.*").unwrap();
     static ref RGN_RE: Regex = Regex::new(r"(.+):([0-9]+)-([0-9]+)").unwrap();
 }
 pub struct Region {
