@@ -1,9 +1,14 @@
+use super::myio;
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::fmt;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::str;
+use std::io::BufRead;
+use std::str; // 1.3.0
 
+lazy_static! {
+    static ref BED_RE: Regex = Regex::new(r"(.+):([0-9]+)-([0-9]+)").unwrap();
+    static ref RGN_RE: Regex = Regex::new(r"(.+):([0-9]+)-([0-9]+)").unwrap();
+}
 pub struct Region {
     pub name: String,
     pub st: u64,
@@ -55,8 +60,9 @@ pub fn has_overlap(rgn1: &Region, rgn2: &Region) -> bool {
 /// assert_eq!("chr1:2-2000", rgn2.name);
 /// ```
 pub fn parse_region(region: &str) -> Region {
-    let re = Regex::new(r"(.+):([0-9]+)-([0-9]+)").unwrap();
-    let caps = re.captures(region).expect("Failed to parse region string.");
+    let caps = RGN_RE
+        .captures(region)
+        .expect("Failed to parse region string.");
 
     let name = caps.get(1).unwrap().as_str().to_string();
     let st = caps.get(2).unwrap().as_str().parse::<u64>().unwrap() - 1;
@@ -88,8 +94,9 @@ pub fn parse_region(region: &str) -> Region {
 /// assert_eq!("chr1:3-2000", rgn2.id);
 /// ```
 pub fn parse_bed_rec(region: &str) -> Region {
-    let re = Regex::new(r"([^\s]+)\t([0-9]+)\t([0-9]+)\t?([^\s]+)?.*").unwrap();
-    let caps = re.captures(region).expect("Failed to parse region string.");
+    let caps = BED_RE
+        .captures(region)
+        .expect("Failed to parse region string.");
 
     let name = caps.get(1).unwrap().as_str().to_string();
     let st = caps.get(2).unwrap().as_str().parse::<u64>().unwrap();
@@ -113,10 +120,13 @@ pub fn parse_bed_rec(region: &str) -> Region {
 /// use rustybam::bed::*;
 /// let vec = parse_bed(".test/asm_small.bed");
 /// assert_eq!(vec.len(), 10);
+/// let vec = parse_bed(".test/asm_small.bed.gz");
+/// assert_eq!(vec.len(), 10);
 /// ```
 pub fn parse_bed(filename: &str) -> Vec<Region> {
-    let file = File::open(filename).unwrap();
-    let reader = BufReader::new(file);
+    //let file = File::open(filename).unwrap();
+    //let reader = BufReader::new(file);
+    let reader = myio::reader(filename);
     let mut vec = Vec::new();
     for (idx, line) in reader.lines().enumerate() {
         eprint!("\rReading bed line: {}", idx + 1);
