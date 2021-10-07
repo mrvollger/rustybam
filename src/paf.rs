@@ -1,5 +1,6 @@
 use super::bed;
 use core::{fmt, panic};
+use lazy_static::lazy_static;
 use regex::Regex;
 use rust_htslib::bam::record::Cigar::*;
 use rust_htslib::bam::record::CigarString;
@@ -10,6 +11,10 @@ use std::io;
 use std::io::BufRead;
 use std::str::FromStr;
 use std::usize;
+
+lazy_static! {
+    static ref PAF_TAG: Regex = Regex::new("(..):(.):(.*)").unwrap();
+}
 
 #[derive(Debug)]
 pub enum Error {
@@ -128,10 +133,9 @@ impl PafRecord {
         let mut tags = "".to_string();
         // find the cigar if it is there
         let mut cigar = CigarString(vec![]);
-        let pattern = Regex::new("(..):(.):(.*)").unwrap();
         for token in t.iter().skip(12) {
-            assert!(pattern.is_match(token));
-            let caps = pattern.captures(token).unwrap();
+            assert!(PAF_TAG.is_match(token));
+            let caps = PAF_TAG.captures(token).unwrap();
             let tag = &caps[1];
             let value = &caps[3];
             // TODO fix cs string parsing when both cigar and cs are there. breaks on real files
