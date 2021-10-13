@@ -48,6 +48,14 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
     if trimmed_paf.cigar.len() == 0 {
         return None;
     }
+    if trimmed_paf.q_st > trimmed_paf.q_en || trimmed_paf.t_st > trimmed_paf.t_en {
+        eprintln!(
+            "Warning: liftover of {} failed. {} > {} or {} > {}",
+            rgn, trimmed_paf.q_st, trimmed_paf.q_en, trimmed_paf.t_st, trimmed_paf.t_en
+        );
+        return None;
+    }
+
     Some(trimmed_paf)
 }
 
