@@ -56,12 +56,9 @@ pub fn run_stats(args: &clap::ArgMatches) {
 
     if paf {
         let file = args.value_of("BAM").unwrap_or("-");
-        let mut idx = 1;
         for paf in paf::Paf::from_file(file).records {
-            eprint!("\rProcessing: {}", idx);
             let stats = bamstats::stats_from_paf(paf);
             bamstats::print_cigar_stats(stats, qbed);
-            idx += 1;
         }
         eprintln!();
         return;
