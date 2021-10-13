@@ -128,8 +128,7 @@ pub fn parse_bed(filename: &str) -> Vec<Region> {
     //let reader = BufReader::new(file);
     let reader = myio::reader(filename);
     let mut vec = Vec::new();
-    for (idx, line) in reader.lines().enumerate() {
-        //eprint!("\rReading bed line: {}", idx + 1);
+    for line in reader.lines() {
         let line = line.unwrap(); // Ignore errors.
         if line.chars().next().unwrap_or('#') == '#' {
             continue;
