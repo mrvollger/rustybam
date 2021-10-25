@@ -21,9 +21,9 @@ fn main() {
         eprintln!("{}", out_dir);
         let mut file = File::create("foo.txt").expect("unable to open");
         file.write(out_dir.as_bytes()).expect("unable to write");
-    */
     generate_to::<Bash, _, _>(&mut app, "rustybam", &out_dir)
         .expect("Failed to generate bash completions");
     generate_to::<Zsh, _, _>(&mut app, "rustybam", &out_dir)
         .expect("Failed to generate zsh completions");
+    */
 }
