@@ -39,7 +39,7 @@ pub fn reader(filename: &str) -> Box<dyn BufRead> {
 
     if ext == Some(OsStr::new("gz")) {
         let file = match File::open(&path) {
-            Err(why) => panic!("couldn't open {}: {}", path.display(), why.to_string()),
+            Err(why) => panic!("couldn't open {}: {}", path.display(), why),
             Ok(file) => file,
         };
         Box::new(BufReader::with_capacity(

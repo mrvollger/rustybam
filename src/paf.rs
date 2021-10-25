@@ -337,7 +337,7 @@ impl fmt::Display for PafRecord {
             self.aln_len,
             self.mapq,
             self.id,
-            self.cigar.to_string(),
+            self.cigar,
         )
     }
 }
@@ -601,8 +601,9 @@ pub fn cs_to_cigar(cs: &str) -> PafResult<CigarString> {
                 while j < length && bytes[j].is_ascii_digit() {
                     j += 1;
                 }
+                let str = cs[i..j].to_string();
                 l = u32::from_str(&cs[i..j]).map_err(|_| Error::ParseIntError {
-                    msg: format!("Expected integer, got {}", cs[i..j].to_string()),
+                    msg: format!("Expected integer, got {}", str),
                 })?;
                 i += j - 1;
                 Cigar::Equal(l)
