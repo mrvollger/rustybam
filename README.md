@@ -96,13 +96,13 @@ Try out
 Split a fasta file between `stdout` and two other files both compressed and uncompressed.
 
 ```shell
-cat {input.fasta} | rustybam fasta-split - two.fa.gz three.fa
+cat {input.fasta} | rustybam fasta-split two.fa.gz three.fa
 ```
 
 Split a fastq file between `stdout` and two other files both compressed and uncompressed.
 
 ```shell
-cat {input.fastq} | rustybam fastq-split - two.fq.gz three.fq
+cat {input.fastq} | rustybam fastq-split two.fq.gz three.fq
 ```
 
 ## General usage
