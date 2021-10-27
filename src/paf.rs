@@ -284,9 +284,11 @@ impl PafRecord {
 
     /// Return a tuple with the n of bases in the query and
     /// target infered from the cigar string
-    pub fn infer_n_bases(&mut self) -> (u64, u64) {
+    pub fn infer_n_bases(&mut self) -> (u64, u64, u64, u64) {
         let mut t_bases = 0;
         let mut q_bases = 0;
+        let mut n_matches = 0;
+        let mut aln_len = 0;
         for opt in self.cigar.into_iter() {
             if consumes_reference(opt) {
                 t_bases += opt.len()
@@ -294,8 +296,17 @@ impl PafRecord {
             if consumes_query(opt) {
                 q_bases += opt.len()
             }
+            if is_match(opt) {
+                n_matches += opt.len()
+            }
+            aln_len += opt.len();
         }
-        (t_bases as u64, q_bases as u64)
+        (
+            t_bases as u64,
+            q_bases as u64,
+            n_matches as u64,
+            aln_len as u64,
+        )
     }
 
     pub fn remove_trailing_indels(&mut self) {
@@ -366,7 +377,7 @@ impl PafRecord {
     }
 
     pub fn check_integrity(&mut self) -> PafResult<()> {
-        let (t_bases, q_bases) = self.infer_n_bases();
+        let (t_bases, q_bases, nmatch, aln_len) = self.infer_n_bases();
         if self.t_en - self.t_st != t_bases {
             return Err(Error::PafParseCigar {
                 msg: format!(
@@ -391,6 +402,11 @@ impl PafRecord {
                 ),
             });
         }
+
+        // update other fields
+        self.nmatch = nmatch;
+        self.aln_len = aln_len;
+
         Ok(())
     }
 }
@@ -436,6 +452,19 @@ pub fn consumes_query(cigar_opt: &Cigar) -> bool {
         Match(_i) | Ins(_i) | SoftClip(_i) | Diff(_i) | Equal(_i)
     )
 }
+
+/// # Example
+/// ```
+/// use rustybam::paf;
+/// use rust_htslib::bam::record::Cigar::*;
+/// assert!(paf::is_match(&Match(5)));
+/// assert!(paf::is_match(&Diff(5)));
+/// assert!(paf::is_match(&Equal(5)));
+/// ```
+pub fn is_match(cigar_opt: &Cigar) -> bool {
+    matches!(cigar_opt, Match(_i) | Diff(_i) | Equal(_i))
+}
+
 /// # Example
 /// ```
 /// use rustybam::paf;
