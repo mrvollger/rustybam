@@ -91,11 +91,7 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
     Some(trimmed_paf)
 }
 
-pub fn trim_help(rgn: &bed::Region, rec: &PafRecord) -> Option<PafRecord> {
-    trim_paf_rec_to_rgn(rgn, rec)
-}
-
-pub fn trim_help_2(name: &str, recs: &[PafRecord], rgns: &[bed::Region]) -> Vec<PafRecord> {
+pub fn trim_helper(name: &str, recs: &[PafRecord], rgns: &[bed::Region]) -> Vec<PafRecord> {
     let mut cur_recs: Vec<PafRecord> = recs
         .into_par_iter()
         .filter(|rec| rec.t_name == name)
@@ -116,7 +112,7 @@ pub fn trim_help_2(name: &str, recs: &[PafRecord], rgns: &[bed::Region]) -> Vec<
         .cartesian_product(cur_rgns) // make all pairwise combs
         .par_bridge()
         .filter(|(paf, rgn)| paf.paf_overlaps_rgn(rgn)) //filter to overlaping pairs
-        .filter_map(|(paf, rgn)| trim_help(rgn, paf))
+        .filter_map(|(paf, rgn)| trim_paf_rec_to_rgn(rgn, paf))
         .collect();
 
     cur_trimmed_paf
@@ -151,7 +147,7 @@ pub fn trim_paf_by_rgns(
             idx + 1,
             names.len()
         );
-        let mut tmp = trim_help_2(name, recs, rgns);
+        let mut tmp = trim_helper(name, recs, rgns);
         trimmed_paf.append(&mut tmp);
     }
     eprintln!();
