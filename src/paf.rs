@@ -332,19 +332,20 @@ impl PafRecord {
         }
         self.cigar.0.truncate(self.cigar.len() - remove_en_opts);
 
-        // update the target coordiantes
-        self.t_st += remove_st_t as u64;
-        self.t_en -= remove_en_t as u64;
-
         // trying to fix a weird bug
         // I think if there is a leading indel we need to
         // increment the size by one so that
+        // TODO understand why this is needed
         if remove_st_opts > 0 && remove_st_t == 0 {
-            self.t_st += 1;
+            remove_st_t += 1;
         }
         if remove_st_opts > 0 && remove_st_q == 0 {
-            self.q_st += 1;
+            remove_st_q += 1;
         }
+
+        // update the target coordiantes
+        self.t_st += remove_st_t as u64;
+        self.t_en -= remove_en_t as u64;
 
         // update the query coordiantes if rc
         if self.strand == '-' {

@@ -26,7 +26,6 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
 
     // index at the start of trimmed alignment
     trimmed_paf.t_st = cmp::max(rgn.st, paf.t_st);
-    //eprintln!("start found: {}", trimmed_paf.t_st);
     let start_idx = match paf.tpos_to_idx(trimmed_paf.t_st, true) {
         Ok(idx) => idx,
         Err(_) => panic!(

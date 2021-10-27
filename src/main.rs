@@ -49,7 +49,6 @@ fn main() {
 pub fn run_stats(args: &clap::ArgMatches) {
     // parse arguments
     let threads = args.value_of_t("threads").unwrap_or(8);
-    eprintln!("Number of threads: {}", threads);
     let qbed = args.is_present("qbed");
     let paf = args.is_present("paf");
     bamstats::print_cigar_stats_header(qbed);
@@ -96,7 +95,6 @@ pub fn run_nucfreq(args: &clap::ArgMatches) {
         .num_threads(threads)
         .build_global()
         .unwrap();
-    eprintln!("Number of threads: {}", threads);
 
     // read the bam
     let bam_f = args
@@ -179,16 +177,12 @@ pub fn run_liftover(args: &clap::ArgMatches) {
     // read in the file
     let paf_file = args.value_of("paf").unwrap_or("-");
     let paf = paf::Paf::from_file(paf_file);
-    // end timer
-    let duration = start.elapsed();
-    eprintln!("Time elapsed reading paf and bed: {:.3?}", duration);
     // whether the input bed is for the query.
     let mut invert_query = false;
     if args.is_present("qbed") {
         invert_query = true;
     }
     //
-    let start = Instant::now();
     let new_recs = liftover::trim_paf_by_rgns(&rgns, &paf.records, invert_query);
 
     // if largest set report only the largest alignment for the record
