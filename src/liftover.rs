@@ -60,6 +60,7 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
 
     // get the cigar opts
     trimmed_paf.cigar = PafRecord::collapse_long_cigar(&paf.subset_cigar(start_idx, end_idx));
+    // trimmed_paf.long_cigar = paf.subset_cigar(start_idx, end_idx);
 
     if paf.strand == '-' {
         std::mem::swap(&mut trimmed_paf.q_en, &mut trimmed_paf.q_st);

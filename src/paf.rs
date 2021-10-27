@@ -70,29 +70,6 @@ impl<'a> Paf<'a> {
         paf.records = records;
         paf
     }
-    /*
-    pub fn populate_hash(&'a mut self) {
-        // read pafs into a hashtable based on name
-        for rec in &self.records[..] {
-            if self.records_by_contig.contains_key(&rec.t_name) {
-                self.records_by_contig
-                    .insert(rec.t_name.clone(), Vec::new());
-            }
-            self.records_by_contig
-                .get_mut(&rec.t_name)
-                .unwrap()
-                .push(&rec);
-        }
-    }
-
-    // calculate infor for different records
-    pub fn make_position_index(&mut self) {
-        eprintln!("Making paf index:");
-        self.records
-            .par_iter_mut()
-            .for_each(|rec| rec.aligned_pairs());
-    }
-    */
 }
 
 #[derive(Debug, Clone)]
@@ -201,7 +178,7 @@ impl PafRecord {
     pub fn aligned_pairs(&mut self) {
         let mut t_pos = self.t_st as i64 - 1;
         let mut q_pos = self.q_st as i64 - 1;
-        
+
         let mut long_cigar = Vec::new();
         self.tpos_aln = Vec::new();
         self.qpos_aln = Vec::new();
@@ -314,12 +291,16 @@ impl PafRecord {
     }
 
     pub fn remove_trailing_indels(&mut self) {
+        //let (t_bases, q_bases, nmatch, aln_len) = self.infer_n_bases();
+        let cigar_len = self.cigar.len();
+
         // find start to trim
-        let st_opt = *self.cigar.first().unwrap();
+        let mut st_opt = *self.cigar.first().unwrap();
         let mut remove_st_t = 0;
         let mut remove_st_q = 0;
         let mut remove_st_opts = 0;
-        if matches!(st_opt, Ins(_) | Del(_)) {
+        let mut removed_st_opts = Vec::new();
+        while matches!(st_opt, Ins(_) | Del(_)) {
             if matches!(st_opt, Del(_)) {
                 // consumes reference
                 remove_st_t += st_opt.len();
@@ -328,17 +309,35 @@ impl PafRecord {
             } else {
                 remove_st_q += st_opt.len();
                 // TODO learn why I need this
+                // TODO handle the case when it is a del and then and ins
                 remove_st_t += 1;
             }
             remove_st_opts += 1;
+            removed_st_opts.push(st_opt);
+            if remove_st_opts < cigar_len {
+                st_opt = self.cigar[remove_st_opts];
+            } else {
+                break;
+            }
+        }
+        // remove extra counts put in my the case of Del followed by Ins
+        if removed_st_opts.len() > 1 {
+            for i in 0..(removed_st_opts.len() - 1) {
+                let pre_opt = removed_st_opts[i];
+                let cur_opt = removed_st_opts[i + 1];
+                if matches!(pre_opt, Del(_)) && matches!(cur_opt, Ins(_)) {
+                    remove_st_t -= 1;
+                }
+            }
         }
 
         // find ends to trim
-        let en_opt = *self.cigar.last().unwrap();
+        let mut en_opt = *self.cigar.last().unwrap();
         let mut remove_en_t = 0;
         let mut remove_en_q = 0;
         let mut remove_en_opts = 0;
-        if matches!(en_opt, Ins(_) | Del(_)) {
+        let mut removed_en_opts = Vec::new();
+        while matches!(en_opt, Ins(_) | Del(_)) {
             if matches!(en_opt, Del(_)) {
                 // consumes reference
                 remove_en_t += en_opt.len();
@@ -346,8 +345,22 @@ impl PafRecord {
                 remove_en_q += en_opt.len();
             }
             remove_en_opts += 1;
+            removed_en_opts.push(en_opt);
+            if cigar_len - remove_en_opts > 0 {
+                en_opt = self.cigar[cigar_len - 1 - remove_en_opts];
+            } else {
+                break;
+            }
         }
 
+        // log that we did something
+        if remove_en_opts > 0 || remove_st_opts > 0 {
+            self.id += &format!(
+                "_TO.{}.{}",
+                CigarString(removed_st_opts),
+                CigarString(removed_en_opts)
+            );
+        }
         // update the cigar string
         self.cigar = CigarString(self.cigar.0[remove_st_opts..].to_vec());
         self.cigar.0.truncate(self.cigar.len() - remove_en_opts);
@@ -364,12 +377,13 @@ impl PafRecord {
         self.q_st += remove_st_q as u64;
         self.q_en -= remove_en_q as u64;
 
-        // run again if there are more trailing indels
+        // check we removed the indels
         if self.cigar.len() > 0 {
             let st_opt = *self.cigar.first().unwrap();
             let en_opt = *self.cigar.last().unwrap();
             if matches!(st_opt, Ins(_) | Del(_)) || matches!(en_opt, Ins(_) | Del(_)) {
-                self.remove_trailing_indels();
+                eprintln!("Why are there still indels?\n{}", self);
+                //self.remove_trailing_indels();
             }
         }
     }
@@ -575,7 +589,7 @@ pub fn paf_swap_query_and_target(paf: &PafRecord) -> PafRecord {
     flipped.long_cigar = cigar_swap_target_query(&paf.long_cigar, paf.strand);
 
     // update the alignment positions
-    if flipped.tpos_aln.len() > 0 {
+    if !flipped.tpos_aln.is_empty() {
         flipped.aligned_pairs();
     }
 
