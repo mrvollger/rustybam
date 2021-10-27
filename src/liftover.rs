@@ -27,14 +27,37 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
     // index at the start of trimmed alignment
     trimmed_paf.t_st = cmp::max(rgn.st, paf.t_st);
     //eprintln!("start found: {}", trimmed_paf.t_st);
-    let start_idx = paf.tpos_to_idx(trimmed_paf.t_st);
+    let start_idx = match paf.tpos_to_idx(trimmed_paf.t_st, true) {
+        Ok(idx) => idx,
+        Err(_) => panic!(
+            "\nProblem getting index in cigar:\n{}\n{}\n{}\n",
+            trimmed_paf.t_st, rgn, paf
+        ),
+    };
+    trimmed_paf.t_st = paf.tpos_aln[start_idx];
     trimmed_paf.q_st = paf.qpos_aln[start_idx];
 
     // index at the end of trimmed alignment
     trimmed_paf.t_en = cmp::min(rgn.en, paf.t_en);
     // the end index is not inclusive so minus 1
-    let end_idx = paf.tpos_to_idx(trimmed_paf.t_en - 1); // not inclusive on the end so -1
+    let end_idx = match paf.tpos_to_idx(trimmed_paf.t_en - 1, false) {
+        Ok(idx) => idx,
+        Err(error_idx) => panic!(
+            "\nProblem getting index in cigar:\n{}\n{:?}\n{}\n{}\n",
+            trimmed_paf.t_en - 1,
+            &paf.tpos_aln[error_idx - 1],
+            rgn,
+            paf
+        ),
+    };
+    trimmed_paf.t_en = paf.tpos_aln[end_idx];
     trimmed_paf.q_en = paf.qpos_aln[end_idx];
+
+    // if this is the case then the whole internal region is indel
+    // TODO check to make sure this is true
+    if start_idx > end_idx {
+        return None;
+    }
 
     // get the cigar opts
     trimmed_paf.cigar = PafRecord::collapse_long_cigar(&paf.subset_cigar(start_idx, end_idx));
@@ -43,8 +66,12 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
         std::mem::swap(&mut trimmed_paf.q_en, &mut trimmed_paf.q_st);
     }
     // make end index not inclusive
+    trimmed_paf.t_en += 1;
     trimmed_paf.q_en += 1;
+
+    // trim indels from start and end
     trimmed_paf.remove_trailing_indels();
+
     if trimmed_paf.cigar.len() == 0 {
         return None;
     }
@@ -55,6 +82,12 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
         );
         return None;
     }
+
+    // check that this is still a valid paf record
+    if let Err(e) = trimmed_paf.check_integrity() {
+        eprintln!("WARNING: {:#?}", e);
+        return None;
+    };
 
     Some(trimmed_paf)
 }

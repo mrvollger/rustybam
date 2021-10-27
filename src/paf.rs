@@ -231,23 +231,18 @@ impl PafRecord {
     }
 
     // Does a binary search on the alignment to find its index in the alignment
-    pub fn tpos_to_idx(&self, tpos: u64) -> usize {
-        /*eprintln!(
-            "{}<{}<{},  {}-{}",
-            self.t_st,
-            tpos,
-            self.t_en,
-            self.tpos_aln[0],
-            self.tpos_aln[self.tpos_aln.len() - 1]
-        );*/
-        let mut idx = self
-            .tpos_aln
-            .binary_search(&tpos)
-            .expect("must be within target alignment positions");
-        while idx + 1 < self.tpos_aln.len() && self.tpos_aln[idx + 1] == tpos {
-            idx += 1;
+    pub fn tpos_to_idx(&self, tpos: u64, right: bool) -> Result<usize, usize> {
+        let mut idx = self.tpos_aln.binary_search(&tpos)?;
+        if right {
+            while idx + 1 < self.tpos_aln.len() && self.tpos_aln[idx + 1] == tpos {
+                idx += 1;
+            }
+        } else {
+            while idx > 0 && self.tpos_aln[idx - 1] == tpos {
+                idx -= 1;
+            }
         }
-        idx
+        Ok(idx)
     }
 
     // subset cigar on coordiantes
@@ -287,35 +282,115 @@ impl PafRecord {
         self.t_en > rgn.st && self.t_st < rgn.en
     }
 
+    /// Return a tuple with the n of bases in the query and
+    /// target infered from the cigar string
+    pub fn infer_n_bases(&mut self) -> (u64, u64) {
+        let mut t_bases = 0;
+        let mut q_bases = 0;
+        for opt in self.cigar.into_iter() {
+            if consumes_reference(opt) {
+                t_bases += opt.len()
+            }
+            if consumes_query(opt) {
+                q_bases += opt.len()
+            }
+        }
+        (t_bases as u64, q_bases as u64)
+    }
+
     pub fn remove_trailing_indels(&mut self) {
         let st_opt = *self.cigar.first().unwrap();
         let en_opt = *self.cigar.last().unwrap();
 
-        let mut remove_st = 0;
+        let mut remove_st_t = 0;
+        let mut remove_st_q = 0;
+        let mut remove_st_opts = 0;
         if matches!(st_opt, Ins(_) | Del(_)) {
-            remove_st = st_opt.len();
-            self.cigar = CigarString(self.cigar.0[1..].to_vec());
+            if matches!(st_opt, Del(_)) {
+                // consumes reference
+                remove_st_t += st_opt.len();
+            } else {
+                remove_st_q += st_opt.len();
+            }
+            remove_st_opts += 1;
+            //st_opt = self.cigar[remove_st_opts];
         }
-        let mut remove_en = 0;
+        self.cigar = CigarString(self.cigar.0[remove_st_opts..].to_vec());
+
+        let mut remove_en_t = 0;
+        let mut remove_en_q = 0;
+        let mut remove_en_opts = 0;
         if matches!(en_opt, Ins(_) | Del(_)) {
-            remove_en = en_opt.len();
-            //self.cigar = CigarString(self.cigar.0[0..self.cigar.len() - 1].to_vec());
-            self.cigar.0.truncate(self.cigar.len() - 1);
+            if matches!(en_opt, Del(_)) {
+                // consumes reference
+                remove_en_t += en_opt.len();
+            } else {
+                remove_en_q += en_opt.len();
+            }
+            remove_en_opts += 1;
+            //en_opt = self.cigar[self.cigar.len() - 1 - remove_en_opts];
+        }
+        self.cigar.0.truncate(self.cigar.len() - remove_en_opts);
+
+        // update the target coordiantes
+        self.t_st += remove_st_t as u64;
+        self.t_en -= remove_en_t as u64;
+
+        // trying to fix a weird bug
+        // I think if there is a leading indel we need to
+        // increment the size by one so that
+        if remove_st_opts > 0 && remove_st_t == 0 {
+            self.t_st += 1;
+        }
+        if remove_st_opts > 0 && remove_st_q == 0 {
+            self.q_st += 1;
         }
 
-        if matches!(st_opt, Del(_)) || matches!(en_opt, Del(_)) {
-            self.t_st += remove_st as u64;
-            self.t_en -= remove_en as u64;
-        }
-        // change the qpos removal
+        // update the query coordiantes if rc
         if self.strand == '-' {
-            std::mem::swap(&mut remove_st, &mut remove_en);
+            std::mem::swap(&mut remove_st_q, &mut remove_en_q);
         }
         // fix the query positions that need to be
-        if matches!(st_opt, Ins(_)) || matches!(en_opt, Ins(_)) {
-            self.q_st += remove_st as u64;
-            self.q_en -= remove_en as u64;
+        self.q_st += remove_st_q as u64;
+        self.q_en -= remove_en_q as u64;
+
+        // run again if there are more trailing indels
+        if self.cigar.len() > 0 {
+            let st_opt = *self.cigar.first().unwrap();
+            let en_opt = *self.cigar.last().unwrap();
+            if matches!(st_opt, Ins(_) | Del(_)) || matches!(en_opt, Ins(_) | Del(_)) {
+                self.remove_trailing_indels();
+            }
         }
+    }
+
+    pub fn check_integrity(&mut self) -> PafResult<()> {
+        let (t_bases, q_bases) = self.infer_n_bases();
+        if self.t_en - self.t_st != t_bases {
+            return Err(Error::PafParseCigar {
+                msg: format!(
+                    "target bases {} from cigar does not equal {}-{}={}\n{}\n",
+                    t_bases,
+                    self.t_en,
+                    self.t_st,
+                    self.t_en - self.t_st,
+                    self
+                ),
+            });
+        }
+        if self.q_en - self.q_st != q_bases {
+            return Err(Error::PafParseCigar {
+                msg: format!(
+                    "query bases {} from cigar does not equal {}-{}={}\n{}\n",
+                    q_bases,
+                    self.q_en,
+                    self.q_st,
+                    self.q_en - self.q_st,
+                    self
+                ),
+            });
+        }
+        Ok(())
     }
 }
 
