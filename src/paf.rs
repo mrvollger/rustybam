@@ -201,7 +201,11 @@ impl PafRecord {
     pub fn aligned_pairs(&mut self) {
         let mut t_pos = self.t_st as i64 - 1;
         let mut q_pos = self.q_st as i64 - 1;
+        
         let mut long_cigar = Vec::new();
+        self.tpos_aln = Vec::new();
+        self.qpos_aln = Vec::new();
+
         if self.strand == '-' {
             q_pos = self.q_en as i64; // ends are not inclusive
         }
@@ -310,9 +314,8 @@ impl PafRecord {
     }
 
     pub fn remove_trailing_indels(&mut self) {
+        // find start to trim
         let st_opt = *self.cigar.first().unwrap();
-        let en_opt = *self.cigar.last().unwrap();
-
         let mut remove_st_t = 0;
         let mut remove_st_q = 0;
         let mut remove_st_opts = 0;
@@ -320,14 +323,18 @@ impl PafRecord {
             if matches!(st_opt, Del(_)) {
                 // consumes reference
                 remove_st_t += st_opt.len();
+                // TODO learn why I need this
+                remove_st_q += 1;
             } else {
                 remove_st_q += st_opt.len();
+                // TODO learn why I need this
+                remove_st_t += 1;
             }
             remove_st_opts += 1;
-            //st_opt = self.cigar[remove_st_opts];
         }
-        self.cigar = CigarString(self.cigar.0[remove_st_opts..].to_vec());
 
+        // find ends to trim
+        let en_opt = *self.cigar.last().unwrap();
         let mut remove_en_t = 0;
         let mut remove_en_q = 0;
         let mut remove_en_opts = 0;
@@ -339,20 +346,11 @@ impl PafRecord {
                 remove_en_q += en_opt.len();
             }
             remove_en_opts += 1;
-            //en_opt = self.cigar[self.cigar.len() - 1 - remove_en_opts];
         }
-        self.cigar.0.truncate(self.cigar.len() - remove_en_opts);
 
-        // trying to fix a weird bug
-        // I think if there is a leading indel we need to
-        // increment the size by one so that
-        // TODO understand why this is needed
-        if remove_st_opts > 0 && remove_st_t == 0 {
-            remove_st_t += 1;
-        }
-        if remove_st_opts > 0 && remove_st_q == 0 {
-            remove_st_q += 1;
-        }
+        // update the cigar string
+        self.cigar = CigarString(self.cigar.0[remove_st_opts..].to_vec());
+        self.cigar.0.truncate(self.cigar.len() - remove_en_opts);
 
         // update the target coordiantes
         self.t_st += remove_st_t as u64;
@@ -572,13 +570,15 @@ pub fn paf_swap_query_and_target(paf: &PafRecord) -> PafRecord {
     // flip the index
     std::mem::swap(&mut flipped.qpos_aln, &mut flipped.tpos_aln);
 
-    if paf.strand == '-' {
-        flipped.qpos_aln.reverse();
-        flipped.tpos_aln.reverse();
-    }
     // flip the cigar
     flipped.cigar = cigar_swap_target_query(&paf.cigar, paf.strand);
     flipped.long_cigar = cigar_swap_target_query(&paf.long_cigar, paf.strand);
+
+    // update the alignment positions
+    if flipped.tpos_aln.len() > 0 {
+        flipped.aligned_pairs();
+    }
+
     flipped
 }
 

@@ -84,7 +84,7 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
 
     // check that this is still a valid paf record
     if let Err(e) = trimmed_paf.check_integrity() {
-        eprintln!("WARNING: {:#?}", e);
+        eprintln!("WARNING: {:?}", e);
         return None;
     };
 
