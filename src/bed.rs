@@ -139,7 +139,6 @@ pub fn parse_bed(filename: &str) -> Vec<Region> {
         }
         vec.push(parse_bed_rec(&line));
     }
-    eprintln!();
     vec
 }
 

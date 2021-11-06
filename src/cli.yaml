@@ -98,6 +98,10 @@ subcommands:
       args:
         - bed:
             index: 1
+        - readable:
+            short: r
+            long: readable
+            about: make the output human readable (Mbp)
   - breakpaf:
       about: break up paf on indels of a certain size
       args:
@@ -118,3 +122,8 @@ subcommands:
       args:
         - fasta:
             min_values: 1
+  - orient:
+      about: orient paf records so that most of the bases are in the forward direction
+      args:
+        - paf:
+            index: 1

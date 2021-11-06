@@ -12,6 +12,7 @@ use rustybam::myio;
 use rustybam::nucfreq;
 use rustybam::paf;
 use rustybam::suns;
+use std::collections::HashMap;
 use std::io;
 use std::time::Instant;
 
@@ -43,6 +44,8 @@ fn main() {
         run_split_fastq(matches);
     } else if let Some(matches) = matches.subcommand_matches("fasta-split") {
         run_split_fasta(matches);
+    } else if let Some(matches) = matches.subcommand_matches("orient") {
+        run_orient(matches);
     }
 }
 
@@ -212,7 +215,11 @@ pub fn run_bedlength(args: &clap::ArgMatches) {
     let bed = args.value_of("bed").expect("Bed file required!");
     let rgns = bed::parse_bed(bed);
     let count: u64 = rgns.into_iter().map(|rgn| rgn.en - rgn.st).sum();
-    println!("{}", count);
+    if args.is_present("readable") {
+        println!("{}", (count as f64) / 1e6);
+    } else {
+        println!("{}", count);
+    }
     let duration = start.elapsed();
     eprintln!("Time elapsed during bedlength: {:.3?}", duration);
 }
@@ -287,4 +294,46 @@ pub fn run_split_fasta(args: &clap::ArgMatches) {
     // end timer
     let duration = start.elapsed();
     eprintln!("Time elapsed splitting fasta: {:.3?}", duration);
+}
+
+pub fn run_orient(args: &clap::ArgMatches) {
+    let start = Instant::now();
+    // read in the file
+    let paf_file = args.value_of("paf").unwrap_or("-");
+    let mut paf = paf::Paf::from_file(paf_file);
+    let mut scores = HashMap::new();
+
+    // calculate whether a contig is mostly forward or reverse strand
+    for rec in &paf.records {
+        let score = scores
+            .entry((rec.t_name.clone(), rec.q_name.clone()))
+            .or_insert(0_i64);
+        if rec.strand == '-' {
+            *score -= (rec.q_en - rec.q_st) as i64;
+        } else {
+            *score += (rec.q_en - rec.q_st) as i64;
+        }
+    }
+
+    // if the contig is mostly reverse strand, flip the paf
+    for rec in &mut paf.records {
+        if *scores
+            .get(&(rec.t_name.clone(), rec.q_name.clone()))
+            .unwrap()
+            < 0
+        {
+            rec.q_name = format!("{}-", rec.q_name);
+            let new_st = rec.q_len - rec.q_en;
+            let new_en = rec.q_len - rec.q_st;
+            rec.q_st = new_st;
+            rec.q_en = new_en;
+            rec.strand = if rec.strand == '+' { '-' } else { '+' };
+        } else {
+            rec.q_name = format!("{}+", rec.q_name);
+        }
+        println!("{}", rec);
+    }
+
+    let duration = start.elapsed();
+    eprintln!("Time elapsed during orient: {:.3?}", duration);
 }
