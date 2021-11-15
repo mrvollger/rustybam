@@ -175,3 +175,7 @@ Once you have modified `table.asm.tbl` to have your assemblies and `config.yaml`
 ```
 snakemake all --cores 160 --use-conda  {any extra snakemake options}
 ```
+
+## TODO
+
+- Add a `bedtools getfasta` like operation that actually works with bgzipped input.
