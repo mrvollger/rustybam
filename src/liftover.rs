@@ -181,6 +181,7 @@ pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord>
                     st: pre_tpos,
                     en: cur_tpos,
                     id: paf.id.clone(),
+                    ..Default::default()
                 };
                 //rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
                 if let Some(x) = trim_paf_rec_to_rgn(&rgn, paf) {
@@ -203,6 +204,7 @@ pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord>
             st: pre_tpos,
             en: cur_tpos,
             id: paf.id.clone(),
+            ..Default::default()
         };
         if let Some(x) = trim_paf_rec_to_rgn(&rgn, paf) {
             rtn.push(x)
@@ -241,18 +243,21 @@ mod tests {
             st: 14,
             en: 15,
             id: "None".to_string(),
+            ..Default::default()
         };
         let rgn2 = Region {
             name: "T".to_string(),
             st: 14,
             en: 18,
             id: "".to_string(),
+            ..Default::default()
         };
         let rgn3 = Region {
             name: "T".to_string(),
             st: 12,
             en: 20,
             id: "".to_string(),
+            ..Default::default()
         };
         // test right extend
         let rgn4 = Region {
@@ -260,6 +265,7 @@ mod tests {
             st: 12,
             en: 30,
             id: "".to_string(),
+            ..Default::default()
         };
         // test left extend
         let rgn5 = Region {
@@ -267,6 +273,7 @@ mod tests {
             st: 5,
             en: 20,
             id: "".to_string(),
+            ..Default::default()
         };
         // test both extend
         let rgn6 = Region {
@@ -274,6 +281,7 @@ mod tests {
             st: 5,
             en: 30,
             id: "".to_string(),
+            ..Default::default()
         };
 
         let sts = vec![4, 7, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2];

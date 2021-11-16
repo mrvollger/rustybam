@@ -7,6 +7,7 @@ use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rustybam::bamstats;
 use rustybam::bed;
+use rustybam::getfasta;
 use rustybam::liftover;
 use rustybam::myio;
 use rustybam::nucfreq;
@@ -46,6 +47,8 @@ fn main() {
         run_split_fasta(matches);
     } else if let Some(matches) = matches.subcommand_matches("orient") {
         run_orient(matches);
+    } else if let Some(matches) = matches.subcommand_matches("getfasta") {
+        run_get_fasta(matches);
     }
 }
 
@@ -336,4 +339,22 @@ pub fn run_orient(args: &clap::ArgMatches) {
 
     let duration = start.elapsed();
     eprintln!("Time elapsed during orient: {:.3?}", duration);
+}
+
+pub fn run_get_fasta(args: &clap::ArgMatches) {
+    let start = Instant::now();
+
+    let bed_file = args.value_of("bed").unwrap();
+    let fasta_file = args.value_of("fasta").unwrap();
+
+    // call the function
+    getfasta::get_fasta(
+        fasta_file,
+        bed_file,
+        args.is_present("name"),
+        args.is_present("strand"),
+    );
+
+    let duration = start.elapsed();
+    eprintln!("Time elapsed during getfasta: {:.3?}", duration);
 }

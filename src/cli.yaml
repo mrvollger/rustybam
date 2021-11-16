@@ -127,3 +127,26 @@ subcommands:
       args:
         - paf:
             index: 1
+  - getfasta:
+      about: Mimic bedtools getfasta but allowed for bgzipped inputs.
+      args:
+        - bed:
+            required: true
+            short: b
+            long: bed
+            takes_value: true
+            about: Bed file of regions to extract
+        - fasta:
+            required: true
+            short: f
+            long: fi
+            takes_value: true
+            about: Fasta file to extract sequences from
+        - strand:
+            short: s
+            long: strand
+            about: revcomp sequence if the strand is "-"
+        - name:
+            short: n
+            long: name
+            about: Add the name (4th column) to the header of the fasta output

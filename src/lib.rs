@@ -1,6 +1,7 @@
 pub mod annotate;
 pub mod bamstats;
 pub mod bed;
+pub mod getfasta;
 pub mod liftover;
 pub mod myio;
 pub mod nucfreq;

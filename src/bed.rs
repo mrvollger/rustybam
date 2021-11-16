@@ -1,19 +1,22 @@
 use super::myio;
+use bio::io::bed;
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::fmt;
-use std::io::BufRead;
 use std::str;
 
 lazy_static! {
     static ref BED_RE: Regex = Regex::new(r"([^\s]+)\t([0-9]+)\t([0-9]+)\t?([^\s]+)?.*").unwrap();
     static ref RGN_RE: Regex = Regex::new(r"(.+):([0-9]+)-([0-9]+)").unwrap();
 }
+
+#[derive(Default)]
 pub struct Region {
     pub name: String,
     pub st: u64,
     pub en: u64,
     pub id: String,
+    pub record: bed::Record,
 }
 
 impl fmt::Display for Region {
@@ -79,7 +82,13 @@ pub fn parse_region(region: &str) -> Region {
         region
     );
 
-    Region { name, st, en, id }
+    Region {
+        name,
+        st,
+        en,
+        id,
+        ..Default::default()
+    }
 }
 
 /// parse bed strings
@@ -95,27 +104,27 @@ pub fn parse_region(region: &str) -> Region {
 /// assert_eq!("chr1", rgn2.name);
 /// assert_eq!("chr1:3-2000", rgn2.id);
 /// ```
-pub fn parse_bed_rec(region: &str) -> Region {
-    let caps = BED_RE
-        .captures(region)
-        .expect("Failed to parse region string.");
+pub fn parse_bed_rec(rec: &str) -> Region {
+    let mut reader = bed::Reader::new(rec.as_bytes());
+    let record = reader.records().next().unwrap().unwrap();
+    parse_bed_record(record)
+}
 
-    let name = caps.get(1).unwrap().as_str().to_string();
-    let st = caps.get(2).unwrap().as_str().parse::<u64>().unwrap();
-    let en = caps.get(3).unwrap().as_str().parse().unwrap_or(4294967295); //this is 2^32-1
-    let id = caps
-        .get(4)
-        .map_or(format!("{}:{}-{}", name, st + 1, en), |m| {
-            m.as_str().to_string()
-        });
-
-    assert!(
-        !(st > en),
-        "Region start must be less than end.\n{}",
-        region
-    );
-
-    Region { name, st, en, id }
+pub fn parse_bed_record(record: bed::Record) -> Region {
+    let name = record.chrom().to_owned();
+    let st = record.start();
+    let en = record.end();
+    let id = match record.name() {
+        Some(x) => x.to_owned(),
+        _ => format!("{}:{}-{}", name, st + 1, en),
+    };
+    Region {
+        name,
+        st,
+        en,
+        id,
+        record,
+    }
 }
 
 /// parse bed file
@@ -128,16 +137,17 @@ pub fn parse_bed_rec(region: &str) -> Region {
 /// assert_eq!(vec.len(), 10);
 /// ```
 pub fn parse_bed(filename: &str) -> Vec<Region> {
-    //let file = File::open(filename).unwrap();
-    //let reader = BufReader::new(file);
-    let reader = myio::reader(filename);
     let mut vec = Vec::new();
-    for line in reader.lines() {
-        let line = line.unwrap(); // Ignore errors.
-        if line.chars().next().unwrap_or('#') == '#' {
-            continue;
+    let reader = myio::reader(filename);
+    let mut records = bed::Reader::new(reader);
+    for (idx, rec) in records.records().enumerate() {
+        match rec {
+            Ok(r) => {
+                let rgn = parse_bed_record(r);
+                vec.push(rgn);
+            }
+            Err(e) => println!("WARNING: error parsing bed at line {}: {:?}", idx + 1, e),
         }
-        vec.push(parse_bed_rec(&line));
     }
     vec
 }
@@ -150,7 +160,8 @@ pub fn parse_bed(filename: &str) -> Vec<Region> {
 ///     name : "CHROMOSOME_I".to_string(),
 ///     st :  0,
 ///     en : 95,
-///     id : "None".to_string()
+///     id : "None".to_string(),
+///     ..Default::default()
 /// };
 /// let small_rgns = rustybam::bed::split_region(&rgn, 10);
 /// assert_eq!(small_rgns[0].st, 0);
@@ -175,6 +186,7 @@ pub fn split_region(rgn: &Region, window: u64) -> Vec<Region> {
             st: start,
             en: end,
             id: rgn.id.clone(),
+            ..Default::default()
         };
         small_rgns.push(tmprgn);
         start = end;

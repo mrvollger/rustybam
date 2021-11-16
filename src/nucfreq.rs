@@ -45,7 +45,8 @@ pub struct NucList {
 ///     name : "CHROMOSOME_I".to_string(),
 ///     st :  1,
 ///     en : 102,
-///     id : "None".to_string()
+///     id : "None".to_string(),
+///     ..Default::default()
 /// };
 /// let vec = rustybam::nucfreq::nucfreq( &mut bam, &rgn);
 /// eprintln!("{:?}", vec[0].a);
