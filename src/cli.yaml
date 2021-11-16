@@ -128,7 +128,7 @@ subcommands:
         - paf:
             index: 1
   - getfasta:
-      about: Mimic bedtools getfasta but allowed for bgzipped inputs.
+      about: Mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs.
       args:
         - bed:
             required: true
