@@ -105,35 +105,26 @@ Split a fastq file between `stdout` and two other files both compressed and unco
 cat {input.fastq} | rustybam fastq-split two.fq.gz three.fq
 ```
 
-## General usage
+## rustybam getfasta
 
 ```
-./rustybam 0.1.8
+rb-getfasta
 
-Mitchell R. Vollger's alignment utilities
+Mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs.
 
 USAGE:
-    rustybam [OPTIONS] <SUBCOMMAND>
+    rb getfasta [FLAGS] [OPTIONS] --bed <bed> --fi <fasta>
 
 FLAGS:
     -h, --help       Print help information
+    -n, --name       Add the name (4th column) to the header of the fasta output
+    -s, --strand     revcomp sequence if the strand is reverse (-)
     -V, --version    Print version information
 
 OPTIONS:
+    -b, --bed <bed>            Bed file of regions to extract
+    -f, --fi <fasta>           Fasta file to extract sequences from
     -t, --threads <threads>    Number of threads to use for decompressing
-
-SUBCOMMANDS:
-    bedlength      count basepairs in a bed file
-    breakpaf       break up paf on indels of a certain size
-    fasta-split    reads in a fasta from stdin and divides into files (can compress by adding
-                   .gz)
-    fastq-split    reads in a fastq from stdin and divides into files (can compress by adding
-                   .gz)
-    help           Print this message or the help of the given subcommand(s)
-    liftover       liftover target sequence coordinates onto query sequence using a PAF
-    nucfreq        Get the frequencies of each bp at each position.
-    repeat         Report the longest repeat length at every position in a fasta.
-    stats          Get percent identity stats from a sam/bam/cram or PAF (add --paf)
 ```
 
 ### More details on `liftover`
@@ -179,3 +170,4 @@ snakemake all --cores 160 --use-conda  {any extra snakemake options}
 ## TODO
 
 - Add a `bedtools getfasta` like operation that actually works with bgzipped input.
+  - Done, but no bed12/split implementation yet.
