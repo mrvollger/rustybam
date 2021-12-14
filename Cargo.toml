@@ -1,8 +1,8 @@
 [package]
-authors = ["mrvollger <mrvollger@gmail.com>"]
+authors = ["Mitchell R. Vollger <mrvollger@gmail.com>"]
 # build = "build.rs" # not yet stable enough
 categories = ["command-line-utilities"]
-description = "Mitchell Vollger's utilities for alignments"
+description = "My alignment untilities"
 edition = "2018"
 homepage = "https://mrvollger.github.io/rustybam/"
 keywords = ["cli", "bam", "paf", "liftover"]
@@ -10,7 +10,7 @@ license = "MIT"
 name = "rustybam"
 readme = "README.md"
 repository = "https://github.com/mrvollger/rustybam"
-version = "0.1.22"
+version = "0.1.23"
 
 [[bin]]
 name = "rb"
@@ -36,7 +36,7 @@ bimap = "0.6.1"
 bio = "0.34.0"
 bio-types = "0.12.0"
 calm_io = "0.1.1"
-clap = {version = "3.0.0-beta.4", features = ["yaml"]}
+clap = {version = "3.0.0-rc.4", features = ["yaml", "derive"]}
 colored = "2.0.0"
 flate2 = {version = "~1", default-features = false}
 gzp = {version = "0.8.2", default-features = false}
@@ -47,5 +47,5 @@ regex = "1.5.4"
 rust-htslib = "0.36.0"
 
 [build-dependencies]
-clap = "3.0.0-beta.4"
-clap_generate = "3.0.0-beta.4"
+clap = "3.0.0-rc.4"
+clap_generate = "3.0.0-rc.4"

@@ -1,12 +1,12 @@
 use bio::io::fasta;
 use bio::io::fastq;
-use clap::{crate_version, load_yaml, App, AppSettings};
 use itertools::Itertools;
 use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rustybam::bamstats;
 use rustybam::bed;
+use rustybam::cli;
 use rustybam::getfasta;
 use rustybam::liftover;
 use rustybam::myio;
@@ -18,7 +18,8 @@ use std::io;
 use std::time::Instant;
 
 fn main() {
-    let yaml = load_yaml!("cli.yaml");
+    cli::make_cli();
+    /*let yaml = load_yaml!("cli.yaml");
     let app = App::from(yaml)
         .version(crate_version!())
         .setting(AppSettings::SubcommandRequiredElseHelp);
@@ -49,7 +50,7 @@ fn main() {
         run_orient(matches);
     } else if let Some(matches) = matches.subcommand_matches("getfasta") {
         run_get_fasta(matches);
-    }
+    }*/
 }
 
 pub fn run_stats(args: &clap::ArgMatches) {

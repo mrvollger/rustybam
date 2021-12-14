@@ -1,19 +1,22 @@
 // in build.rs
-use clap::{crate_version, load_yaml, App, AppSettings};
+// use clap::{crate_version, load_yaml, App, AppSettings};
 //use clap_generate::generators::{Bash, Zsh};
-use std::env;
+//use std::env;
 //use std::fs::File;
 //use std::io::prelude::*;
 
 fn main() {
+    /*
     let yaml = load_yaml!("src/cli.yaml");
     let mut app = App::from(yaml)
         .version(crate_version!())
         .setting(AppSettings::SubcommandRequiredElseHelp);
 
     app.set_bin_name("rustybam");
-    //let out_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("completions/");
     let _out_dir = env::var("OUT_DIR").unwrap();
+    */    
+    //let out_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("completions/");
+    
     /*
         eprintln!("{}", out_dir);
         let mut file = File::create("foo.txt").expect("unable to open");

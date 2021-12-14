@@ -1,15 +1,17 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {
-		"git.ignoreLimitWarning": true,
-		"python.pythonPath": "/Users/mrvollger/miniconda3/envs/smk/bin/python",
-		"editor.wordWrapColumn": 100,
-		"cSpell.words": [
-			"breakpaf"
-		]
-	}
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "git.ignoreLimitWarning": true,
+    "python.pythonPath": "/Users/mrvollger/miniconda3/envs/smk/bin/python",
+    "editor.wordWrapColumn": 100,
+    "cSpell.words": [
+        "bamstats",
+        "breakpaf",
+        "Breakpaf"
+    ]
+  }
 }
