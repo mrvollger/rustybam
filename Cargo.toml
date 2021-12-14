@@ -1,16 +1,16 @@
 [package]
-authors = ["mrvollger <mrvollger@gmail.com>"] 
-build = "build.rs" # not yet stable enough
-categories = ["command-line-utilities"] 
-description = "Mitchell Vollger's utilities for alignments" 
-edition = "2018" 
-homepage = "https://mrvollger.github.io/rustybam/" 
-keywords = ["cli", "bam", "paf", "liftover"] 
-license = "MIT" 
-name = "rustybam" 
-readme = "README.md" 
-repository = "https://github.com/mrvollger/rustybam" 
-version = "0.1.20" 
+authors = ["mrvollger <mrvollger@gmail.com>"]
+# build = "build.rs" # not yet stable enough
+categories = ["command-line-utilities"]
+description = "Mitchell Vollger's utilities for alignments"
+edition = "2018"
+homepage = "https://mrvollger.github.io/rustybam/"
+keywords = ["cli", "bam", "paf", "liftover"]
+license = "MIT"
+name = "rustybam"
+readme = "README.md"
+repository = "https://github.com/mrvollger/rustybam"
+version = "0.1.20"
 
 [[bin]]
 name = "rb"
