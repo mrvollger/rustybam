@@ -1,29 +1,17 @@
 // in build.rs
-// use clap::{crate_version, load_yaml, App, AppSettings};
-//use clap_generate::generators::{Bash, Zsh};
-//use std::env;
-//use std::fs::File;
-//use std::io::prelude::*;
+use clap_generate::{generate_to, generators::*};
+include!("src/cli.rs");
 
 fn main() {
-    /*
-    let yaml = load_yaml!("src/cli.yaml");
-    let mut app = App::from(yaml)
-        .version(crate_version!())
-        .setting(AppSettings::SubcommandRequiredElseHelp);
+    let mut app = Cli::into_app();
+    let outdir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("target/");
 
-    app.set_bin_name("rustybam");
-    let _out_dir = env::var("OUT_DIR").unwrap();
-    */    
-    //let out_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("completions/");
-    
-    /*
-        eprintln!("{}", out_dir);
-        let mut file = File::create("foo.txt").expect("unable to open");
-        file.write(out_dir.as_bytes()).expect("unable to write");
-    generate_to::<Bash, _, _>(&mut app, "rustybam", &out_dir)
-        .expect("Failed to generate bash completions");
-    generate_to::<Zsh, _, _>(&mut app, "rustybam", &out_dir)
-        .expect("Failed to generate zsh completions");
-    */
+    for bin_name in ["rb", "rustybam"] {
+        // Bash, Fish, Zsh, PowerShell, Elvish
+        generate_to(Bash, &mut app, bin_name, &outdir).unwrap();
+        generate_to(Fish, &mut app, bin_name, &outdir).unwrap();
+        generate_to(Zsh, &mut app, bin_name, &outdir).unwrap();
+        generate_to(PowerShell, &mut app, bin_name, &outdir).unwrap();
+        generate_to(Elvish, &mut app, bin_name, &outdir).unwrap();
+    }
 }
