@@ -11,10 +11,10 @@ use std::io;
 use std::time::Instant;
 
 fn main() {
-    make_cli();
+    parse_cli();
 }
 
-pub fn make_cli() {
+pub fn parse_cli() {
     let pg_start = Instant::now();
     let args = cli::make_cli_parse();
 
