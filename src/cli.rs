@@ -99,6 +99,13 @@ pub enum Commands {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
         #[clap(default_value = "-")]
         paf: String,
+        /// Make fake query names that scaffold together all the records that map to one target sequence.
+        /// The order of the scaffold will be determined by the middle position of the largest alignment.
+        #[clap(short, long)]
+        scaffold: bool,
+        /// space to add between records
+        #[clap(short, long, default_value_t = 1_000_000)]
+        insert: u64,
     },
     /// break up paf on indels of a certain size
     Breakpaf {

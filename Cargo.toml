@@ -10,7 +10,7 @@ license = "MIT"
 name = "rustybam" 
 readme = "README.md" 
 repository = "https://github.com/mrvollger/rustybam" 
-version = "0.1.21" 
+version = "0.1.22" 
 
 [[bin]]
 name = "rb"
@@ -22,7 +22,6 @@ path = "src/main.rs"
 
 [features]
 default = ["deflate_zlib_ng", "libdeflate"]
-
 deflate_rust = ["gzp/deflate_rust", "flate2/rust_backend"]
 deflate_zlib = ["gzp/deflate_zlib", "flate2/zlib", "any_zlib"]
 deflate_zlib_ng = ["gzp/deflate_zlib_ng", "flate2/zlib-ng-compat", "any_zlib"]

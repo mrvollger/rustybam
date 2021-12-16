@@ -5,8 +5,9 @@ use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rustybam::cli::Commands;
+use rustybam::paf::PafRecord;
 use rustybam::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io;
 use std::time::Instant;
 
@@ -184,40 +185,12 @@ pub fn parse_cli() {
         //
         // Run Orient
         //
-        Some(Commands::Orient { paf }) => {
-            let mut paf = paf::Paf::from_file(paf);
-            let mut scores = HashMap::new();
-
-            // calculate whether a contig is mostly forward or reverse strand
-            for rec in &paf.records {
-                let score = scores
-                    .entry((rec.t_name.clone(), rec.q_name.clone()))
-                    .or_insert(0_i64);
-                if rec.strand == '-' {
-                    *score -= (rec.q_en - rec.q_st) as i64;
-                } else {
-                    *score += (rec.q_en - rec.q_st) as i64;
-                }
-            }
-
-            // if the contig is mostly reverse strand, flip the paf
-            for rec in &mut paf.records {
-                if *scores
-                    .get(&(rec.t_name.clone(), rec.q_name.clone()))
-                    .unwrap()
-                    < 0
-                {
-                    rec.q_name = format!("{}-", rec.q_name);
-                    let new_st = rec.q_len - rec.q_en;
-                    let new_en = rec.q_len - rec.q_st;
-                    rec.q_st = new_st;
-                    rec.q_en = new_en;
-                    rec.strand = if rec.strand == '+' { '-' } else { '+' };
-                } else {
-                    rec.q_name = format!("{}+", rec.q_name);
-                }
-                println!("{}", rec);
-            }
+        Some(Commands::Orient {
+            paf,
+            scaffold,
+            insert,
+        }) => {
+            orient_records(paf, *scaffold, *insert);
         }
         //
         // Run Breakpaf
@@ -305,334 +278,40 @@ pub fn run_split_fastq(files: &[String]) {
     }
 }
 
-/*
-use bio::io::fasta;
-use bio::io::fastq;
-use itertools::Itertools;
-use rayon::prelude::*;
-use rust_htslib::bam;
-use rust_htslib::bam::Read;
-use rustybam::bamstats;
-use rustybam::bed;
-use rustybam::cli;
-use rustybam::getfasta;
-use rustybam::liftover;
-use rustybam::myio;
-use rustybam::nucfreq;
-use rustybam::paf;
-use rustybam::suns;
-use std::collections::HashMap;
-use std::io;
-use std::time::Instant;
-fn main() {
-    cli::make_cli();
-    /*let yaml = load_yaml!("cli.yaml");
-    let app = App::from(yaml)
-        .version(crate_version!())
-        .setting(AppSettings::SubcommandRequiredElseHelp);
-    let matches = app.get_matches();
-
-    let threads = matches.value_of_t("threads").unwrap_or(8);
-    std::env::set_var("RAYON_NUM_THREADS", threads.to_string());
-
-    if let Some(matches) = matches.subcommand_matches("stats") {
-        run_stats(matches);
-    } else if let Some(matches) = matches.subcommand_matches("nucfreq") {
-        run_nucfreq(matches);
-    } else if let Some(matches) = matches.subcommand_matches("suns") {
-        run_suns(matches);
-    } else if let Some(matches) = matches.subcommand_matches("liftover") {
-        run_liftover(matches);
-    } else if let Some(matches) = matches.subcommand_matches("repeat") {
-        run_longest_repeats(matches);
-    } else if let Some(matches) = matches.subcommand_matches("bedlength") {
-        run_bedlength(matches);
-    } else if let Some(matches) = matches.subcommand_matches("breakpaf") {
-        run_break_paf(matches);
-    } else if let Some(matches) = matches.subcommand_matches("fastq-split") {
-        run_split_fastq(matches);
-    } else if let Some(matches) = matches.subcommand_matches("fasta-split") {
-        run_split_fasta(matches);
-    } else if let Some(matches) = matches.subcommand_matches("orient") {
-        run_orient(matches);
-    } else if let Some(matches) = matches.subcommand_matches("getfasta") {
-        run_get_fasta(matches);
-    }*/
-}
-
-pub fn run_stats(args: &clap::ArgMatches) {
-    // parse arguments
-    let threads = args.value_of_t("threads").unwrap_or(8);
-    let qbed = args.is_present("qbed");
-    let paf = args.is_present("paf");
-    bamstats::print_cigar_stats_header(qbed);
-
-    if paf {
-        let file = args.value_of("BAM").unwrap_or("-");
-        for paf in paf::Paf::from_file(file).records {
-            let stats = bamstats::stats_from_paf(paf);
-            bamstats::print_cigar_stats(stats, qbed);
-        }
-        eprintln!();
-        return;
-    }
-    // Not a paf so lets read in the bam
-
-    // we want to do bam reading
-    let mut bam = match args.value_of("BAM") {
-        Some(bam_f) => {
-            bam::Reader::from_path(bam_f).unwrap_or_else(|_| panic!("Failed to open {}", bam_f))
-        }
-        _ => bam::Reader::from_stdin().unwrap(),
-    };
-
-    // open bam
-    bam.set_threads(threads).unwrap();
-    let bam_header = bam::Header::from_template(bam.header());
-
-    // get stats
-    for (idx, rec) in bam.records().enumerate() {
-        eprint!("\rProcessing: {}", idx + 1);
-        let rec = rec.unwrap();
-        if !rec.is_unmapped() {
-            let stats = bamstats::cigar_stats(rec, &bam_header);
-            bamstats::print_cigar_stats(stats, qbed);
-        }
-    }
-    eprintln!();
-}
-
-pub fn run_nucfreq(args: &clap::ArgMatches) {
-    // set the number of threads
-    let threads = args.value_of_t("threads").unwrap_or(8);
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(threads)
-        .build_global()
-        .unwrap();
-
-    // read the bam
-    let bam_f = args
-        .value_of("BAM")
-        .expect("Must provide an indexed alignment file (bam/cram)");
-
-    // add the nuc freq regions to process.
-    let mut rgns = Vec::new();
-    if args.is_present("region") {
-        rgns.push(bed::parse_region(args.value_of("region").unwrap()));
-    }
-    if args.is_present("bed") {
-        let bed_f = args.value_of("bed").expect("Unable to read bedfile");
-        rgns.append(&mut bed::parse_bed(bed_f));
-    }
-
-    for rgn in rgns {
-        // say the max window size a region can be before printing
-        let med_rgns = bed::split_region(&rgn, 1_000_000);
-        // split the windows into windows of that size
-        for med_rgn in med_rgns {
-            let small_rgns = bed::split_region(&med_rgn, 10_000);
-            // generate the nucfreqs
-            let vec: Vec<nucfreq::Nucfreq> = small_rgns
-                .into_par_iter()
-                .map(|r| nucfreq::region_nucfreq(bam_f, &r, 4))
-                .flatten()
-                .collect();
-
-            // print the results
-            if args.is_present("small") {
-                nucfreq::small_nucfreq(&vec)
-            } else {
-                nucfreq::print_nucfreq_header();
-                nucfreq::print_nucfreq(&vec);
-            }
-        }
-    }
-}
-
-pub fn run_suns(args: &clap::ArgMatches) {
-    let kmer_size = args.value_of_t("kmersize").unwrap_or(21);
-    let max_interval = args.value_of_t("maxsize").unwrap_or(std::usize::MAX);
-    let fastafile = args.value_of("fasta").expect("Fasta file required!");
-    let genome = suns::Genome::from_file(fastafile);
-    let sun_intervals = genome.find_sun_intervals(kmer_size);
-    println!("#chr\tstart\tend\tsun_seq");
-    for (chr, start, end, seq) in &sun_intervals {
-        if end - start < max_interval {
-            println!(
-                "{}\t{}\t{}\t{}",
-                chr,
-                start,
-                end,
-                std::str::from_utf8(seq).unwrap()
-            );
-        }
-    }
-    if args.is_present("validate") {
-        suns::validate_suns(&genome, &sun_intervals, kmer_size);
-    }
-}
-
-pub fn run_longest_repeats(args: &clap::ArgMatches) {
-    let minsize = args.value_of_t("min").unwrap_or(21);
-    let fastafile = args.value_of("fasta").expect("Fasta file required!");
-    let genome = suns::Genome::from_file(fastafile);
-    let unique_intervals = genome.get_longest_perfect_repeats(minsize);
-    println!("#chr\tstart\tend\trepeat_length");
-    for (chr, start, length) in &unique_intervals {
-        println!("{}\t{}\t{}\t{}", chr, start, start + length, length - 1,);
-    }
-}
-
-pub fn run_liftover(args: &clap::ArgMatches) {
-    let start = Instant::now();
-    // read in the bed
-    let bed = args.value_of("bed").expect("Bed file required!");
-    let rgns = bed::parse_bed(bed);
-    // read in the file
-    let paf_file = args.value_of("paf").unwrap_or("-");
-    let paf = paf::Paf::from_file(paf_file);
-    // whether the input bed is for the query.
-    let mut invert_query = false;
-    if args.is_present("qbed") {
-        invert_query = true;
-    }
-    //
-    let new_recs = liftover::trim_paf_by_rgns(&rgns, &paf.records, invert_query);
-
-    // if largest set report only the largest alignment for the record
-    let largest = args.is_present("largest");
-    if largest {
-        for (_key, group) in &new_recs
-            .into_iter()
-            .sorted_by_key(|pac_rec| pac_rec.id.clone())
-            .group_by(|paf_rec| paf_rec.id.clone())
-        {
-            let largest_rec = group.max_by_key(|p| (p.t_en - p.t_st)).unwrap();
-            println!("{}", largest_rec);
-        }
-    } else {
-        for rec in new_recs {
-            println!("{}", rec);
-        }
-    }
-
-    let duration = start.elapsed();
-    eprintln!("Time elapsed during liftover: {:.3?}", duration);
-}
-
-pub fn run_bedlength(args: &clap::ArgMatches) {
-    let start = Instant::now();
-    // read in the bed
-    let bed = args.value_of("bed").expect("Bed file required!");
-    let rgns = bed::parse_bed(bed);
-    let count: u64 = rgns.into_iter().map(|rgn| rgn.en - rgn.st).sum();
-    if args.is_present("readable") {
-        println!("{}", (count as f64) / 1e6);
-    } else {
-        println!("{}", count);
-    }
-    let duration = start.elapsed();
-    eprintln!("Time elapsed during bedlength: {:.3?}", duration);
-}
-
-pub fn run_break_paf(args: &clap::ArgMatches) {
-    let start = Instant::now();
-    // break length
-    let break_length = args.value_of_t("max-size").unwrap_or(100);
-    // read in the file
-    let paf_file = args.value_of("paf").unwrap_or("-");
-    let paf = paf::Paf::from_file(paf_file);
-
-    for mut paf in paf.records {
-        paf.aligned_pairs();
-        let pafs = liftover::break_paf_on_indels(&paf, break_length);
-        for trimed_paf in pafs {
-            println!("{}", trimed_paf);
-        }
-    }
-    // end timer
-    let duration = start.elapsed();
-    eprintln!("Time elapsed breaking paf on indels: {:.3?}", duration);
-}
-
-pub fn run_split_fastq(args: &clap::ArgMatches) {
-    let start = Instant::now();
-    let files: Vec<_> = args.values_of("fastq").unwrap().collect();
-
-    let mut outs = Vec::new();
-    for f in files {
-        let handle = myio::writer(f);
-        outs.push(fastq::Writer::new(handle));
-    }
-
-    let mut records = fastq::Reader::new(io::stdin()).records();
-    let mut out_idx = 0;
-    while let Some(Ok(record)) = records.next() {
-        outs[out_idx]
-            .write_record(&record)
-            .expect("Error writing record.");
-        out_idx += 1;
-        if out_idx == outs.len() {
-            out_idx = 0;
-        }
-    }
-    // end timer
-    let duration = start.elapsed();
-    eprintln!("Time elapsed splitting fastq: {:.3?}", duration);
-}
-
-pub fn run_split_fasta(args: &clap::ArgMatches) {
-    let start = Instant::now();
-    let files: Vec<_> = args.values_of("fasta").unwrap().collect();
-
-    let mut outs = Vec::new();
-    for f in files {
-        let handle = myio::writer(f);
-        outs.push(fasta::Writer::new(handle));
-    }
-
-    let mut records = fasta::Reader::new(io::stdin()).records();
-    let mut out_idx = 0;
-    while let Some(Ok(record)) = records.next() {
-        outs[out_idx]
-            .write_record(&record)
-            .expect("Error writing record.");
-        out_idx += 1;
-        if out_idx == outs.len() {
-            out_idx = 0;
-        }
-    }
-    // end timer
-    let duration = start.elapsed();
-    eprintln!("Time elapsed splitting fasta: {:.3?}", duration);
-}
-
-pub fn run_orient(args: &clap::ArgMatches) {
-    let start = Instant::now();
-    // read in the file
-    let paf_file = args.value_of("paf").unwrap_or("-");
-    let mut paf = paf::Paf::from_file(paf_file);
-    let mut scores = HashMap::new();
-
+pub fn orient_records(paf: &str, scaffold: bool, insert: u64) {
+    let mut paf = paf::Paf::from_file(paf);
+    let mut orient_order_dict = HashMap::new();
+    let mut t_names = HashSet::new();
     // calculate whether a contig is mostly forward or reverse strand
+    // and determine the middle alignment position with respect to the target
     for rec in &paf.records {
-        let score = scores
+        let (orient, total_bp, order) = orient_order_dict
             .entry((rec.t_name.clone(), rec.q_name.clone()))
-            .or_insert(0_i64);
+            .or_insert((0_i64, 0_u64, 0_u64));
+        // set the orientation of the query relative to the target
         if rec.strand == '-' {
-            *score -= (rec.q_en - rec.q_st) as i64;
+            *orient -= (rec.q_en - rec.q_st) as i64;
         } else {
-            *score += (rec.q_en - rec.q_st) as i64;
+            *orient += (rec.q_en - rec.q_st) as i64;
         }
+        // set a number that will determine the order of the contig
+        let weight = rec.t_en - rec.t_st;
+        *total_bp += weight;
+        *order += weight * (rec.t_st + rec.t_en) / 2;
+        // make a list of targets
+        t_names.insert(rec.t_name.clone());
     }
 
-    // if the contig is mostly reverse strand, flip the paf
+    // set the order and orientation of records
     for rec in &mut paf.records {
-        if *scores
+        // set the order of the records
+        let (orient, total_bp, order) = orient_order_dict
             .get(&(rec.t_name.clone(), rec.q_name.clone()))
-            .unwrap()
-            < 0
-        {
+            .unwrap();
+        rec.order = *order / *total_bp;
+
+        // reverse record if it is mostly on the rc
+        if *orient < 0 {
             rec.q_name = format!("{}-", rec.q_name);
             let new_st = rec.q_len - rec.q_en;
             let new_en = rec.q_len - rec.q_st;
@@ -642,28 +321,55 @@ pub fn run_orient(args: &clap::ArgMatches) {
         } else {
             rec.q_name = format!("{}+", rec.q_name);
         }
-        println!("{}", rec);
     }
 
-    let duration = start.elapsed();
-    eprintln!("Time elapsed during orient: {:.3?}", duration);
+    // sort the records by their target name and order
+    paf.records.sort_by(|a, b| {
+        a.t_name
+            .cmp(&b.t_name) // group by target
+            .then(a.order.cmp(&b.order)) // order query by position in target
+            .then(a.q_st.cmp(&b.q_st)) // order by position in query
+    });
+
+    // group by t_name
+    for (_t_name, t_recs) in &paf.records.iter_mut().group_by(|rec| rec.t_name.clone()) {
+        let mut t_recs: Vec<&mut PafRecord> = t_recs.collect();
+        // sort recs by order
+        t_recs.sort_by(|a, b| {
+            a.order
+                .cmp(&b.order) // order query by position in target
+                .then(a.q_st.cmp(&b.q_st)) // order by position in query
+        });
+
+        // new scaffold name
+        let scaffold_name = t_recs
+            .iter()
+            .map(|rec| rec.q_name.clone())
+            .unique()
+            .collect::<Vec<String>>()
+            .join("::");
+
+        let mut scaffold_len = 0_u64;
+        for (_q_name, q_recs) in &t_recs.iter_mut().group_by(|rec| rec.q_name.clone()) {
+            let q_recs: Vec<&mut &mut PafRecord> = q_recs.collect();
+            let q_min = q_recs.iter().map(|rec| rec.q_st).min().unwrap_or(0);
+            let q_max = q_recs.iter().map(|rec| rec.q_en).max().unwrap_or(0);
+            let added_q_bases = q_max - q_min;
+            for rec in q_recs {
+                if scaffold {
+                    rec.q_st = rec.q_st - q_min + scaffold_len;
+                    rec.q_en = rec.q_en - q_min + scaffold_len;
+                }
+            }
+            scaffold_len += added_q_bases + insert;
+        }
+        for rec in t_recs {
+            if scaffold {
+                rec.q_name = scaffold_name.clone();
+                rec.q_len = scaffold_len;
+            }
+            // return result
+            println!("{}", rec);
+        }
+    }
 }
-
-pub fn run_get_fasta(args: &clap::ArgMatches) {
-    let start = Instant::now();
-
-    let bed_file = args.value_of("bed").unwrap();
-    let fasta_file = args.value_of("fasta").unwrap();
-
-    // call the function
-    getfasta::get_fasta(
-        fasta_file,
-        bed_file,
-        args.is_present("name"),
-        args.is_present("strand"),
-    );
-
-    let duration = start.elapsed();
-    eprintln!("Time elapsed during getfasta: {:.3?}", duration);
-}
-*/

@@ -92,6 +92,7 @@ pub struct PafRecord {
     pub qpos_aln: Vec<u64>,
     pub long_cigar: CigarString,
     pub id: String,
+    pub order: u64,
 }
 
 impl PafRecord {
@@ -147,6 +148,7 @@ impl PafRecord {
             qpos_aln: Vec::new(),
             long_cigar: CigarString(Vec::new()),
             id: "".to_string(),
+            order: 0,
         };
         Ok(rec)
     }
@@ -171,6 +173,7 @@ impl PafRecord {
             qpos_aln: Vec::new(),
             long_cigar: CigarString(Vec::new()),
             id: self.id.clone(),
+            order: self.order,
         }
     }
 
