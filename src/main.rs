@@ -194,9 +194,7 @@ pub fn parse_cli() {
             let mut paf = paf::Paf::from_file(paf);
             eprintln!("{} PAF records BEFORE filtering.", paf.records.len());
             paf.filter_query_len(*query);
-            eprintln!("{} PAF records AFTER filtering.", paf.records.len());
             paf.filter_aln_len(*aln);
-            eprintln!("{} PAF records AFTER filtering.", paf.records.len());
             paf.filter_aln_pairs(*paired_len);
             eprintln!("{} PAF records AFTER filtering.", paf.records.len());
             for rec in paf.records {
