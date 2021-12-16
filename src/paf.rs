@@ -70,6 +70,27 @@ impl<'a> Paf<'a> {
         paf.records = records;
         paf
     }
+
+    pub fn filter_aln_pairs(&mut self, paired_len: u64) {
+        let mut dict = HashMap::new();
+        for rec in self.records.iter_mut() {
+            let aln_bp = dict
+                .entry((rec.t_name.clone(), rec.q_name.clone()))
+                .or_insert(0_u64);
+            *aln_bp += rec.t_en - rec.t_st;
+        }
+        self.records.retain(|rec| {
+            paired_len < *dict.get(&(rec.t_name.clone(), rec.q_name.clone())).unwrap()
+        });
+    }
+
+    pub fn filter_query_len(&mut self, min_query_len: u64) {
+        self.records.retain(|rec| rec.q_len > min_query_len);
+    }
+
+    pub fn filter_aln_len(&mut self, min_aln_len: u64) {
+        self.records.retain(|rec| rec.t_en - rec.t_st > min_aln_len);
+    }
 }
 
 #[derive(Debug, Clone)]

@@ -79,6 +79,21 @@ pub enum Commands {
         #[clap(short, long)]
         readable: bool,
     },
+    /// filter paf records in various ways
+    Filter {
+        /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
+        #[clap(default_value = "-")]
+        paf: String,
+        /// Number of aligned bases between a target and query in order to keep
+        #[clap(short, long, default_value_t = 0)]
+        paired_len: u64,
+        /// minimum alignment length
+        #[clap(short, long, default_value_t = 0)]
+        aln: u64,
+        /// minimum query length
+        #[clap(short, long, default_value_t = 0)]
+        query: u64,
+    },
     ///  liftover target sequence coordinates onto query sequence using a PAF
     Liftover {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
