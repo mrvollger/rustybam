@@ -9,3 +9,4 @@ completions/_rustybam
 completions/rustybam.bash
 **.Rhistory
 bioconda/**
+dists/**
