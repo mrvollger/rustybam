@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-V=$1
+V=$(grep "^version" Cargo.toml | sed 's/.*= //g' | sed 's/"//g')
 echo $V
 
 # broken for some reason
