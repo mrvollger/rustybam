@@ -183,7 +183,7 @@ pub fn parse_cli() {
             }
         }
         //
-        // Run Liftover
+        // Run Filter
         //
         Some(Commands::Filter {
             paf,
