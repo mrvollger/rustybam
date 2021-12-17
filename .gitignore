@@ -10,3 +10,4 @@ completions/rustybam.bash
 **.Rhistory
 bioconda/**
 dists/**
+tmp.paf
