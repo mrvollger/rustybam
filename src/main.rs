@@ -382,6 +382,9 @@ pub fn orient_records(paf: &str, scaffold: bool, insert: u64) {
             }
             scaffold_len += added_q_bases + insert;
         }
+        // remove padding insert on the end of rec
+        scaffold_len -= insert;
+
         for rec in t_recs {
             if scaffold {
                 rec.q_name = scaffold_name.clone();
