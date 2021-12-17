@@ -5,9 +5,7 @@ use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rustybam::cli::Commands;
-use rustybam::paf::PafRecord;
 use rustybam::*;
-use std::collections::{HashMap, HashSet};
 use std::io;
 use std::time::Instant;
 
@@ -18,6 +16,8 @@ fn main() {
 pub fn parse_cli() {
     let pg_start = Instant::now();
     let args = cli::make_cli_parse();
+    let matches = cli::make_cli_app().get_matches();
+    let subcommand = matches.subcommand_name().unwrap();
 
     // set up number of threads to use globally
     rayon::ThreadPoolBuilder::new()
@@ -209,7 +209,15 @@ pub fn parse_cli() {
             scaffold,
             insert,
         }) => {
-            orient_records(paf, *scaffold, *insert);
+            //orient_records(paf, *scaffold, *insert);
+            let mut paf = paf::Paf::from_file(paf);
+            paf.orient();
+            if *scaffold {
+                paf.scaffold(*insert);
+            }
+            for rec in &paf.records {
+                println!("{}", rec);
+            }
         }
         //
         // Run Breakpaf
@@ -255,7 +263,10 @@ pub fn parse_cli() {
     };
 
     let duration = pg_start.elapsed();
-    eprintln!("Time elapsed during rustybam: {:.3?}", duration);
+    eprintln!(
+        "[SUCCESS] Time elapsed during rustybam-{}: {:.3?}",
+        subcommand, duration
+    );
 }
 
 pub fn run_split_fasta(files: &[String]) {
@@ -293,105 +304,6 @@ pub fn run_split_fastq(files: &[String]) {
         out_idx += 1;
         if out_idx == outs.len() {
             out_idx = 0;
-        }
-    }
-}
-
-pub fn orient_records(paf: &str, scaffold: bool, insert: u64) {
-    let mut paf = paf::Paf::from_file(paf);
-    let mut orient_order_dict = HashMap::new();
-    let mut t_names = HashSet::new();
-    // calculate whether a contig is mostly forward or reverse strand
-    // and determine the middle alignment position with respect to the target
-    for rec in &paf.records {
-        let (orient, total_bp, order) = orient_order_dict
-            .entry((rec.t_name.clone(), rec.q_name.clone()))
-            .or_insert((0_i64, 0_u64, 0_u64));
-        // set the orientation of the query relative to the target
-        if rec.strand == '-' {
-            *orient -= (rec.q_en - rec.q_st) as i64;
-        } else {
-            *orient += (rec.q_en - rec.q_st) as i64;
-        }
-        // set a number that will determine the order of the contig
-        let weight = rec.t_en - rec.t_st;
-        *total_bp += weight;
-        *order += weight * (rec.t_st + rec.t_en) / 2;
-        // make a list of targets
-        t_names.insert(rec.t_name.clone());
-    }
-
-    // set the order and orientation of records
-    for rec in &mut paf.records {
-        // set the order of the records
-        let (orient, total_bp, order) = orient_order_dict
-            .get(&(rec.t_name.clone(), rec.q_name.clone()))
-            .unwrap();
-        rec.order = *order / *total_bp;
-
-        // reverse record if it is mostly on the rc
-        if *orient < 0 {
-            rec.q_name = format!("{}-", rec.q_name);
-            let new_st = rec.q_len - rec.q_en;
-            let new_en = rec.q_len - rec.q_st;
-            rec.q_st = new_st;
-            rec.q_en = new_en;
-            rec.strand = if rec.strand == '+' { '-' } else { '+' };
-        } else {
-            rec.q_name = format!("{}+", rec.q_name);
-        }
-    }
-
-    // sort the records by their target name and order
-    paf.records.sort_by(|a, b| {
-        a.t_name
-            .cmp(&b.t_name) // group by target
-            .then(a.order.cmp(&b.order)) // order query by position in target
-            .then(a.q_st.cmp(&b.q_st)) // order by position in query
-    });
-
-    // group by t_name
-    for (_t_name, t_recs) in &paf.records.iter_mut().group_by(|rec| rec.t_name.clone()) {
-        let mut t_recs: Vec<&mut PafRecord> = t_recs.collect();
-        // sort recs by order
-        t_recs.sort_by(|a, b| {
-            a.order
-                .cmp(&b.order) // order query by position in target
-                .then(a.q_st.cmp(&b.q_st)) // order by position in query
-        });
-
-        // new scaffold name
-        let scaffold_name = t_recs
-            .iter()
-            .map(|rec| rec.q_name.clone())
-            .unique()
-            .collect::<Vec<String>>()
-            .join("::");
-
-        let mut scaffold_len = 0_u64;
-        for (_q_name, q_recs) in &t_recs.iter_mut().group_by(|rec| rec.q_name.clone()) {
-            let q_recs: Vec<&mut &mut PafRecord> = q_recs.collect();
-            let q_min = q_recs.iter().map(|rec| rec.q_st).min().unwrap_or(0);
-            let q_max = q_recs.iter().map(|rec| rec.q_en).max().unwrap_or(0);
-            let added_q_bases = q_max - q_min;
-            for rec in q_recs {
-                if scaffold {
-                    rec.q_st = rec.q_st - q_min + scaffold_len;
-                    rec.q_en = rec.q_en - q_min + scaffold_len;
-                }
-            }
-            scaffold_len += added_q_bases + insert;
-        }
-        // remove padding insert on the end of rec
-        scaffold_len -= insert;
-
-        for rec in t_recs {
-            if scaffold {
-                rec.q_name = scaffold_name.clone();
-                rec.q_len = scaffold_len;
-            }
-            // return result
-            println!("{}", rec);
         }
     }
 }
