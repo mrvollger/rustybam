@@ -3,6 +3,9 @@ set -euxo pipefail
 V=$(grep "^version" Cargo.toml | sed 's/.*= //g' | sed 's/"//g' | xargs)
 echo $V
 
+cargo test
+cargo run --bin rb -- --help
+
 # broken for some reason
 # target=aarch64-unknown-linux-musl
 
