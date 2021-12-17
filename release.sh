@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euxo pipefail
-V=$(grep "^version" Cargo.toml | sed 's/.*= //g' | sed 's/"//g')
+V=$(grep "^version" Cargo.toml | sed 's/.*= //g' | sed 's/"//g' | xargs)
 echo $V
 
 # broken for some reason
