@@ -20,4 +20,5 @@ gh release create \
     -t "Release v${V}" \
     -n "v${V}" \
     "v${V}" \
+    -p \
     ./dists/rustybam_v${V}-*tar.gz
