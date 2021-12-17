@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -euxo pipefail
 V=$(grep "^version" Cargo.toml | sed 's/.*= //g' | sed 's/"//g')
 echo $V
 
@@ -12,7 +12,7 @@ for target in x86_64-apple-darwin aarch64-apple-darwin x86_64-unknown-linux-musl
     echo $target
     cross build --release --target $target
     tar -czvf ./dists/rustybam_v${V}-${target}.tar.gz \
-        -C ./target/$target/release/ \
+        -C ./target/${target}/release/ \
         rustybam rb
 done
 
