@@ -22,7 +22,7 @@ done
 cargo publish
 
 gh release create \
-    -t "Release v${V}" \
-    -n "v${V}" \
     "v${V}" \
+    -t "v${V}" \
+    -n "v${V}" \
     ./dists/rustybam_v${V}-*tar.gz
