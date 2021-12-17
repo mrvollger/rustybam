@@ -16,9 +16,10 @@ for target in x86_64-apple-darwin aarch64-apple-darwin x86_64-unknown-linux-musl
         rustybam rb
 done
 
+cargo publish
+
 gh release create \
     -t "Release v${V}" \
     -n "v${V}" \
     "v${V}" \
-    -p \
     ./dists/rustybam_v${V}-*tar.gz
