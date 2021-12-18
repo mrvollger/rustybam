@@ -94,6 +94,12 @@ pub enum Commands {
         #[clap(short, long, default_value_t = 0)]
         query: u64,
     },
+    ///  invert the target and query sequences in a PAF along with the cg tag.
+    Invert {
+        /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
+        #[clap(default_value = "-")]
+        paf: String,
+         },
     ///  liftover target sequence coordinates onto query sequence using a PAF
     Liftover {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.

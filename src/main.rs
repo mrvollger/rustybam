@@ -5,6 +5,7 @@ use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rustybam::cli::Commands;
+use rustybam::paf::paf_swap_query_and_target;
 use rustybam::*;
 use std::io;
 use std::time::Instant;
@@ -149,6 +150,16 @@ pub fn parse_cli() {
                 println!("{}", (count as f64) / 1e6);
             } else {
                 println!("{}", count);
+            }
+        }
+        //
+        // Run Liftover
+        //
+        Some(Commands::Invert { paf }) => {
+            let paf = paf::Paf::from_file(paf);
+            for rec in &paf.records {
+                let inv_rec = paf_swap_query_and_target(rec);
+                println!("{}", inv_rec);
             }
         }
         //
