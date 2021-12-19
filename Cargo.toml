@@ -35,12 +35,15 @@ bimap = "0.6.1"
 bio = "0.34.0"
 bio-types = "0.12.0"
 calm_io = "0.1.1"
+chrono = "0.4.19"
 clap = {version = "3.0.0-rc.4", features = ["yaml", "derive"]}
 colored = "2.0.0"
+env_logger = "0.9.0"
 flate2 = {version = "~1", default-features = false}
 gzp = {version = "0.8.2", default-features = false}
 itertools = "0.10.0"
 lazy_static = "1.4.0"
+log = "0.4.14"
 rayon = "1.5"
 regex = "1.5.4"
 rust-htslib = "0.38.2"
@@ -48,3 +51,5 @@ rust-htslib = "0.38.2"
 [build-dependencies]
 clap = {version = "3.0.0-rc.4", features = ["yaml", "derive"]}
 clap_generate = "3.0.0-rc.4"
+env_logger = "0.9.0"
+log = "0.4.14"

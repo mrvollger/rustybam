@@ -8,9 +8,13 @@ use clap::{App, AppSettings, Parser, Subcommand};
 #[clap(global_setting(AppSettings::UseLongFormatForHelpSubcommand))]
 #[clap(setting(AppSettings::SubcommandRequiredElseHelp))]
 pub struct Cli {
-    // Threads for decompression
+    /// threads for decompression
     #[clap(short, long, default_value_t = 8)]
     pub threads: usize,
+
+    /// logging level.
+    #[clap(short, long, parse(from_occurrences))]
+    pub verbose: usize,
 
     #[clap(subcommand)]
     pub command: Option<Commands>,
@@ -20,7 +24,7 @@ pub struct Cli {
 pub enum Commands {
     /// get percent identity stats from a sam/bam/cram or PAF
     Stats {
-        // sam/bam/cram/file
+        /// sam/bam/cram/file
         #[clap(default_value = "-")]
         bam: String,
         /// print query coordinates first
@@ -33,12 +37,12 @@ pub enum Commands {
     },
 
     /// count bases in a bed file
-    #[clap(aliases = &["bedlen", "bl"])]
-    Bedlength {
-        // a bed file
+    #[clap(visible_aliases = &["bedlen", "bl", "bedlength"])]
+    BedLength {
+        /// a bed file
         #[clap(default_value = "-")]
         bed: String,
-        // make the output human readable (Mbp)
+        /// make the output human readable (Mbp)
         #[clap(short, long)]
         readable: bool,
     },
@@ -92,7 +96,8 @@ pub enum Commands {
         insert: u64,
     },
     /// break up paf on indels of a certain size
-    Breakpaf {
+    #[clap(visible_aliases = &["breakpaf", "bp"])]
+    BreakPaf {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
         #[clap(default_value = "-")]
         paf: String,
@@ -101,17 +106,19 @@ pub enum Commands {
         max_size: u32,
     },
     /// reads in a fasta from stdin and divides into files (can compress by adding .gz)
+    #[clap(visible_aliases = &["fastasplit", "fasplit"])]
     FastaSplit {
         /// list of fasta files
         fasta: Vec<String>,
     },
     /// reads in a fastq from stdin and divides into files (can compress by adding .gz)
+    #[clap(visible_aliases = &["fastqsplit", "fqsplit"])]
     FastqSplit {
         /// list of fastq files
         fastq: Vec<String>,
     },
     /// mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs.
-    #[clap(aliases = &["getfasta", "gf"])]
+    #[clap(visible_aliases = &["getfasta", "gf"])]
     GetFasta {
         /// fasta file to extract sequences from
         #[clap(short, long, default_value = "-")]

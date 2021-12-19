@@ -1,5 +1,6 @@
 use bio::io::fasta;
 use bio::io::fastq;
+use colored::Colorize;
 use itertools::Itertools;
 use rayon::prelude::*;
 use rust_htslib::bam;
@@ -10,6 +11,9 @@ use rustybam::*;
 use std::io;
 use std::time::Instant;
 
+use env_logger::{Builder, Target};
+use log::LevelFilter;
+
 fn main() {
     parse_cli();
 }
@@ -19,6 +23,35 @@ pub fn parse_cli() {
     let args = cli::make_cli_parse();
     let matches = cli::make_cli_app().get_matches();
     let subcommand = matches.subcommand_name().unwrap();
+
+    // set the logging level
+    let min_log_level = match matches.occurrences_of("verbose") {
+        0 => LevelFilter::Warn,
+        1 => LevelFilter::Info,
+        2 => LevelFilter::Debug,
+        3 | _ => LevelFilter::Trace,
+    };
+    Builder::new()
+        .target(Target::Stderr)
+        .filter(None, min_log_level)
+        .init();
+    /*
+    use chrono::Local;
+    use std::io::Write;
+    */
+    /*
+        .format(|buf, record| {
+        writeln!(
+            buf,
+            "{} [{}] - {}",
+            Local::now().format("%Y-%m-%dT%H:%M:%S"),
+            record.level(),
+            record.args()
+        )
+    })
+    */
+    log::debug!("DEBUG logging enabled");
+    log::trace!("TRACE logging enabled");
 
     // set up number of threads to use globally
     rayon::ThreadPoolBuilder::new()
@@ -143,7 +176,7 @@ pub fn parse_cli() {
         //
         // Run Bedlength
         //
-        Some(Commands::Bedlength { bed, readable }) => {
+        Some(Commands::BedLength { bed, readable }) => {
             let rgns = bed::parse_bed(bed);
             let count: u64 = rgns.into_iter().map(|rgn| rgn.en - rgn.st).sum();
             if *readable {
@@ -203,11 +236,11 @@ pub fn parse_cli() {
             query,
         }) => {
             let mut paf = paf::Paf::from_file(paf);
-            eprintln!("{} PAF records BEFORE filtering.", paf.records.len());
+            log::info!("{} PAF records BEFORE filtering.", paf.records.len());
             paf.filter_query_len(*query);
             paf.filter_aln_len(*aln);
             paf.filter_aln_pairs(*paired_len);
-            eprintln!("{} PAF records AFTER filtering.", paf.records.len());
+            log::info!("{} PAF records AFTER filtering.", paf.records.len());
             for rec in paf.records {
                 println!("{}", rec);
             }
@@ -233,7 +266,7 @@ pub fn parse_cli() {
         //
         // Run Breakpaf
         //
-        Some(Commands::Breakpaf { paf, max_size }) => {
+        Some(Commands::BreakPaf { paf, max_size }) => {
             // read in the file
             let paf = paf::Paf::from_file(paf);
             for mut paf in paf.records {
@@ -274,9 +307,10 @@ pub fn parse_cli() {
     };
 
     let duration = pg_start.elapsed();
-    eprintln!(
-        "[SUCCESS] Time elapsed during rustybam-{}: {:.3?}",
-        subcommand, duration
+    log::info!(
+        "rustybam-{} done! Time elapsed: {:.2?}",
+        subcommand.bright_green().bold(),
+        duration
     );
 }
 
