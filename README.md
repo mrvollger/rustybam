@@ -7,6 +7,28 @@
 [![Conda (channel only)](https://img.shields.io/conda/vn/bioconda/rustybam?color=green)](https://anaconda.org/bioconda/rustybam)
 [![Downloads](https://img.shields.io/conda/dn/bioconda/rustybam?color=green)](https://anaconda.org/bioconda/rustybam)
 
+## Subcommands
+
+```
+SUBCOMMANDS:
+    stats          get percent identity stats from a sam/bam/cram or PAF
+    bedlength      count bases in a bed file
+    filter         filter PAF records in various ways
+    invert         invert the target and query sequences in a PAF along with the cg tag
+    liftover       liftover target sequence coordinates onto query sequence using a PAF
+    orient         orient paf records so that most of the bases are in the forward direction
+    breakpaf       break up paf on indels of a certain size
+    fasta-split    reads in a fasta from stdin and divides into files (can compress by adding
+                   .gz)
+    fastq-split    reads in a fastq from stdin and divides into files (can compress by adding
+                   .gz)
+    get-fasta      mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs
+    nucfreq        get the frequencies of each bp at each position
+    repeat         report the longest repeat length at every position in a fasta
+    suns           extract the intervals in a genome (fasta) that are made up of SUNs
+    help           Print this message or the help of the given subcommand(s)
+```
+
 ## Install
 
 It is easy just make sure you have rust and cargo installed and then:
