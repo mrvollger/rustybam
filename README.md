@@ -4,8 +4,8 @@
 [![Actions Status](https://github.com/mrvollger/rustybam/workflows/Formatting/badge.svg)](https://github.com/mrvollger/rustybam/actions)
 [![Actions Status](https://github.com/mrvollger/rustybam/workflows/Clippy/badge.svg)](https://github.com/mrvollger/rustybam/actions)
 [![DOI](https://zenodo.org/badge/351639424.svg)](https://zenodo.org/badge/latestdoi/351639424)
-[![](https://anaconda.org/bioconda/rustybam/badges/downloads.svg)](https://anaconda.org/bioconda/rustybam)
-[![](https://anaconda.org/bioconda/rustybam/badges/installer/conda.svg)](https://anaconda.org/bioconda/rustybam)
+[![Conda (channel only)](https://img.shields.io/conda/vn/bioconda/rustybam?color=green)](https://anaconda.org/bioconda/rustybam)
+[![Downloads](https://img.shields.io/conda/dn/bioconda/rustybam?color=green)](https://anaconda.org/bioconda/rustybam)
 
 ## Install
 
