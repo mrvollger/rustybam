@@ -257,9 +257,9 @@ pub fn parse_cli() {
             run_split_fastq(fastq);
         }
         //
-        // Run Getfasta
+        // Run GetFasta
         //
-        Some(Commands::Getfasta {
+        Some(Commands::GetFasta {
             fasta,
             bed,
             strand,

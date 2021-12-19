@@ -4,6 +4,7 @@ use clap::{App, AppSettings, Parser, Subcommand};
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
 #[clap(global_setting(AppSettings::PropagateVersion))]
+#[clap(global_setting(AppSettings::DeriveDisplayOrder))]
 #[clap(global_setting(AppSettings::UseLongFormatForHelpSubcommand))]
 #[clap(setting(AppSettings::SubcommandRequiredElseHelp))]
 pub struct Cli {
@@ -17,12 +18,12 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// Get percent identity stats from a sam/bam/cram or PAF
+    /// get percent identity stats from a sam/bam/cram or PAF
     Stats {
         // sam/bam/cram/file
         #[clap(default_value = "-")]
         bam: String,
-        /// Print query coordinates first
+        /// print query coordinates first
         #[clap(short, long)]
         qbed: bool,
         /// The input is paf format
@@ -30,47 +31,9 @@ pub enum Commands {
         #[clap(short, long)]
         paf: bool,
     },
-    /// Get the frequencies of each bp at each position.
-    Nucfreq {
-        // sam/bam/cram/file
-        #[clap(default_value = "-")]
-        bam: String,
-        /// Print nucfreq info from the input region e.g "chr1:1-1000"
-        #[clap(short, long)]
-        region: Option<String>,
-        /// Print nucfreq info from regions in the bed file
-        /// output is optionally tagged using the 4th column
-        #[clap(short, long)]
-        bed: Option<String>,
-        // smaller output format
-        #[clap(short, long)]
-        small: bool,
-    },
-    /// Report the longest repeat length at every position in a fasta
-    Repeat {
-        // a fasta file
-        #[clap(default_value = "-")]
-        fasta: String,
-        /// The smallest repeat length to report
-        #[clap(short, long, default_value_t = 21)]
-        min: usize,
-    },
-    /// Extract the intervals in a genome (fasta) that are made up of SUNs
-    Suns {
-        /// fasta file with the genome
-        #[clap(short, long, default_value = "-")]
-        fasta: String,
-        /// The size of the required unique kmer
-        #[clap(short, long, default_value_t = 21)]
-        kmer_size: usize,
-        /// The maximum size SUN interval to report
-        #[clap(short, long, default_value_t = std::usize::MAX)]
-        max_size: usize,
-        /// Confirm all the SUNs (very slow) only for debugging.
-        #[clap(short, long)]
-        validate: bool,
-    },
+
     /// count bases in a bed file
+    #[clap(aliases = &["bedlen", "bl"])]
     Bedlength {
         // a bed file
         #[clap(default_value = "-")]
@@ -79,12 +42,12 @@ pub enum Commands {
         #[clap(short, long)]
         readable: bool,
     },
-    /// filter paf records in various ways
+    /// filter PAF records in various ways
     Filter {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
         #[clap(default_value = "-")]
         paf: String,
-        /// Number of aligned bases between a target and query in order to keep
+        /// minimum number of aligned bases across all alignments between a target and query in order to keep those records
         #[clap(short, long, default_value_t = 0)]
         paired_len: u64,
         /// minimum alignment length
@@ -105,13 +68,13 @@ pub enum Commands {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
         #[clap(default_value = "-")]
         paf: String,
-        /// Bed file of regions to liftover
+        /// bed file of regions to liftover
         #[clap(short, long)]
         bed: String,
-        /// The bed contains query coordinates to be lifted (note the query in the original PAF will become the target in the output)
+        /// the bed contains query coordinates to be lifted (note the query in the original PAF will become the target in the output)
         #[clap(short, long)]
         qbed: bool,
-        /// The bed contains query coordinates to be lifted (note the query in the original PAF will become the target in the output)
+        /// the bed contains query coordinates to be lifted (note the query in the original PAF will become the target in the output)
         #[clap(short, long)]
         largest: bool,
     },
@@ -120,8 +83,8 @@ pub enum Commands {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
         #[clap(default_value = "-")]
         paf: String,
-        /// Make fake query names that scaffold together all the records that map to one target sequence.
-        /// The order of the scaffold will be determined by the middle position of the largest alignment.
+        /// make fake query names that scaffold together all the records that map to one target sequence.
+        /// the order of the scaffold will be determined by the middle position of the largest alignment.
         #[clap(short, long)]
         scaffold: bool,
         /// space to add between records
@@ -147,8 +110,9 @@ pub enum Commands {
         /// list of fastq files
         fastq: Vec<String>,
     },
-    /// Mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs.
-    Getfasta {
+    /// mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs.
+    #[clap(aliases = &["getfasta", "gf"])]
+    GetFasta {
         /// fasta file to extract sequences from
         #[clap(short, long, default_value = "-")]
         fasta: String,
@@ -161,6 +125,46 @@ pub enum Commands {
         /// add the name (4th column) to the header of the fasta output
         #[clap(short, long)]
         name: bool,
+    },
+    /// get the frequencies of each bp at each position.
+    Nucfreq {
+        // sam/bam/cram/file
+        #[clap(default_value = "-")]
+        bam: String,
+        /// print nucfreq info from the input region e.g "chr1:1-1000"
+        #[clap(short, long)]
+        region: Option<String>,
+        /// print nucfreq info from regions in the bed file
+        /// output is optionally tagged using the 4th column
+        #[clap(short, long)]
+        bed: Option<String>,
+        // smaller output format
+        #[clap(short, long)]
+        small: bool,
+    },
+    /// report the longest repeat length at every position in a fasta
+    Repeat {
+        // a fasta file
+        #[clap(default_value = "-")]
+        fasta: String,
+        /// The smallest repeat length to report
+        #[clap(short, long, default_value_t = 21)]
+        min: usize,
+    },
+    /// extract the intervals in a genome (fasta) that are made up of SUNs
+    Suns {
+        /// fasta file with the genome
+        #[clap(short, long, default_value = "-")]
+        fasta: String,
+        /// the size of the required unique kmer
+        #[clap(short, long, default_value_t = 21)]
+        kmer_size: usize,
+        /// the maximum size SUN interval to report
+        #[clap(short, long, default_value_t = std::usize::MAX)]
+        max_size: usize,
+        /// confirm all the SUNs (very slow) only for debugging.
+        #[clap(short, long)]
+        validate: bool,
     },
 }
 
