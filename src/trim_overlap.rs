@@ -30,11 +30,12 @@ fn score_of_qpos(rec: &PafRecord, pos: u64) -> i32 {
 pub fn trim_overlapping_pafs(left: &mut PafRecord, right: &mut PafRecord) {
     let st_ovl = max(left.q_st, right.q_st);
     let en_ovl = min(left.q_en, right.q_en);
+    log::info!("Number of overlapping bases {}", en_ovl - st_ovl);
 
     let mut l_score = vec![0];
     let mut r_score = vec![];
+
     for pos in st_ovl..en_ovl {
-        eprintln!("{}", pos);
         let l_s = score_of_qpos(left, pos);
         let r_s = score_of_qpos(right, pos);
         l_score.push(l_s);
@@ -51,7 +52,6 @@ pub fn trim_overlapping_pafs(left: &mut PafRecord, right: &mut PafRecord) {
         *x += acc;
         *x
     });
-    eprintln!("{:?}\n{:?}", l_score, r_score);
 
     // determine the split point
     let mut max_idx: u64 = 0;
@@ -66,8 +66,9 @@ pub fn trim_overlapping_pafs(left: &mut PafRecord, right: &mut PafRecord) {
     right.truncate_record_by_query(st_ovl + max_idx, right.q_en);
 
     log::info!(
-        "Split position was found to be {} bases after the overlap start ({}).",
+        "Split position was found to be {} bases after the overlap start ({}) with a score of {}.",
         max_idx,
-        st_ovl
+        st_ovl,
+        max
     );
 }

@@ -1,3 +1,5 @@
+use crate::trim_overlap::trim_overlapping_pafs;
+
 use super::bed;
 use core::{fmt, panic};
 use itertools::Itertools;
@@ -211,7 +213,7 @@ impl Paf {
             let rec1 = &self.records[i];
             let rgn1 = rec1.get_query_as_region();
             let mut j = i + 1;
-            while rec1.q_name == self.records[j].q_name {
+            while j < self.records.len() && rec1.q_name == self.records[j].q_name {
                 let rec2 = &self.records[j];
                 let rgn2 = rec2.get_query_as_region();
                 // count overlap
@@ -220,10 +222,10 @@ impl Paf {
                 if overlap < 1 {
                     j += 1;
                     continue;
-                /*} else if overlap == (rec2.q_en - rec2.q_st) {
+                } else if overlap == (rec2.q_en - rec2.q_st) {
                     //rec2.contained = true;
                 } else if overlap == (rec1.q_en - rec1.q_st) {
-                    //rec1.contained = true;*/
+                    //rec1.contained = true;
                 } else {
                     // put recs in left, right order
                     if rec1.q_st <= rec2.q_st {
@@ -237,6 +239,19 @@ impl Paf {
             }
         }
         overlap_pairs.sort_by_key(|rec| std::u64::MAX - rec.0);
+        if overlap_pairs.len() > 1 {
+            let mut left = self.records[overlap_pairs[0].1].clone();
+            let mut right = self.records[overlap_pairs[0].2].clone();
+            left.aligned_pairs();
+            right.aligned_pairs();
+            trim_overlapping_pafs(&mut left, &mut right);
+            log::trace!("{}", left);
+            log::trace!("{}", right);
+            self.records[overlap_pairs[0].1] = left;
+            self.records[overlap_pairs[0].2] = right;
+            // recursively call for next overlap
+            self.overlapping_paf_recs();
+        }
     }
 }
 
