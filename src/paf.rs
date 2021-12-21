@@ -224,8 +224,10 @@ impl Paf {
                     continue;
                 } else if overlap == (rec2.q_en - rec2.q_st) {
                     //rec2.contained = true;
+                    log::trace!("{}\n^is contained in another alignment", rec1);
                 } else if overlap == (rec1.q_en - rec1.q_st) {
                     //rec1.contained = true;
+                    log::trace!("{}\n^is contained in another alignment", rec1);
                 } else {
                     // put recs in left, right order
                     if rec1.q_st <= rec2.q_st {
