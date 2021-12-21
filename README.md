@@ -195,8 +195,8 @@ OPTIONS:
 
 ## TODO
 
-- Add a `bedtools getfasta` like operation that actually works with bgzipped input.
-  - Done, but no bed12/split implementation yet.
-- Add `D4` for Nucfreq.
-- Finish implementing `trim-paf`.
-- Finish implementing `suns`.
+- [x] Finish implementing `trim-paf`.
+- [x] Add a `bedtools getfasta` like operation that actually works with bgzipped input.
+  - [ ] implement bed12/split
+- [ ] Add `D4` for Nucfreq.
+- [ ] Finish implementing `suns`.
