@@ -8,3 +8,4 @@ pub mod myio;
 pub mod nucfreq;
 pub mod paf;
 pub mod suns;
+pub mod trim_overlap;

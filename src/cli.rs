@@ -5,6 +5,7 @@ use clap::{App, AppSettings, Parser, Subcommand};
 #[clap(author, version, about)]
 #[clap(global_setting(AppSettings::PropagateVersion))]
 #[clap(global_setting(AppSettings::DeriveDisplayOrder))]
+#[clap(global_setting(AppSettings::InferSubcommands))]
 #[clap(global_setting(AppSettings::UseLongFormatForHelpSubcommand))]
 #[clap(setting(AppSettings::SubcommandRequiredElseHelp))]
 pub struct Cli {
@@ -22,7 +23,9 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// get percent identity stats from a sam/bam/cram or PAF
+    /// Get percent identity stats from a sam/bam/cram or PAF.
+    ///
+    /// Requires =/X operations in the CIGAR string!
     Stats {
         /// sam/bam/cram/file
         #[clap(default_value = "-")]
@@ -35,8 +38,7 @@ pub enum Commands {
         #[clap(short, long)]
         paf: bool,
     },
-
-    /// count bases in a bed file
+    /// Count the number of bases in a bed file.
     #[clap(visible_aliases = &["bedlen", "bl", "bedlength"])]
     BedLength {
         /// a bed file
@@ -46,7 +48,7 @@ pub enum Commands {
         #[clap(short, long)]
         readable: bool,
     },
-    /// filter PAF records in various ways
+    /// Filter PAF records in various ways.
     Filter {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
         #[clap(default_value = "-")]
@@ -61,41 +63,58 @@ pub enum Commands {
         #[clap(short, long, default_value_t = 0)]
         query: u64,
     },
-    ///  invert the target and query sequences in a PAF along with the cg tag.
+    /// Invert the target and query sequences in a PAF along with the CIGAR string.
     Invert {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
         #[clap(default_value = "-")]
         paf: String,
     },
-    ///  liftover target sequence coordinates onto query sequence using a PAF
+    /// Liftover target sequence coordinates onto query sequence using a PAF.
+    ///
+    /// This is a function for lifting over coordinates from a reference (--bed) to a query using a PAF file from minimap2 or unimap (note, you can use `paftools.js sam2paf` to convert SAM data to PAF format).
+    /// The returned file is a PAF file that is trimmed to the regions in the bed file. Even the cigar in the returned PAF file is trimmed so it can be used downstream! Additionally, a tag with the format `id:Z:<>` is added to the PAF where `<>` is either the 4th column of the input bed file or if not present `chr_start_end`.
     Liftover {
-        /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
+        /// PAF file from minimap2 or unimap run with -c and --eqx [i.e. the PAF file must have the cg tag and use extended CIGAR opts (=/X)].
         #[clap(default_value = "-")]
         paf: String,
-        /// bed file of regions to liftover
+        /// BED file of reference regions to liftover to the query.
         #[clap(short, long)]
         bed: String,
-        /// the bed contains query coordinates to be lifted (note the query in the original PAF will become the target in the output)
+        /// Specifies that the BED file contains query coordinates to be lifted onto the reference (reverses direction of liftover).
+        ///
+        /// Note, that this will make the query in the input `PAF` the target in the output `PAF`.
         #[clap(short, long)]
         qbed: bool,
-        /// the bed contains query coordinates to be lifted (note the query in the original PAF will become the target in the output)
+        /// If multiple records overlap the same region in the <bed> return only the largest liftover. The default is to return all liftovers.
         #[clap(short, long)]
         largest: bool,
     },
-    /// orient paf records so that most of the bases are in the forward direction
+    /// Trim paf records that overlap in query sequence.
+    ///
+    /// This idea is to mimic some of the trimming that happens in PAV to improve breakpoint detection. Starts with the largest overlap and iterates until no query overlaps remain.
+    #[clap(visible_aliases = &["trim", "tp"])]
+    TrimPaf {
+        /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
+        #[clap(default_value = "-")]
+        paf: String,
+    },
+    /// Orient paf records so that most of the bases are in the forward direction.
+    ///
+    /// Optionally scaffold the queriers so that there is one query per target.
     Orient {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
         #[clap(default_value = "-")]
         paf: String,
-        /// make fake query names that scaffold together all the records that map to one target sequence.
-        /// the order of the scaffold will be determined by the middle position of the largest alignment.
+        /// Generate ~1 query per target that scaffolds together all the records that map to that target sequence.
+        ///
+        /// The order of the scaffold will be determined by the average target position across all the queries, and the name of the new scaffold will be
         #[clap(short, long)]
         scaffold: bool,
         /// space to add between records
         #[clap(short, long, default_value_t = 1_000_000)]
         insert: u64,
     },
-    /// break up paf on indels of a certain size
+    /// Break PAF records with large indels into multiple records (useful for SafFire).
     #[clap(visible_aliases = &["breakpaf", "bp"])]
     BreakPaf {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
@@ -105,19 +124,19 @@ pub enum Commands {
         #[clap(short, long, default_value_t = 100)]
         max_size: u32,
     },
-    /// reads in a fasta from stdin and divides into files (can compress by adding .gz)
+    /// Reads in a fasta from stdin and divides into files (can compress by adding .gz).
     #[clap(visible_aliases = &["fastasplit", "fasplit"])]
     FastaSplit {
         /// list of fasta files
         fasta: Vec<String>,
     },
-    /// reads in a fastq from stdin and divides into files (can compress by adding .gz)
+    /// Reads in a fastq from stdin and divides into files (can compress by adding .gz).
     #[clap(visible_aliases = &["fastqsplit", "fqsplit"])]
     FastqSplit {
         /// list of fastq files
         fastq: Vec<String>,
     },
-    /// mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs.
+    /// Mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs.
     #[clap(visible_aliases = &["getfasta", "gf"])]
     GetFasta {
         /// fasta file to extract sequences from
@@ -133,7 +152,7 @@ pub enum Commands {
         #[clap(short, long)]
         name: bool,
     },
-    /// get the frequencies of each bp at each position.
+    /// Get the frequencies of each bp at each position.
     Nucfreq {
         // sam/bam/cram/file
         #[clap(default_value = "-")]
@@ -149,7 +168,7 @@ pub enum Commands {
         #[clap(short, long)]
         small: bool,
     },
-    /// report the longest repeat length at every position in a fasta
+    /// Report the longest exact repeat length at every position in a fasta.
     Repeat {
         // a fasta file
         #[clap(default_value = "-")]
@@ -158,7 +177,7 @@ pub enum Commands {
         #[clap(short, long, default_value_t = 21)]
         min: usize,
     },
-    /// extract the intervals in a genome (fasta) that are made up of SUNs
+    /// Extract the intervals in a genome (fasta) that are made up of SUNs.
     Suns {
         /// fasta file with the genome
         #[clap(short, long, default_value = "-")]

@@ -11,3 +11,6 @@ completions/rustybam.bash
 bioconda/**
 dists/**
 tmp.paf
+tmp**
+temp/**
+tmp/**

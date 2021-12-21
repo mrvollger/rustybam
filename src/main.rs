@@ -29,27 +29,13 @@ pub fn parse_cli() {
         0 => LevelFilter::Warn,
         1 => LevelFilter::Info,
         2 => LevelFilter::Debug,
-        3 | _ => LevelFilter::Trace,
+        _ => LevelFilter::Trace,
     };
     Builder::new()
         .target(Target::Stderr)
         .filter(None, min_log_level)
         .init();
-    /*
-    use chrono::Local;
-    use std::io::Write;
-    */
-    /*
-        .format(|buf, record| {
-        writeln!(
-            buf,
-            "{} [{}] - {}",
-            Local::now().format("%Y-%m-%dT%H:%M:%S"),
-            record.level(),
-            record.args()
-        )
-    })
-    */
+
     log::debug!("DEBUG logging enabled");
     log::trace!("TRACE logging enabled");
 
@@ -186,7 +172,7 @@ pub fn parse_cli() {
             }
         }
         //
-        // Run Liftover
+        // Run Invert
         //
         Some(Commands::Invert { paf }) => {
             let paf = paf::Paf::from_file(paf);
@@ -224,6 +210,16 @@ pub fn parse_cli() {
                 for rec in new_recs {
                     println!("{}", rec);
                 }
+            }
+        }
+        //
+        // Run TrimPaf
+        //
+        Some(Commands::TrimPaf { paf }) => {
+            let mut paf = paf::Paf::from_file(paf);
+            paf.overlapping_paf_recs();
+            for rec in &paf.records {
+                println!("{}", rec);
             }
         }
         //

@@ -27,16 +27,16 @@ pub enum Error {
 type PafResult<T> = Result<T, crate::paf::Error>;
 
 #[derive(Debug)]
-pub struct Paf<'a> {
+pub struct Paf {
     pub records: Vec<PafRecord>,
-    pub records_by_contig: HashMap<String, Vec<&'a PafRecord>>,
+    //pub records_by_contig: HashMap<String, Vec<&'a PafRecord>>,
 }
 
-impl<'a> Paf<'a> {
-    fn new() -> Paf<'a> {
+impl Paf {
+    fn new() -> Paf {
         Paf {
             records: Vec::new(),
-            records_by_contig: HashMap::new(),
+            //records_by_contig: HashMap::new(),
         }
     }
     /// read in the paf from a file pass "-" for stdin
@@ -49,27 +49,39 @@ impl<'a> Paf<'a> {
     /// assert_eq!(paf.records.len(), 249);
     ///
     /// ```
-    pub fn from_file(file_name: &str) -> Paf<'a> {
+    pub fn from_file(file_name: &str) -> Paf {
         // open the paf file
         let paf_file: Box<dyn io::Read> = match file_name {
             "-" => Box::new(io::stdin()),
             _ => Box::new(fs::File::open(file_name).expect("Unable to open paf file")),
         };
         let mut paf = Paf::new();
-        let mut records = Vec::new();
+        //let mut records = Vec::new();
         // read the paf recs into a vector
         for (index, line) in io::BufReader::new(paf_file).lines().enumerate() {
             match PafRecord::new(&line.unwrap()) {
                 Ok(rec) => {
                     //eprint!("\rReading PAF entry # {}", index);
-                    records.push(rec)
+                    paf.records.push(rec);
+                    //let q_name = rec.q_name.clone();
+                    //let rec = paf.records.last().expect("must have inserted at least one");
+                    //(*paf.records_by_contig.entry(q_name).or_insert(Vec::new())).push(x);
                 }
                 Err(_) => eprintln!("\nUnable to parse PAF record. Skipping line {}", index + 1),
             }
         }
-        eprintln!();
-        paf.records = records;
         paf
+    }
+
+    pub fn query_name_map(&mut self) -> HashMap<String, Vec<&PafRecord>> {
+        let mut records_by_contig = HashMap::new();
+        for rec in &self.records {
+            (*records_by_contig
+                .entry(rec.q_name.clone())
+                .or_insert_with(Vec::new))
+            .push(rec);
+        }
+        records_by_contig
     }
 
     pub fn filter_aln_pairs(&mut self, paired_len: u64) {
@@ -140,7 +152,7 @@ impl<'a> Paf<'a> {
         }
     }
 
-    // scaffold oriented contigs into one fake super contig
+    /// scaffold oriented contigs into one fake super contig
     pub fn scaffold(&mut self, spacer_size: u64) {
         // sort the records by their target name and order
         self.records.sort_by(|a, b| {
@@ -189,6 +201,43 @@ impl<'a> Paf<'a> {
             }
         }
     }
+
+    /// Identify overlapping pairs in Paf set
+    pub fn overlapping_paf_recs(&mut self) {
+        let mut overlap_pairs = Vec::new();
+        self.records.sort_by_key(|rec| rec.q_name.clone());
+
+        for i in 0..(self.records.len() - 1) {
+            let rec1 = &self.records[i];
+            let rgn1 = rec1.get_query_as_region();
+            let mut j = i + 1;
+            while rec1.q_name == self.records[j].q_name {
+                let rec2 = &self.records[j];
+                let rgn2 = rec2.get_query_as_region();
+                // count overlap
+                let overlap = bed::get_overlap(&rgn1, &rgn2);
+                // check if rec2 is contained
+                if overlap < 1 {
+                    j += 1;
+                    continue;
+                /*} else if overlap == (rec2.q_en - rec2.q_st) {
+                    //rec2.contained = true;
+                } else if overlap == (rec1.q_en - rec1.q_st) {
+                    //rec1.contained = true;*/
+                } else {
+                    // put recs in left, right order
+                    if rec1.q_st <= rec2.q_st {
+                        overlap_pairs.push((overlap, i, j));
+                    } else {
+                        overlap_pairs.push((overlap, j, i));
+                    }
+                }
+                // go to next
+                j += 1;
+            }
+        }
+        overlap_pairs.sort_by_key(|rec| std::u64::MAX - rec.0);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -212,6 +261,7 @@ pub struct PafRecord {
     pub long_cigar: CigarString,
     pub id: String,
     pub order: u64,
+    pub contained: bool,
 }
 
 impl PafRecord {
@@ -268,6 +318,7 @@ impl PafRecord {
             long_cigar: CigarString(Vec::new()),
             id: "".to_string(),
             order: 0,
+            contained: false,
         };
         Ok(rec)
     }
@@ -293,6 +344,37 @@ impl PafRecord {
             long_cigar: CigarString(Vec::new()),
             id: self.id.clone(),
             order: self.order,
+            contained: self.contained,
+        }
+    }
+
+    /// This function returns a region type from the paf query
+    pub fn get_query_as_region(&self) -> bed::Region {
+        bed::Region {
+            name: self.q_name.clone(),
+            st: self.q_st,
+            en: self.q_en,
+            ..Default::default()
+        }
+    }
+
+    /// This function returns a region type from the paf target
+    /// Example:
+    /// ```
+    /// use rustybam::bed::*;
+    /// use rustybam::paf::*;
+    /// let paf = PafRecord::new("Q 10 0 10 + T 20 12 20 3 9 60 cg:Z:7=1X2=").unwrap().get_target_as_region();
+    /// let rgn = Region {name: "T".to_string(), st: 12, en: 20, ..Default::default()};
+    /// assert_eq!((rgn.name, rgn.st, rgn.en),
+    ///             (paf.name, paf.st, paf.en)
+    /// );
+    /// ```
+    pub fn get_target_as_region(&self) -> bed::Region {
+        bed::Region {
+            name: self.t_name.clone(),
+            st: self.t_st,
+            en: self.t_en,
+            ..Default::default()
         }
     }
 
@@ -333,7 +415,7 @@ impl PafRecord {
         self.long_cigar = CigarString(long_cigar);
     }
 
-    // Does a binary search on the alignment to find its index in the alignment
+    /// Does a binary search on the alignment to find its index in the alignment
     pub fn tpos_to_idx(&self, tpos: u64, right: bool) -> Result<usize, usize> {
         let mut idx = self.tpos_aln.binary_search(&tpos)?;
         if right {
@@ -348,7 +430,28 @@ impl PafRecord {
         Ok(idx)
     }
 
-    // subset cigar on coordiantes
+    /// Does a binary search on the query sequence to find its index in the alignment
+    pub fn qpos_to_idx(&self, qpos: u64) -> Result<usize, usize> {
+        let idx = if self.strand == '-' {
+            // can be reverse sorted if the strand is "-" so need to mod bin search
+            self.qpos_aln
+                .binary_search_by(|probe| probe.cmp(&qpos).reverse())?
+        } else {
+            self.qpos_aln.binary_search(&qpos)?
+        };
+        /*if right {
+            while idx + 1 < self.qpos_aln.len() && self.qpos_aln[idx + 1] == qpos {
+                idx += 1;
+            }
+        } else {
+            while idx > 0 && self.qpos_aln[idx - 1] == qpos {
+                idx -= 1;
+            }
+        }*/
+        Ok(idx)
+    }
+
+    /// subset cigar on coordinates
     pub fn subset_cigar(&self, start_idx: usize, end_idx: usize) -> CigarString {
         // update the cigar string
         let mut new_cigar = vec![];
@@ -386,7 +489,7 @@ impl PafRecord {
     }
 
     /// Return a tuple with the n of bases in the query and
-    /// target infered from the cigar string
+    /// target inferred from the cigar string
     pub fn infer_n_bases(&mut self) -> (u64, u64, u64, u64) {
         let mut t_bases = 0;
         let mut q_bases = 0;
@@ -487,11 +590,11 @@ impl PafRecord {
         self.cigar = CigarString(self.cigar.0[remove_st_opts..].to_vec());
         self.cigar.0.truncate(self.cigar.len() - remove_en_opts);
 
-        // update the target coordiantes
+        // update the target coordinates
         self.t_st += remove_st_t as u64;
         self.t_en -= remove_en_t as u64;
 
-        // update the query coordiantes if rc
+        // update the query coordinates if rc
         if self.strand == '-' {
             std::mem::swap(&mut remove_st_q, &mut remove_en_q);
         }
@@ -508,6 +611,42 @@ impl PafRecord {
                 //self.remove_trailing_indels();
             }
         }
+    }
+
+    pub fn truncate_record_by_query(&mut self, new_q_st: u64, new_q_en: u64) {
+        // checks
+        assert!(new_q_st >= self.q_st, "New start is less than old start.");
+        assert!(new_q_en <= self.q_en, "New end is greater than old end.");
+
+        // get alignment positions
+        let mut aln_st = self.qpos_to_idx(new_q_st).unwrap();
+        let mut aln_en = self.qpos_to_idx(new_q_en - 1).unwrap();
+        if aln_st > aln_en {
+            std::mem::swap(&mut aln_st, &mut aln_en);
+        }
+        let new_t_st = self.tpos_aln[aln_st];
+        let new_t_en = self.tpos_aln[aln_en] + 1; // ends are not inclusive
+
+        // update the cigar string
+        self.long_cigar = self.subset_cigar(aln_st, aln_en);
+        self.cigar = PafRecord::collapse_long_cigar(&self.long_cigar);
+
+        // update the target coordinates
+        self.t_st = new_t_st;
+        self.t_en = new_t_en;
+
+        // fix the query positions that need to be
+        self.q_st = new_q_st;
+        self.q_en = new_q_en;
+
+        // update alignment positions
+        self.aligned_pairs();
+
+        // should not happen but just in case
+        self.remove_trailing_indels();
+
+        // check integrity and update aln_len and nmatch
+        self.check_integrity().unwrap();
     }
 
     pub fn check_integrity(&mut self) -> PafResult<()> {
@@ -716,86 +855,6 @@ pub fn paf_swap_query_and_target(paf: &PafRecord) -> PafRecord {
     }
 
     flipped
-}
-
-pub fn old_trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> PafRecord {
-    // initalize a trimmed paf record
-    let mut trimmed_paf = (*paf).clone();
-    // check if we can return right away
-    if paf.t_st >= rgn.st && paf.t_en <= rgn.en {
-        return trimmed_paf;
-    }
-    // count until we get to the correct regions
-    let mut t_pos = paf.t_st;
-    let mut q_offset = 0;
-    let mut q_offset_st = 0;
-    let mut q_offset_en = 0;
-    let mut new_cigar = Vec::new();
-    trimmed_paf.nmatch = 0;
-    trimmed_paf.aln_len = 0;
-    for opt in paf.cigar.into_iter() {
-        let moves_t = consumes_reference(opt);
-        let moves_q = consumes_query(opt);
-        let opt_len = opt.len() as u64;
-        let mut new_opt_len = 0;
-        let mut done = false;
-        // incrment the ref and or query
-        for _i in 0..opt_len {
-            if moves_t {
-                t_pos += 1;
-            }
-            if moves_q {
-                q_offset += 1;
-            }
-            // add to the new cigar opt length
-            if t_pos > rgn.st && t_pos <= rgn.en {
-                new_opt_len += 1;
-                trimmed_paf.aln_len += 1;
-            }
-            // record the starting positions
-            if moves_t && t_pos == rgn.st {
-                trimmed_paf.t_st = rgn.st;
-                q_offset_st = q_offset;
-            }
-            // record the ending positions
-            if moves_t && (t_pos == rgn.en || t_pos == paf.t_en) {
-                trimmed_paf.t_en = t_pos;
-                q_offset_en = q_offset;
-                done = true;
-                break;
-            }
-        }
-        // add to the new cigar string.
-        if new_opt_len != 0 {
-            new_cigar.push(match opt {
-                Match(_) => Match(new_opt_len),
-                Ins(_) => Ins(new_opt_len),
-                Del(_) => Del(new_opt_len),
-                RefSkip(_) => RefSkip(new_opt_len),
-                HardClip(_) => HardClip(new_opt_len),
-                SoftClip(_) => SoftClip(new_opt_len),
-                Pad(_) => Pad(new_opt_len),
-                Equal(_) => {
-                    trimmed_paf.nmatch += new_opt_len as u64;
-                    Equal(new_opt_len)
-                }
-                Diff(_) => Diff(new_opt_len),
-            })
-        }
-        if done {
-            break;
-        }
-    }
-    // fix strand if needed
-    if paf.strand == '+' {
-        trimmed_paf.q_st = paf.q_st + q_offset_st;
-        trimmed_paf.q_en = paf.q_st + q_offset_en;
-    } else {
-        trimmed_paf.q_st = paf.q_en - q_offset_en + 1;
-        trimmed_paf.q_en = paf.q_en - q_offset_st;
-    }
-    trimmed_paf.cigar = CigarString(new_cigar); // update to trimmed cigar.
-    trimmed_paf
 }
 
 pub fn make_fake_paf_rec() -> PafRecord {

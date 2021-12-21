@@ -2,6 +2,7 @@ use super::myio;
 use bio::io::bed;
 use lazy_static::lazy_static;
 use regex::Regex;
+use std::cmp::{max, min};
 use std::fmt;
 use std::str;
 
@@ -49,6 +50,20 @@ pub fn has_overlap(rgn1: &Region, rgn2: &Region) -> bool {
         return false;
     }
     rgn1.en > rgn2.st && rgn1.st < rgn2.en
+}
+
+/// return the # of overlapping bases
+pub fn get_overlap(rgn1: &Region, rgn2: &Region) -> u64 {
+    //max(0, min(rgn1.en, rgn2.en) - max(rgn1.st, rgn2.st))
+    if rgn1.name != rgn2.name {
+        return 0;
+    }
+    let my_min = min(rgn1.en, rgn2.en);
+    let my_max = max(rgn1.st, rgn2.st);
+    if my_min < my_max {
+        return 0;
+    }
+    my_min - my_max
 }
 
 /// parse region strings
