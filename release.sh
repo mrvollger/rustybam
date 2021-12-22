@@ -3,6 +3,7 @@ set -euxo pipefail
 V=$(grep "^version" Cargo.toml | sed 's/.*= //g' | sed 's/"//g' | xargs)
 echo $V
 
+cargo clippy
 cargo test
 cargo run --bin rb -- --help
 
