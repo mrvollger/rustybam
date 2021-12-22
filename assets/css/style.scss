@@ -78,7 +78,7 @@ code {
 // modify TOC
 #my_toc {
   font-size: 10px;
-  max-height: 40%;
+  max-height: 60%;
   max-width: 20%;
   padding: 5px;
   //background: #e5e5e5;
@@ -89,6 +89,15 @@ code {
   left: 3%;
   top: 40%;
   -webkit-font-smoothing: subpixel-antialiased;
+  white-space: nowrap;
+  overflow: scroll;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+#my_toc::-webkit-scrollbar {
+  display: none;
 }
 
 #my_toc.inline_toc {
