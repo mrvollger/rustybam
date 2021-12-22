@@ -1,1 +1,6 @@
+title: rustybam
+logo: /images/logo.svg
+description: Command line toolkit for bioinformatics written in rust.
+show_downloads: true
+google_analytics:
 theme: jekyll-theme-minimal
