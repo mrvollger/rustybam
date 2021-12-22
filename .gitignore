@@ -14,3 +14,7 @@ tmp.paf
 tmp**
 temp/**
 tmp/**
+Gemfile
+Gemfile.lock
+_site/**
+gh-md-toc
