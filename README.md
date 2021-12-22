@@ -27,7 +27,7 @@ rb [OPTIONS] <SUBCOMMAND>
 ```
 rustybam 0.1.23
 Mitchell R. Vollger <mrvollger@gmail.com>
-bioinformatic tools in rust
+bioinformatics toolkit in rust
 
 USAGE:
     rb [OPTIONS] <SUBCOMMAND>
