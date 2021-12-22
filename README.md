@@ -37,6 +37,8 @@ SUBCOMMANDS:
     orient         Orient paf records so that most of the bases are in the forward direction
     break-paf      Break PAF records with large indels into multiple records (useful for
                    SafFire) [aliases: breakpaf, bp]
+    paf-to-sam     Convert a PAF file into a SAM file. Warning, all alignments will be marked as
+                   primary! [aliases: paftosam, p2s, paf2sam]
     fasta-split    Reads in a fasta from stdin and divides into files (can compress by adding
                    .gz) [aliases: fastasplit, fasplit]
     fastq-split    Reads in a fastq from stdin and divides into files (can compress by adding
