@@ -100,27 +100,15 @@ Download from [releases](https://github.com/mrvollger/rustybam/releases) (may be
 ### From source
 
 ```
-
 git clone https://github.com/mrvollger/rustybam.git
 cd rustybam
 cargo build --release
-
 ```
 
-and the executable will be built here:
+and the executables will be built here:
 
 ```
-
-target/release/rustybam
-
-```
-
-There will also be an identical binary with the abbreviated name `rb`:
-
-```
-
-target/release/rb
-
+target/release/{rustybam,rb}
 ```
 
 ## Examples
@@ -131,12 +119,10 @@ target/release/rb
 
 With `rustybam` its easy:
 
-```
-
+```shell
 ./rustybam liftover \
- --bed <(printf "chr1\t0\t250000000\n") \
- input.paf > trimmed.paf
-
+     --bed <(printf "chr1\t0\t250000000\n") \
+     input.paf > trimmed.paf
 ```
 
 > But I also want the alignment statistics for the region.
@@ -144,15 +130,12 @@ With `rustybam` its easy:
 No problem, `rustybam liftover` does not just trim the coordinates but also the CIGAR
 so it is ready for `rustybam stats`:
 
-```
-
+```shell
 ./rustybam liftover \
- --bed <(printf "chr1\t0\t250000000\n") \
- input.paf \
- | ./rustybam stats --paf \
-
-> trimmed.stats.bed
-
+    --bed <(printf "chr1\t0\t250000000\n") \
+    input.paf \
+    | ./rustybam stats --paf \
+    > trimmed.stats.bed
 ```
 
 > Okay, but Evan asked for an "align slider" so I need to realign in chunks.
@@ -160,31 +143,25 @@ so it is ready for `rustybam stats`:
 No need, just make your `bed` query to `rustybam liftoff` a set of sliding windows
 and it will do the rest.
 
-```
-
+```shell
 ./rustybam liftover \
- --bed <(bedtools makewindows -w 100000 \
- <(printf "chr1\t0\t250000000\n")
-) \
- input.paf \
- | ./rustybam stats --paf \
-
-> trimmed.stats.bed
-
+    --bed <(bedtools makewindows -w 100000 \
+        <(printf "chr1\t0\t250000000\n") \
+        ) \
+    input.paf \
+    | ./rustybam stats --paf \
+    > trimmed.stats.bed
 ```
 
 You can also use `rustybam breakpaf` to break up the paf records of indels above a certain size to
 get more "miropeats" like intervals.
 
-```
-
+```shell
 ./rustybam breakpaf --max-size 1000 input.paf \
- | ./rustybam liftover \
- --bed <(printf "chr1\t0\t250000000\n") \
- | ./rustybam stats --paf \
-
-> trimmed.stats.bed
-
+    | ./rustybam liftover \
+    --bed <(printf "chr1\t0\t250000000\n") \
+    | ./rustybam stats --paf \
+    > trimmed.stats.bed
 ```
 
 > Yeah but how do I visualize the data?
