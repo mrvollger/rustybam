@@ -14,7 +14,7 @@
   </head>
   <body>
     <div class="wrapper">
-      <header class="sidebar">
+      <header>
         <!--
         <h1><a href="{{ "/" | absolute_url }}" class="mytitle">{{ site.title | default: site.github.repository_name }}</a></h1>
         -->
@@ -42,32 +42,25 @@
           <li><a href="{{ site.github.tar_url }}">Download <strong>TAR Ball</strong></a></li>
         </ul>
           <li><a href="{{ site.github.repository_url }}">View On <strong>GitHub</strong></a></li>
+            {% endif %}
           -->
-        {% endif %}
 
-        <!-- Lightweight client-side loader that feature-detects and load polyfills only when necessary -->
-        <script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2/webcomponents-loader.min.js"></script>
-
-        <!-- Load the element definition -->
-        <script type="module" src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@1/src/zero-md.min.js"></script>
-
-        <!-- Simply set the `src` attribute to your MD file and win -->
-        <zero-md src="TOC.md" class="toc">
-            <div class="md-html"></div>
-        </zero-md>
       </header>
     </div>
-      <section class="mycontent">
+    
+    {% include toc.html html=content sanitize=true class="inline_toc" id="my_toc" h_min=2 h_max=3 %}
 
-      {{ content }}
+    <section class="mycontent">
+        {{ content }}
+    </section>
 
-      </section>
-      <footer class="myfooter">
+
+    <footer class="myfooter">
         {% if site.github.is_project_page %}
         <p>This project is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></p>
         {% endif %}
         <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
+    </footer>
     </div>
     <script src="{{ "/assets/js/scale.fix.js" | relative_url }}"></script>
   </body>
