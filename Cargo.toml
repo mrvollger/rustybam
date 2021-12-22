@@ -2,7 +2,7 @@
 authors = ["Mitchell R. Vollger <mrvollger@gmail.com>"] 
 build = "build.rs" # not yet stable enough
 categories = ["command-line-utilities"] 
-description = "bioinformatic tools in rust" 
+description = "bioinformatics toolkit in rust" 
 edition = "2018" 
 homepage = "https://mrvollger.github.io/rustybam/" 
 keywords = ["cli", "bam", "paf", "liftover"] 
