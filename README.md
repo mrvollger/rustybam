@@ -82,7 +82,7 @@ cargo install rustybam
 
 Download from [releases](https://github.com/mrvollger/rustybam/releases) (may be slower than locally complied versions).
 
-### From source
+### Source
 
 ```
 git clone https://github.com/mrvollger/rustybam.git
@@ -98,7 +98,21 @@ target/release/{rustybam,rb}
 
 ## Examples
 
-### Manipulating PAFs and creating liftovers
+### PAF or BAM statistics
+
+For BAM files with extended cigar operations we can calculate statistics about the aliment and report them in BED format.
+
+```
+./rustybam stats {input.bam} > {stats.bed}
+```
+
+The same can be done with PAF files as long as they are generated with `-c --eqx`.
+
+```
+./rustybam stats --paf {input.paf} > {stats.bed}
+```
+
+### PAF liftovers
 
 > I have a `PAF` and I want to subset it for just a particular region in the reference.
 
@@ -154,7 +168,7 @@ get more "miropeats" like intervals.
 Try out
 [SafFire](https://mrvollger.github.io/SafFire/)!
 
-### Splitting up a fastx file
+### Split fastx files
 
 Split a fasta file between `stdout` and two other files both compressed and uncompressed.
 
@@ -168,21 +182,13 @@ Split a fastq file between `stdout` and two other files both compressed and unco
 cat {input.fastq} | rustybam fastq-split two.fq.gz three.fq
 ```
 
-### Extract fasta from a genome with a bed file
+### Extract from a fasta
+
+This tools is designed to mimic `bedtools getfasta` but this tools allows the fasta to be `bgzipped`.
 
 ```
-Mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs
-
-USAGE:
-    rb get-fasta [OPTIONS] --bed <BED>
-
-OPTIONS:
-    -f, --fasta <FASTA>    fasta file to extract sequences from [default: -]
-    -b, --bed <BED>        bed file of regions to extract
-    -s, --strand           revcomp sequence if the strand is "-"
-    -n, --name             add the name (4th column) to the header of the fasta output
-    -h, --help             Print help information
-    -V, --version          Print version information
+samtools faidx {seq.fa(.gz)}
+rb get-fasta --name --strand --bed {regions.of.interest.bed} --fasta {seq.fa(.gz)}
 ```
 
 ## TODO
