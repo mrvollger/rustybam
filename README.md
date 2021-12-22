@@ -7,6 +7,9 @@
 [![Conda (channel only)](https://img.shields.io/conda/vn/bioconda/rustybam?color=green)](https://anaconda.org/bioconda/rustybam)
 [![Downloads](https://img.shields.io/conda/dn/bioconda/rustybam?color=green)](https://anaconda.org/bioconda/rustybam)
 
+- TOC
+  {:toc}
+
 ## Usage
 
 ```
