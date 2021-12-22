@@ -1,6 +1,6 @@
 title: rustybam
 logo: /images/logo.png
-description: bioinformatics tools in rust
+description: bioinformatic tools in rust
 show_downloads: true
 google_analytics:
 theme: jekyll-theme-minimal
