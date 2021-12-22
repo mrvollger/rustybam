@@ -274,6 +274,16 @@ pub fn parse_cli() {
             }
         }
         //
+        // Run PafToSam
+        //
+        Some(Commands::PafToSam { paf }) => {
+            let paf = paf::Paf::from_file(paf);
+            println!("{}", paf.sam_header());
+            for rec in paf.records {
+                println!("{}", rec.to_sam_string());
+            }
+        }
+        //
         // Run Fasta-split
         //
         Some(Commands::FastaSplit { fasta }) => {

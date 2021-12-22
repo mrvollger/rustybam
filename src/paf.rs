@@ -4,6 +4,7 @@ use super::bed;
 use core::{fmt, panic};
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use natord;
 use regex::Regex;
 use rust_htslib::bam::record::Cigar::*;
 use rust_htslib::bam::record::CigarString;
@@ -254,6 +255,44 @@ impl Paf {
             // recursively call for next overlap
             self.overlapping_paf_recs();
         }
+    }
+
+    /// Make a SAM header from a Paf
+    /// # Example
+    /// ```
+    /// use rustybam::paf;
+    /// use std::fs::File;
+    /// use std::io::*;
+    /// let mut paf = paf::Paf::from_file(".test/asm_small.paf");
+    /// let header = paf.sam_header();
+    /// assert_eq!(header[0..3], "@HD".to_string());
+    /// assert_eq!(header.split("\n").count(), 5);
+    /// ```
+    pub fn sam_header(&self) -> String {
+        /*
+        @HD	VN:1.6	SO:coordinate
+        @SQ	SN:chr1	LN:248387497
+        ...
+        @SQ	SN:chrM	LN:16569
+        @SQ	SN:chrY	LN:57227415
+        @PG	ID:unimap	PN:unimap	VN:0.1-r41	CL:
+        */
+        let mut header = "@HD\tVN:1.6\n".to_string();
+
+        // sort names naturally
+        let mut names: Vec<(String, u64)> = self
+            .records
+            .iter()
+            .map(|rec| (rec.t_name.clone(), rec.t_len))
+            .unique()
+            .collect();
+
+        names.sort_by(|a, b| natord::compare(&a.0, &b.0));
+        for (name, length) in names {
+            header.push_str(&format!("@SQ\tSN:{}\tLN:{}\n", name, length));
+        }
+        header.push_str("@PG\tID:rustybam\tPN:rustybam");
+        header
     }
 }
 
@@ -698,6 +737,30 @@ impl PafRecord {
         self.aln_len = aln_len;
 
         Ok(())
+    }
+
+    /// Print the paf record as a SAM record
+    /// Example:
+    /// ```
+    /// use rustybam::bed::*;
+    /// use rustybam::paf::*;
+    /// let paf = PafRecord::new("Q 10 0 10 + T 20 12 20 3 9 60 cg:Z:7=1X2=").unwrap();
+    /// let sam = paf.to_sam_string();
+    /// ```
+    pub fn to_sam_string(&self) -> String {
+        /*
+        m64062_190807_194840/133628256/ccs	0	chr1	1	60	396=	*	0	0   *   *
+        */
+        let flag = if self.strand == '-' { 16 } else { 0 };
+        format!(
+            "{}\t{}\t{}\t{}\t{}\t{}\t*\t0\t0\t*\t*",
+            self.q_name,
+            flag,
+            self.t_name,
+            self.q_st + 1,
+            self.mapq,
+            self.cigar
+        )
     }
 }
 

@@ -124,6 +124,13 @@ pub enum Commands {
         #[clap(short, long, default_value_t = 100)]
         max_size: u32,
     },
+    /// Convert a PAF file into a SAM file. Warning, all alignments will be marked as primary!
+    #[clap(visible_aliases = &["paftosam", "p2s", "paf2sam"])]
+    PafToSam {
+        /// PAF file from minimap2 or unimap.
+        #[clap(default_value = "-")]
+        paf: String,
+    },
     /// Reads in a fasta from stdin and divides into files (can compress by adding .gz).
     #[clap(visible_aliases = &["fastasplit", "fasplit"])]
     FastaSplit {
