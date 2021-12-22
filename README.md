@@ -9,14 +9,22 @@
 
 ## Usage
 
-`rustybam [OPTIONS] <SUBCOMMAND>` or `rb [OPTIONS] <SUBCOMMAND>`.
+```
+rustybam [OPTIONS] <SUBCOMMAND>
+```
+
+or
+
+```
+rb [OPTIONS] <SUBCOMMAND>
+```
 
 ### Available options and subcommands
 
 ```
 rustybam 0.1.23
 Mitchell R. Vollger <mrvollger@gmail.com>
-My bioinformatics utilities
+bioinformatic tools in rust
 
 USAGE:
     rb [OPTIONS] <SUBCOMMAND>
