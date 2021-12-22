@@ -24,7 +24,7 @@ or
 rb [OPTIONS] <SUBCOMMAND>
 ```
 
-### Available options and subcommands
+### Options and subcommands
 
 ```
 rustybam 0.1.23
@@ -68,13 +68,13 @@ SUBCOMMANDS:
 
 ### conda
 
-```
+```shell
 mamba install -c bioconda rustybam
 ```
 
 ### cargo
 
-```
+```shell
 cargo install rustybam
 ```
 
@@ -84,7 +84,7 @@ Download from [releases](https://github.com/mrvollger/rustybam/releases) (may be
 
 ### Source
 
-```
+```shell
 git clone https://github.com/mrvollger/rustybam.git
 cd rustybam
 cargo build --release
@@ -92,7 +92,7 @@ cargo build --release
 
 and the executables will be built here:
 
-```
+```shell
 target/release/{rustybam,rb}
 ```
 
@@ -102,14 +102,14 @@ target/release/{rustybam,rb}
 
 For BAM files with extended cigar operations we can calculate statistics about the aliment and report them in BED format.
 
-```
-./rustybam stats {input.bam} > {stats.bed}
+```shell
+rustybam stats {input.bam} > {stats.bed}
 ```
 
 The same can be done with PAF files as long as they are generated with `-c --eqx`.
 
-```
-./rustybam stats --paf {input.paf} > {stats.bed}
+```shell
+rustybam stats --paf {input.paf} > {stats.bed}
 ```
 
 ### PAF liftovers
@@ -119,7 +119,7 @@ The same can be done with PAF files as long as they are generated with `-c --eqx
 With `rustybam` its easy:
 
 ```shell
-./rustybam liftover \
+rustybam liftover \
      --bed <(printf "chr1\t0\t250000000\n") \
      input.paf > trimmed.paf
 ```
@@ -130,10 +130,10 @@ No problem, `rustybam liftover` does not just trim the coordinates but also the 
 so it is ready for `rustybam stats`:
 
 ```shell
-./rustybam liftover \
+rustybam liftover \
     --bed <(printf "chr1\t0\t250000000\n") \
     input.paf \
-    | ./rustybam stats --paf \
+    | rustybam stats --paf \
     > trimmed.stats.bed
 ```
 
@@ -143,12 +143,12 @@ No need, just make your `bed` query to `rustybam liftoff` a set of sliding windo
 and it will do the rest.
 
 ```shell
-./rustybam liftover \
+rustybam liftover \
     --bed <(bedtools makewindows -w 100000 \
         <(printf "chr1\t0\t250000000\n") \
         ) \
     input.paf \
-    | ./rustybam stats --paf \
+    | rustybam stats --paf \
     > trimmed.stats.bed
 ```
 
@@ -156,8 +156,8 @@ You can also use `rustybam breakpaf` to break up the paf records of indels above
 get more "miropeats" like intervals.
 
 ```shell
-./rustybam breakpaf --max-size 1000 input.paf \
-    | ./rustybam liftover \
+rustybam breakpaf --max-size 1000 input.paf \
+    | rustybam liftover \
     --bed <(printf "chr1\t0\t250000000\n") \
     | ./rustybam stats --paf \
     > trimmed.stats.bed
@@ -186,7 +186,7 @@ cat {input.fastq} | rustybam fastq-split two.fq.gz three.fq
 
 This tools is designed to mimic `bedtools getfasta` but this tools allows the fasta to be `bgzipped`.
 
-```
+```shell
 samtools faidx {seq.fa(.gz)}
 rb get-fasta --name --strand --bed {regions.of.interest.bed} --fasta {seq.fa(.gz)}
 ```
