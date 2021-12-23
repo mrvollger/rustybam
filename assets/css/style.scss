@@ -10,7 +10,7 @@
 
 header {
   left: 3%;
-  max-width: 20%;
+  max-width: 25%;
   max-height: 20%;
   float: left;
   position: fixed;
@@ -18,41 +18,11 @@ header {
   //background: #402727;
 }
 
-header ul {
-  /*
-  list-style-type: none;
-  padding-left: 5%;
-  padding-top: 1%;
-  padding-bottom: 1%;
-  padding-right: 5%;
-  max-width: 100%;
-  max-height: 40%;
-  background: #e5e5e5;
-  position: relative;
-  margin-left: 5px;
-  float: right;
-  contain: layout;
-  width: 15%;*/
-}
-
-header li {
-  /*width: 5%;
-  float: left;
-  border-right: 1px solid #e0e0e0;
-  height: 40px;*/
-}
-
-header ul li + li {
-  /*
-  border-right: none;
-  width: 15%;*/
-}
-
 //
 // footer
 //
 footer {
-  max-width: 20%;
+  max-width: 25%;
   max-height: 15%;
   float: left;
   left: 3%;
@@ -92,7 +62,7 @@ code {
 #my_toc {
   font-size: 10px;
   max-height: 60%;
-  max-width: 20%;
+  max-width: 25%;
   padding: 5px;
   //background: #e5e5e5;
   float: left;
@@ -111,9 +81,6 @@ code {
 /* Hide scrollbar for Chrome, Safari and Opera */
 #my_toc::-webkit-scrollbar {
   display: none;
-}
-
-#my_toc.inline_toc {
 }
 
 .sidebar_right {
