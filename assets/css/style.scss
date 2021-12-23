@@ -3,10 +3,6 @@
 
 @import "{{ site.theme }}";
 
-.mytitle {
-  color: red;
-}
-
 .wrapper {
   width: 100%; //1060px;;
   margin: 0 auto;
@@ -52,16 +48,30 @@ header ul li + li {
   width: 15%;*/
 }
 
+//
+// footer
+//
 footer {
   max-width: 20%;
-  max-height: 10%;
+  max-height: 15%;
   float: left;
   left: 3%;
   position: fixed;
   bottom: 20px;
   -webkit-font-smoothing: subpixel-antialiased;
+  overflow: scroll;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
+footer::-webkit-scrollbar {
+  display: none;
+}
+
+//
+// README
+//
 section {
   width: 75%;
   float: right;
@@ -76,7 +86,9 @@ code {
   font-size: 11px;
 }
 
+//
 // modify TOC
+//
 #my_toc {
   font-size: 10px;
   max-height: 60%;
@@ -107,25 +119,3 @@ code {
 .sidebar_right {
   float: left;
 }
-/*
-.wrapper .mywrapper .sidebar {
-  width: 20%; //1060px;;
-  margin: 0 auto;
-  float: left;
-}
-
-.wrapper .mycontent {
-  width: 60%; //1060px;;
-  float: right;
-  padding-bottom: 50px;
-}
-
-.wrapper .myfooter {
-  width: 30%; //1060px;;
-  margin: 0 auto;
-  position: fixed;
-  bottom: 0;
-  float: left;
-}
-
-*/
