@@ -10,7 +10,9 @@ use rust_htslib::bam::record::Cigar::*;
 use rust_htslib::bam::record::CigarString;
 use rust_htslib::bam::record::*;
 use std::collections::{HashMap, HashSet};
-use std::fs;
+use std::convert::TryFrom;
+//use std::fs;
+use super::myio;
 use std::io;
 use std::io::BufRead;
 use std::str::FromStr;
@@ -54,14 +56,17 @@ impl Paf {
     /// ```
     pub fn from_file(file_name: &str) -> Paf {
         // open the paf file
+        /*
         let paf_file: Box<dyn io::Read> = match file_name {
             "-" => Box::new(io::stdin()),
             _ => Box::new(fs::File::open(file_name).expect("Unable to open paf file")),
-        };
+        };*/
+        let paf_file = myio::reader(file_name);
         let mut paf = Paf::new();
         //let mut records = Vec::new();
         // read the paf recs into a vector
         for (index, line) in io::BufReader::new(paf_file).lines().enumerate() {
+            log::trace!("{:?}", line);
             match PafRecord::new(&line.unwrap()) {
                 Ok(rec) => {
                     //eprint!("\rReading PAF entry # {}", index);
@@ -346,7 +351,10 @@ impl PafRecord {
             //    cigar = cs_to_cigar(value)?;
             //} else
             if tag == "cg" && cigar.len() == 0 {
-                cigar = cigar_from_str(value)?;
+                log::trace!("parsing cigar of length: {}", value.len());
+                //cigar = cigar_from_str(value)?;
+                cigar =
+                    CigarString::try_from(value.as_bytes()).expect("Unable to parse cigar string.");
             } else {
                 tags.push('\t');
                 tags.push_str(token);
