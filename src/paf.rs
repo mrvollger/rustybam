@@ -1,6 +1,6 @@
-use crate::trim_overlap::trim_overlapping_pafs;
-
 use super::bed;
+use super::myio;
+use super::trim_overlap::trim_overlapping_pafs;
 use core::{fmt, panic};
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -11,9 +11,6 @@ use rust_htslib::bam::record::CigarString;
 use rust_htslib::bam::record::*;
 use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
-//use std::fs;
-use super::myio;
-use std::io;
 use std::io::BufRead;
 use std::str::FromStr;
 use std::usize;
@@ -55,25 +52,15 @@ impl Paf {
     ///
     /// ```
     pub fn from_file(file_name: &str) -> Paf {
-        // open the paf file
-        /*
-        let paf_file: Box<dyn io::Read> = match file_name {
-            "-" => Box::new(io::stdin()),
-            _ => Box::new(fs::File::open(file_name).expect("Unable to open paf file")),
-        };*/
         let paf_file = myio::reader(file_name);
         let mut paf = Paf::new();
-        //let mut records = Vec::new();
         // read the paf recs into a vector
-        for (index, line) in io::BufReader::new(paf_file).lines().enumerate() {
+        for (index, line) in paf_file.lines().enumerate() {
             log::trace!("{:?}", line);
             match PafRecord::new(&line.unwrap()) {
                 Ok(rec) => {
-                    //eprint!("\rReading PAF entry # {}", index);
+                    log::debug!("\rReading PAF entry # {}", index);
                     paf.records.push(rec);
-                    //let q_name = rec.q_name.clone();
-                    //let rec = paf.records.last().expect("must have inserted at least one");
-                    //(*paf.records_by_contig.entry(q_name).or_insert(Vec::new())).push(x);
                 }
                 Err(_) => eprintln!("\nUnable to parse PAF record. Skipping line {}", index + 1),
             }
