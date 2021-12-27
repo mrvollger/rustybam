@@ -198,7 +198,7 @@ impl Paf {
     }
 
     /// Identify overlapping pairs in Paf set
-    pub fn overlapping_paf_recs(&mut self) {
+    pub fn overlapping_paf_recs(&mut self, match_score: i32, diff_score: i32, indel_score: i32) {
         let mut overlap_pairs = Vec::new();
         self.records.sort_by_key(|rec| rec.q_name.clone());
 
@@ -239,13 +239,13 @@ impl Paf {
             let mut right = self.records[overlap_pairs[0].2].clone();
             left.aligned_pairs();
             right.aligned_pairs();
-            trim_overlapping_pafs(&mut left, &mut right);
+            trim_overlapping_pafs(&mut left, &mut right, match_score, diff_score, indel_score);
             log::trace!("{}", left);
             log::trace!("{}", right);
             self.records[overlap_pairs[0].1] = left;
             self.records[overlap_pairs[0].2] = right;
             // recursively call for next overlap
-            self.overlapping_paf_recs();
+            self.overlapping_paf_recs(match_score, diff_score, indel_score);
         }
     }
 

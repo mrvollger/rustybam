@@ -3,12 +3,18 @@ use log;
 use rust_htslib::bam::record::Cigar::*;
 use std::cmp::{max, min};
 
-fn score_of_qpos(rec: &PafRecord, pos: u64) -> i32 {
+fn score_of_qpos(
+    rec: &PafRecord,
+    pos: u64,
+    match_score: i32,
+    diff_score: i32,
+    indel_score: i32,
+) -> i32 {
     let aln_idx = rec.qpos_to_idx(pos).unwrap();
     match rec.long_cigar[aln_idx] {
-        Equal(_) => 1,
-        Ins(_) | Del(_) => -1,
-        _ => -1,
+        Equal(_) => match_score,
+        Ins(_) | Del(_) => -indel_score,
+        _ => -diff_score,
     }
 }
 
@@ -22,12 +28,18 @@ fn score_of_qpos(rec: &PafRecord, pos: u64) -> i32 {
 /// let mut right = PafRecord::new("Q 10 5 10 - T 20 10 15 3 9 60 cg:Z:3=1X1=").unwrap();
 /// right.aligned_pairs();
 ///
-/// trim_overlapping_pafs(&mut left, &mut right);
+/// trim_overlapping_pafs(&mut left, &mut right, 1 ,1 ,1);
 ///
 /// assert_eq!(left.cigar.to_string(), "7=");
 /// assert_eq!(right.cigar.to_string(), "3=");
 /// ```
-pub fn trim_overlapping_pafs(left: &mut PafRecord, right: &mut PafRecord) {
+pub fn trim_overlapping_pafs(
+    left: &mut PafRecord,
+    right: &mut PafRecord,
+    match_score: i32,
+    diff_score: i32,
+    indel_score: i32,
+) {
     let st_ovl = max(left.q_st, right.q_st);
     let en_ovl = min(left.q_en, right.q_en);
     log::info!("Number of overlapping bases {}", en_ovl - st_ovl);
@@ -36,8 +48,8 @@ pub fn trim_overlapping_pafs(left: &mut PafRecord, right: &mut PafRecord) {
     let mut r_score = vec![];
 
     for pos in st_ovl..en_ovl {
-        let l_s = score_of_qpos(left, pos);
-        let r_s = score_of_qpos(right, pos);
+        let l_s = score_of_qpos(left, pos, match_score, diff_score, indel_score);
+        let r_s = score_of_qpos(right, pos, match_score, diff_score, indel_score);
         l_score.push(l_s);
         r_score.push(r_s);
     }

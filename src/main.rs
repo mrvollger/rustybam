@@ -215,9 +215,14 @@ pub fn parse_cli() {
         //
         // Run TrimPaf
         //
-        Some(Commands::TrimPaf { paf }) => {
+        Some(Commands::TrimPaf {
+            paf,
+            match_score,
+            diff_score,
+            indel_score,
+        }) => {
             let mut paf = paf::Paf::from_file(paf);
-            paf.overlapping_paf_recs();
+            paf.overlapping_paf_recs(*match_score, *diff_score, *indel_score);
             for rec in &paf.records {
                 println!("{}", rec);
             }

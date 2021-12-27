@@ -97,6 +97,15 @@ pub enum Commands {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
         #[clap(default_value = "-")]
         paf: String,
+        /// Value added for a matching base.
+        #[clap(short, long, default_value_t = 1)]
+        match_score: i32,
+        /// Value subtracted for a mismatching base.
+        #[clap(short, long, default_value_t = 1)]
+        diff_score: i32,
+        /// Value subtracted for an insertion or deletion.
+        #[clap(short, long, default_value_t = 1)]
+        indel_score: i32,
     },
     /// Orient paf records so that most of the bases are in the forward direction.
     ///
