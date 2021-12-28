@@ -12,6 +12,8 @@
 
 [![DOI](https://zenodo.org/badge/351639424.svg)](https://zenodo.org/badge/latestdoi/351639424)
 
+`rustybam` is a bioinformatics toolkit written in the `rust` programing language focused around manipulation of alignment files (`bam` and `PAF`), annotation (`bed`), and sequence files (`fasta` and `fastq`).
+
 ## Usage
 
 ```
@@ -24,22 +26,9 @@ or
 rb [OPTIONS] <SUBCOMMAND>
 ```
 
-### Options and subcommands
+### Subcommands
 
 ```
-rustybam 0.1.23
-Mitchell R. Vollger <mrvollger@gmail.com>
-bioinformatics toolkit in rust
-
-USAGE:
-    rb [OPTIONS] <SUBCOMMAND>
-
-OPTIONS:
-    -t, --threads <THREADS>    threads for decompression [default: 8]
-    -v, --verbose              logging level
-    -h, --help                 Print help information
-    -V, --version              Print version information
-
 SUBCOMMANDS:
     stats          Get percent identity stats from a sam/bam/cram or PAF
     bed-length     Count the number of bases in a bed file [aliases: bedlen, bl, bedlength]
