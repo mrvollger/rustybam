@@ -11,6 +11,7 @@
 header {
   left: 3%;
   max-width: 25%;
+  min-width: 20%;
   max-height: 20%;
   float: left;
   position: fixed;
@@ -23,6 +24,7 @@ header {
 //
 footer {
   max-width: 25%;
+  min-width: 20%;
   max-height: 15%;
   float: left;
   left: 3%;
@@ -43,7 +45,8 @@ footer::-webkit-scrollbar {
 // README
 //
 section {
-  width: 70%;
+  width: 75%;
+  min-width: 70%;
   float: right;
   padding-bottom: 50px;
 }
@@ -63,6 +66,7 @@ code {
   font-size: 10px;
   max-height: 60%;
   max-width: 25%;
+  min-width: 20%;
   padding: 5px;
   //background: #e5e5e5;
   float: left;
