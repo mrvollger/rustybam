@@ -3,6 +3,12 @@
 
 @import "{{ site.theme }}";
 
+
+$side-min-width: 20%;
+$side-max-width: 15%;
+$my-min-width: 76%;
+$my-max-width: 78%;
+
 .wrapper {
   width: 100%; //1060px;;
   margin: 0 auto;
@@ -10,8 +16,8 @@
 
 header {
   left: 3%;
-  max-width: 25%;
-  min-width: 20%;
+  max-width: $side-max-width;
+  min-width: $side-min-width;
   max-height: 20%;
   float: left;
   position: fixed;
@@ -23,8 +29,8 @@ header {
 // footer
 //
 footer {
-  max-width: 25%;
-  min-width: 20%;
+  max-width: $side-max-width;
+  min-width: $side-min-width;
   max-height: 15%;
   float: left;
   left: 3%;
@@ -45,8 +51,8 @@ footer::-webkit-scrollbar {
 // README
 //
 section {
-  width: 74%;
-  min-width: 70%;
+  max-width: $my-max-width;
+  min-width: $my-min-width;
   float: right;
   padding-bottom: 50px;
 }
@@ -65,8 +71,8 @@ code {
 #my_toc {
   font-size: 10px;
   max-height: 60%;
-  max-width: 25%;
-  min-width: 20%;
+  max-width: $side-max-width;
+  min-width: $side-min-width;
   padding: 5px;
   //background: #e5e5e5;
   float: left;

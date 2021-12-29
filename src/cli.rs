@@ -6,6 +6,7 @@ use clap::{App, AppSettings, Parser, Subcommand};
 #[clap(global_setting(AppSettings::PropagateVersion))]
 #[clap(global_setting(AppSettings::DeriveDisplayOrder))]
 #[clap(global_setting(AppSettings::InferSubcommands))]
+#[clap(global_setting(AppSettings::HelpExpected))]
 #[clap(global_setting(AppSettings::UseLongFormatForHelpSubcommand))]
 #[clap(setting(AppSettings::SubcommandRequiredElseHelp))]
 pub struct Cli {
@@ -170,7 +171,7 @@ pub enum Commands {
     },
     /// Get the frequencies of each bp at each position.
     Nucfreq {
-        // sam/bam/cram/file
+        /// sam/bam/cram/file
         #[clap(default_value = "-")]
         bam: String,
         /// print nucfreq info from the input region e.g "chr1:1-1000"
@@ -180,13 +181,13 @@ pub enum Commands {
         /// output is optionally tagged using the 4th column
         #[clap(short, long)]
         bed: Option<String>,
-        // smaller output format
+        /// smaller output format
         #[clap(short, long)]
         small: bool,
     },
     /// Report the longest exact repeat length at every position in a fasta.
     Repeat {
-        // a fasta file
+        /// a fasta file
         #[clap(default_value = "-")]
         fasta: String,
         /// The smallest repeat length to report
