@@ -48,7 +48,7 @@ pub enum Commands {
         /// make the output human readable (Mbp)
         #[clap(short, long)]
         readable: bool,
-        /// count bases for each category in this column <N>.
+        /// count bases for each category in this column <COLUMN>.
         #[clap(short, long)]
         column: Option<u8>,
     },
