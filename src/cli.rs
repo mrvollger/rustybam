@@ -2,20 +2,20 @@ use clap::IntoApp;
 use clap::{App, AppSettings, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
-#[clap(author, version, about)]
 #[clap(global_setting(AppSettings::PropagateVersion))]
 #[clap(global_setting(AppSettings::DeriveDisplayOrder))]
 #[clap(global_setting(AppSettings::InferSubcommands))]
 #[clap(global_setting(AppSettings::HelpExpected))]
 #[clap(global_setting(AppSettings::UseLongFormatForHelpSubcommand))]
 #[clap(setting(AppSettings::SubcommandRequiredElseHelp))]
+#[clap(author, version, about)]
 pub struct Cli {
-    /// threads for decompression
+    /// Threads for decompression.
     #[clap(short, long, default_value_t = 8)]
     pub threads: usize,
 
-    /// logging level.
-    #[clap(short, long, parse(from_occurrences))]
+    /// Logging level [-v: Info, -vv: Debug, -vvv: Trace].
+    #[clap(short, long, parse(from_occurrences), help_heading = "DEBUG")]
     pub verbose: usize,
 
     #[clap(subcommand)]

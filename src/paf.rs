@@ -59,7 +59,7 @@ impl Paf {
             log::trace!("{:?}", line);
             match PafRecord::new(&line.unwrap()) {
                 Ok(rec) => {
-                    log::debug!("\rReading PAF entry # {}", index);
+                    log::debug!("Reading PAF entry # {}", index);
                     paf.records.push(rec);
                 }
                 Err(_) => eprintln!("\nUnable to parse PAF record. Skipping line {}", index + 1),
