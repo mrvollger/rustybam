@@ -1,18 +1,18 @@
 use bio::io::fasta;
 use bio::io::fastq;
 use colored::Colorize;
+use env_logger::{Builder, Target};
 use itertools::Itertools;
+use log::LevelFilter;
 use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rustybam::cli::Commands;
 use rustybam::paf::paf_swap_query_and_target;
 use rustybam::*;
+use std::collections::HashMap;
 use std::io;
 use std::time::Instant;
-
-use env_logger::{Builder, Target};
-use log::LevelFilter;
 
 fn main() {
     parse_cli();
@@ -162,13 +162,36 @@ pub fn parse_cli() {
         //
         // Run Bedlength
         //
-        Some(Commands::BedLength { bed, readable }) => {
+        Some(Commands::BedLength {
+            bed,
+            readable,
+            column,
+        }) => {
             let rgns = bed::parse_bed(bed);
-            let count: u64 = rgns.into_iter().map(|rgn| rgn.en - rgn.st).sum();
-            if *readable {
-                println!("{}", (count as f64) / 1e6);
-            } else {
-                println!("{}", count);
+            match *column {
+                Some(c) => {
+                    let mut dict = HashMap::new();
+                    for rgn in rgns {
+                        let bp = dict.entry(rgn.get_column(c).clone()).or_insert(0_u64);
+                        *bp += rgn.en - rgn.st;
+                    }
+                    log::trace!("{:?}", dict);
+                    for (key, count) in dict {
+                        if *readable {
+                            println!("{}\t{}", key, (count as f64) / 1e6);
+                        } else {
+                            println!("{}\t{}", key, count);
+                        }
+                    }
+                }
+                None => {
+                    let count: u64 = rgns.into_iter().map(|rgn| rgn.en - rgn.st).sum();
+                    if *readable {
+                        println!("{}", (count as f64) / 1e6);
+                    } else {
+                        println!("{}", count);
+                    }
+                }
             }
         }
         //
@@ -319,7 +342,8 @@ pub fn parse_cli() {
 
     let duration = pg_start.elapsed();
     log::info!(
-        "rustybam-{} done! Time elapsed: {:.2?}",
+        "{} {} done! Time elapsed: {:.2?}",
+        "rustybam".bright_green().bold(),
         subcommand.bright_green().bold(),
         duration
     );

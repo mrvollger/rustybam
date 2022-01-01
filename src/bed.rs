@@ -20,6 +20,24 @@ pub struct Region {
     pub record: bed::Record,
 }
 
+impl Region {
+    pub fn get_column(&self, column: u8) -> String {
+        match column {
+            1 => self.name.clone(),
+            2 => self.st.to_string(),
+            3 => self.en.to_string(),
+            4 => self.record.name().unwrap_or("no-value").to_string(),
+            5 => self.record.score().unwrap_or("no-value").to_string(),
+            6 => self
+                .record
+                .strand()
+                .unwrap_or(bio_types::strand::Strand::Unknown)
+                .to_string(),
+            _ => "no-value".to_string(),
+        }
+    }
+}
+
 impl fmt::Display for Region {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}:{}-{}", self.name, self.st + 1, self.en)

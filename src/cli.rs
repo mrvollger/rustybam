@@ -48,6 +48,9 @@ pub enum Commands {
         /// make the output human readable (Mbp)
         #[clap(short, long)]
         readable: bool,
+        /// count bases for each category in this column <N>.
+        #[clap(short, long)]
+        column: Option<u8>,
     },
     /// Filter PAF records in various ways.
     Filter {
