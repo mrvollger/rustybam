@@ -12,7 +12,7 @@
 
 [![DOI](https://zenodo.org/badge/351639424.svg)](https://zenodo.org/badge/latestdoi/351639424)
 
-`rustybam` is a bioinformatics toolkit written in the `rust` programing language focused around manipulation of alignment files (`bam` and `PAF`), annotation (`bed`), and sequence files (`fasta` and `fastq`).
+`rustybam` is a bioinformatics toolkit written in the `rust` programing language focused around manipulation of alignment (`bam` and `PAF`), annotation (`bed`), and sequence (`fasta` and `fastq`) files.
 
 ## Usage
 
