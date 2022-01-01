@@ -342,10 +342,9 @@ pub fn parse_cli() {
 
     let duration = pg_start.elapsed();
     log::info!(
-        "{} {} done! Time elapsed: {:.2?}",
-        "rustybam".bright_green().bold(),
+        "{} done! Time elapsed: {}",
         subcommand.bright_green().bold(),
-        duration
+        format!("{:.2?}", duration).bright_yellow().bold()
     );
 }
 
