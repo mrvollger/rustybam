@@ -16,19 +16,21 @@
 
 ## Usage
 
-```
+```shell
 rustybam [OPTIONS] <SUBCOMMAND>
 ```
 
 or
 
-```
+```shell
 rb [OPTIONS] <SUBCOMMAND>
 ```
 
 ### Subcommands
 
-```
+The full manual of subcommands can be found on the [docs](https://docs.rs/rustybam/latest/rustybam/cli/enum.Commands.html).
+
+```shell
 SUBCOMMANDS:
     stats          Get percent identity stats from a sam/bam/cram or PAF
     bed-length     Count the number of bases in a bed file [aliases: bedlen, bl, bedlength]

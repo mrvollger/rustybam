@@ -22,6 +22,14 @@ pub struct Cli {
     pub command: Option<Commands>,
 }
 
+///
+/// This structure contains all the subcommands for rustybam and their help descriptions.
+///
+/// Because of naming conventions for rust enums the commands names have
+/// different capitalization than on the command line.
+/// For example, the `Liftover` enum is invoked using `rustybam liftover`
+/// and the `TrimPaf` command with `rustybam trim-paf`.
+///
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Get percent identity stats from a sam/bam/cram or PAF.
@@ -75,7 +83,7 @@ pub enum Commands {
     },
     /// Liftover target sequence coordinates onto query sequence using a PAF.
     ///
-    /// This is a function for lifting over coordinates from a reference (--bed) to a query using a PAF file from minimap2 or unimap (note, you can use `paftools.js sam2paf` to convert SAM data to PAF format).
+    /// This is a function for lifting over coordinates from a reference (<BED>) to a query using a PAF file from minimap2 or unimap (note, you can use `paftools.js sam2paf` to convert SAM data to PAF format).
     /// The returned file is a PAF file that is trimmed to the regions in the bed file. Even the cigar in the returned PAF file is trimmed so it can be used downstream! Additionally, a tag with the format `id:Z:<>` is added to the PAF where `<>` is either the 4th column of the input bed file or if not present `chr_start_end`.
     Liftover {
         /// PAF file from minimap2 or unimap run with -c and --eqx [i.e. the PAF file must have the cg tag and use extended CIGAR opts (=/X)].
