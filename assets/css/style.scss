@@ -4,8 +4,8 @@
 @import "{{ site.theme }}";
 
 
-$side-min-width: 20%;
-$side-max-width: 15%;
+$side-min-width: 15%;
+$side-max-width: 20%;
 $my-min-width: 76%;
 $my-max-width: 78%;
 
@@ -71,6 +71,7 @@ code {
 #my_toc {
   font-size: 10px;
   max-height: 60%;
+  min-height: 30%;
   max-width: $side-max-width;
   min-width: $side-min-width;
   padding: 5px;
