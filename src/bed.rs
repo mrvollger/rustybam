@@ -110,7 +110,7 @@ pub fn parse_region(region: &str) -> Region {
         });
 
     assert!(
-        !(st > en),
+        (st <= en),
         "Region start must be less than end.\n{}",
         region
     );

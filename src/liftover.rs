@@ -125,16 +125,15 @@ pub fn trim_paf_by_rgns(
     invert_query: bool,
 ) -> Vec<PafRecord> {
     // swap qeury and ref if needed.
-    let recs: &[PafRecord];
     let mut newvec = Vec::new();
-    if invert_query {
+    let recs: &[PafRecord] = if invert_query {
         for rec in paf_recs.iter() {
             newvec.push(paf_swap_query_and_target(rec));
         }
-        recs = &newvec;
+        &newvec
     } else {
-        recs = paf_recs;
-    }
+        paf_recs
+    };
 
     // define the unique contig names to looks at
     let names: Vec<&String> = recs.iter().map(|rec| &rec.t_name).unique().collect();

@@ -374,6 +374,7 @@ impl PafRecord {
         Ok(rec)
     }
 
+    #[must_use]
     pub fn small_copy(&self) -> PafRecord {
         PafRecord {
             q_name: self.q_name.clone(),
