@@ -173,6 +173,20 @@ rustybam breakpaf --max-size 1000 input.paf \
 Try out
 [SafFire](https://mrvollger.github.io/SafFire/)!
 
+### Align once
+
+At the boundaries of CNVs and inversions minimap2 may align the same section of query sequence to multiple stretches of the target sequence. This utility uses the CIGAR (must use `--eqx`) strings of PAF alignments to determine an optimal split of the alignments such no query base is aligned more than once. To do this the whole PAF file is loaded in memory and then overlaps are removed starting with the largest overlapping interval and iterating.
+
+```bash
+rb trim-paf {input.paf} > {trimmed.paf}
+```
+
+Here is an example from the NOTCH2NL region comparing CHM1 against CHM13 before trimming:
+![](images/no-trim.svg)
+
+and after trimming
+![](images/trim.svg)
+
 ### Split fastx files
 
 Split a fasta file between `stdout` and two other files both compressed and uncompressed.
