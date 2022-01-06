@@ -14,7 +14,7 @@
 
 `rustybam` is a bioinformatics toolkit written in the `rust` programing language focused around manipulation of alignment (`bam` and `PAF`), annotation (`bed`), and sequence (`fasta` and `fastq`) files.
 
-## What can `rustybam` do?
+## What can rustybam do?
 
 Here is a commented example that highlights some of the better features of `rustybam`, and demonstrates how each result can be read directly into another subcommand.
 
