@@ -10,7 +10,7 @@ license = "MIT"
 name = "rustybam" 
 readme = "README.md" 
 repository = "https://github.com/mrvollger/rustybam" 
-version = "0.1.25" 
+version = "0.1.26" 
 
 [[bin]]
 name = "rb"

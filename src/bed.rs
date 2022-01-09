@@ -179,7 +179,11 @@ pub fn parse_bed(filename: &str) -> Vec<Region> {
                 let rgn = parse_bed_record(r);
                 vec.push(rgn);
             }
-            Err(e) => println!("WARNING: error parsing bed at line {}: {:?}", idx + 1, e),
+            Err(e) => log::warn!(
+                "Unable to parse bed at line {}, skipping. Reason: {}",
+                idx + 1,
+                e
+            ),
         }
     }
     vec
