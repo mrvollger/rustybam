@@ -356,11 +356,14 @@ pub fn run_split_fasta(files: &[String]) {
     }
     let mut records = fasta::Reader::new(io::stdin()).records();
     let mut out_idx = 0;
+    let mut rec_num = 0;
     while let Some(Ok(record)) = records.next() {
         outs[out_idx]
             .write_record(&record)
-            .expect("Error writing record.");
+            .unwrap_or_else(|_| panic!("Error writing record number {}", rec_num + 1));
+        log::debug!("Wrote record number {}", rec_num + 1);
         out_idx += 1;
+        rec_num += 1;
         if out_idx == outs.len() {
             out_idx = 0;
         }
@@ -376,11 +379,14 @@ pub fn run_split_fastq(files: &[String]) {
 
     let mut records = fastq::Reader::new(io::stdin()).records();
     let mut out_idx = 0;
+    let mut rec_num = 0;
     while let Some(Ok(record)) = records.next() {
         outs[out_idx]
             .write_record(&record)
-            .expect("Error writing record.");
+            .unwrap_or_else(|_| panic!("Error writing record number {}", rec_num + 1));
+        log::debug!("Wrote record number {}", rec_num + 1);
         out_idx += 1;
+        rec_num += 1;
         if out_idx == outs.len() {
             out_idx = 0;
         }
