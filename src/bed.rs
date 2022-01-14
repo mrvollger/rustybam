@@ -173,6 +173,7 @@ pub fn parse_bed(filename: &str) -> Vec<Region> {
     let mut vec = Vec::new();
     let reader = myio::reader(filename);
     let mut records = bed::Reader::new(reader);
+    let mut rec_num = 0;
     for (idx, rec) in records.records().enumerate() {
         match rec {
             Ok(r) => {
@@ -185,6 +186,8 @@ pub fn parse_bed(filename: &str) -> Vec<Region> {
                 e
             ),
         }
+        rec_num += 1;
+        log::debug!("Read bed record number {}", rec_num);
     }
     vec
 }

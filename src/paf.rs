@@ -59,11 +59,11 @@ impl Paf {
             log::trace!("{:?}", line);
             match PafRecord::new(&line.unwrap()) {
                 Ok(rec) => {
-                    log::debug!("Reading PAF entry # {}", index);
                     paf.records.push(rec);
                 }
                 Err(_) => eprintln!("\nUnable to parse PAF record. Skipping line {}", index + 1),
             }
+            log::debug!("Read PAF record number: {}", index + 1);
         }
         paf
     }
@@ -749,13 +749,15 @@ impl PafRecord {
         */
         let flag = if self.strand == '-' { 16 } else { 0 };
         format!(
-            "{}\t{}\t{}\t{}\t{}\t{}\t*\t0\t0\t*\t*",
+            "{}\t{}\t{}\t{}\t{}\t{}H{}{}H\t*\t0\t0\t*\t*",
             self.q_name,
             flag,
             self.t_name,
-            self.q_st + 1,
+            self.t_st + 1,
             self.mapq,
-            self.cigar
+            self.q_st,
+            self.cigar,
+            self.q_len - self.q_en,
         )
     }
 }
