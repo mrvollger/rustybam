@@ -152,12 +152,13 @@ pub enum Commands {
         #[clap(default_value = "-")]
         paf: String,
     },
-    /// Reads in a fastx from stdin and divides into files (can compress by adding .gz).
-    /// Input can be either compressed or uncompressed!
-    #[clap(visible_aliases = &["fxsplit", "fasta-split", "fastq-split" ,"fa-split", "fq-split"])]
+    /// Splits fastx from stdin into multiple files.
+    ///
+    /// Specifically it reads fastx format (fastq, fasta, or mixed) from stdin and divides the records across multiple output files. Output files can be compressed by adding `.gz`, and the input can also be compressed or uncompressed.
+    #[clap(visible_aliases = &["fxs", "fasta-split", "fastq-split" ,"fa-split", "fq-split"])]
     FastxSplit {
-        /// list of fasta files
-        fasta: Vec<String>,
+        /// List of fastx files to write to
+        fastx: Vec<String>,
     },
     /// Mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs.
     #[clap(visible_aliases = &["getfasta", "gf"])]
@@ -168,10 +169,10 @@ pub enum Commands {
         /// bed file of regions to extract
         #[clap(short, long)]
         bed: String,
-        /// revcomp sequence if the strand is "-"
+        /// Reverse complement the sequence if the strand is "-"
         #[clap(short, long)]
         strand: bool,
-        /// add the name (4th column) to the header of the fasta output
+        /// Add the name (4th column) to the header of the fasta output
         #[clap(short, long)]
         name: bool,
     },

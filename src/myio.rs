@@ -22,9 +22,8 @@ pub fn writer(filename: &str) -> Box<dyn Write> {
     let buffer = get_output(Some(path)).expect("Error: cannot create output file");
 
     if ext == Some(OsStr::new("gz")) {
-        // Error is here: Created file isn't gzip-compressed
         let writer = ZBuilder::<Bgzf, _>::new()
-            .num_threads(8)
+            .num_threads(1) // must limit to 1 thread because if I don't I get an error when I write to multiple gzip files with large input strings
             .compression_level(Compression::new(6))
             .from_writer(buffer);
         Box::new(writer)

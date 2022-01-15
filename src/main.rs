@@ -312,9 +312,9 @@ pub fn parse_cli() {
         //
         // Run Fastx-split
         //
-        Some(Commands::FastxSplit { fasta }) => {
+        Some(Commands::FastxSplit { fastx }) => {
             //run_split_fasta(fasta);
-            fastx::run_split_fastx(fasta, "-");
+            fastx::run_split_fastx(fastx, "-");
         }
         //
         // Run GetFasta
