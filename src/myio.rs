@@ -23,7 +23,7 @@ pub fn writer(filename: &str) -> Box<dyn Write> {
 
     if ext == Some(OsStr::new("gz")) {
         let writer = ZBuilder::<Bgzf, _>::new()
-            .num_threads(1) // must limit to 1 thread because if I don't I get an error when I write to multiple gzip files with large input strings
+            .num_threads(0) // must limit to 1 thread because if I don't I get an error when I write to multiple gzip files with large input strings
             .compression_level(Compression::new(6))
             .from_writer(buffer);
         Box::new(writer)
