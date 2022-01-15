@@ -1,5 +1,3 @@
-use bio::io::fasta;
-use bio::io::fastq;
 use colored::Colorize;
 use env_logger::{Builder, Target};
 use itertools::Itertools;
@@ -8,10 +6,10 @@ use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rustybam::cli::Commands;
+use rustybam::fastx;
 use rustybam::paf::paf_swap_query_and_target;
 use rustybam::*;
 use std::collections::HashMap;
-use std::io;
 use std::time::Instant;
 
 fn main() {
@@ -312,16 +310,11 @@ pub fn parse_cli() {
             }
         }
         //
-        // Run Fasta-split
+        // Run Fastx-split
         //
-        Some(Commands::FastaSplit { fasta }) => {
-            run_split_fasta(fasta);
-        }
-        //
-        // Run Fastq-split
-        //
-        Some(Commands::FastqSplit { fastq }) => {
-            run_split_fastq(fastq);
+        Some(Commands::FastxSplit { fasta }) => {
+            //run_split_fasta(fasta);
+            fastx::run_split_fastx(fasta, "-");
         }
         //
         // Run GetFasta
@@ -346,49 +339,4 @@ pub fn parse_cli() {
         subcommand.bright_green().bold(),
         format!("{:.2?}", duration).bright_yellow().bold()
     );
-}
-
-pub fn run_split_fasta(files: &[String]) {
-    let mut outs = Vec::new();
-    for f in files {
-        let handle = myio::writer(f);
-        outs.push(fasta::Writer::new(handle));
-    }
-    let mut records = fasta::Reader::new(io::stdin()).records();
-    let mut out_idx = 0;
-    let mut rec_num = 0;
-    while let Some(Ok(record)) = records.next() {
-        outs[out_idx]
-            .write_record(&record)
-            .unwrap_or_else(|_| panic!("Error writing record number {}", rec_num + 1));
-        log::debug!("Wrote record number {}", rec_num + 1);
-        out_idx += 1;
-        rec_num += 1;
-        if out_idx == outs.len() {
-            out_idx = 0;
-        }
-    }
-}
-
-pub fn run_split_fastq(files: &[String]) {
-    let mut outs = Vec::new();
-    for f in files {
-        let handle = myio::writer(f);
-        outs.push(fastq::Writer::new(handle));
-    }
-
-    let mut records = fastq::Reader::new(io::stdin()).records();
-    let mut out_idx = 0;
-    let mut rec_num = 0;
-    while let Some(Ok(record)) = records.next() {
-        outs[out_idx]
-            .write_record(&record)
-            .unwrap_or_else(|_| panic!("Error writing record number {}", rec_num + 1));
-        log::debug!("Wrote record number {}", rec_num + 1);
-        out_idx += 1;
-        rec_num += 1;
-        if out_idx == outs.len() {
-            out_idx = 0;
-        }
-    }
 }

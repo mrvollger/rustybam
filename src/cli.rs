@@ -152,17 +152,12 @@ pub enum Commands {
         #[clap(default_value = "-")]
         paf: String,
     },
-    /// Reads in a fasta from stdin and divides into files (can compress by adding .gz).
-    #[clap(visible_aliases = &["fastasplit", "fasplit"])]
-    FastaSplit {
+    /// Reads in a fastx from stdin and divides into files (can compress by adding .gz).
+    /// Input can be either compressed or uncompressed!
+    #[clap(visible_aliases = &["fxsplit", "fasta-split", "fastq-split" ,"fa-split", "fq-split"])]
+    FastxSplit {
         /// list of fasta files
         fasta: Vec<String>,
-    },
-    /// Reads in a fastq from stdin and divides into files (can compress by adding .gz).
-    #[clap(visible_aliases = &["fastqsplit", "fqsplit"])]
-    FastqSplit {
-        /// list of fastq files
-        fastq: Vec<String>,
     },
     /// Mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs.
     #[clap(visible_aliases = &["getfasta", "gf"])]

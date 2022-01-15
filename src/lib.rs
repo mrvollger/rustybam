@@ -10,6 +10,8 @@ pub mod bamstats;
 pub mod bed;
 /// Command line interface for rustybam.
 pub mod cli;
+/// Functions for fastx files.
+pub mod fastx;
 /// Mimic of `bedtools getfasta` that works with bgzipped files.
 pub mod getfasta;
 /// Liftover between assemblies using a PAF file.
