@@ -36,8 +36,8 @@ pub fn run_split_fastx(files: &[String], infile: &str) {
             out_idx = 0;
         }
     }
-
     // Close all the files.
+    // this breaks things?
     for mut out in outs {
         out.flush()
             .unwrap_or_else(|_| panic!("Error flushing output!"));

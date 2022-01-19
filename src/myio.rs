@@ -1,8 +1,8 @@
 use anyhow::Result;
 use flate2::read;
-use flate2::Compression;
 use gzp::deflate::Bgzf; //, Gzip, Mgzip, RawDeflate};
 use gzp::BgzfSyncReader;
+use gzp::Compression;
 use gzp::ZBuilder;
 use std::error::Error;
 use std::ffi::OsStr;
@@ -11,7 +11,7 @@ use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use std::path::{Path, PathBuf};
 
 type DynResult<T> = Result<T, Box<dyn Error + 'static>>;
-const BUFFER_SIZE: usize = 128 * 1024;
+const BUFFER_SIZE: usize = 32 * 1024;
 
 /// Write normal or compressed files seamlessly
 /// Uses the presence of a `.gz` extension to decide
@@ -23,7 +23,7 @@ pub fn writer(filename: &str) -> Box<dyn Write> {
 
     if ext == Some(OsStr::new("gz")) {
         let writer = ZBuilder::<Bgzf, _>::new()
-            .num_threads(0) // must limit to 1 thread because if I don't I get an error when I write to multiple gzip files with large input strings
+            .num_threads(8)
             .compression_level(Compression::new(6))
             .from_writer(buffer);
         Box::new(writer)

@@ -26,3 +26,5 @@ pub mod paf;
 pub mod suns;
 /// Functions for trimming query overlaps from a PAF file.
 pub mod trim_overlap;
+
+//pub mod test;
