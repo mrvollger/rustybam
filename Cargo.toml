@@ -20,10 +20,6 @@ path = "src/main.rs"
 name = "rustybam"
 path = "src/main.rs"
 
-[[bin]]
-name = "test"
-path = "src/test.rs"
-
 [features]
 default = ["deflate_zlib_ng", "libdeflate"]
 deflate_rust = ["gzp/deflate_rust", "flate2/rust_backend"]
