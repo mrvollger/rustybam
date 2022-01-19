@@ -19,3 +19,4 @@ Gemfile.lock
 _site/**
 gh-md-toc
 .jekyll-metadata
+src/test.rs
