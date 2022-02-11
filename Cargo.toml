@@ -10,7 +10,7 @@ license = "MIT"
 name = "rustybam"
 readme = "README.md"
 repository = "https://github.com/mrvollger/rustybam"
-version = "0.1.27"
+version = "0.1.28"
 
 [[bin]]
 name = "rb"
@@ -40,7 +40,7 @@ clap = {version = "3.0.0", features = ["yaml", "derive"]}
 colored = "2.0.0"
 env_logger = "0.9.0"
 flate2 = {version = "~1", default-features = false}
-gzp = {version = "0.9.3", default-features = false}
+gzp = {version = "0.9.5", default-features = false}
 itertools = "0.10.0"
 lazy_static = "1.4.0"
 log = "0.4.14"

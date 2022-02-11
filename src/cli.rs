@@ -35,6 +35,20 @@ pub enum Commands {
     /// Get percent identity stats from a sam/bam/cram or PAF.
     ///
     /// Requires =/X operations in the CIGAR string!
+    ///
+    /// # output column descriptions:
+    ///
+    /// perID_by_matches is calculated as:
+    ///
+    ///  matches / (matches + mismatches)
+    ///
+    /// perID_by_events is calculated as:
+    ///
+    ///  matches / (matches + mismatches + insertion events + deletion events)
+    ///
+    /// perID_by_all is calculated as:
+    ///
+    ///  matches / (matches + mismatches + insertion bases + deletion bases)
     Stats {
         /// sam/bam/cram/file
         #[clap(default_value = "-")]

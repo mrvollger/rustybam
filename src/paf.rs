@@ -34,8 +34,14 @@ pub struct Paf {
     //pub records_by_contig: HashMap<String, Vec<&'a PafRecord>>,
 }
 
+impl Default for Paf {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Paf {
-    fn new() -> Paf {
+    pub fn new() -> Paf {
         Paf {
             records: Vec::new(),
             //records_by_contig: HashMap::new(),
@@ -234,7 +240,7 @@ impl Paf {
             }
         }
         overlap_pairs.sort_by_key(|rec| std::u64::MAX - rec.0);
-        if overlap_pairs.len() > 1 {
+        if !overlap_pairs.is_empty() {
             let mut left = self.records[overlap_pairs[0].1].clone();
             let mut right = self.records[overlap_pairs[0].2].clone();
             left.aligned_pairs();

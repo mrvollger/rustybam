@@ -84,3 +84,87 @@ pub fn trim_overlapping_pafs(
         max
     );
 }
+
+/// Example
+/// ```
+/// use rustybam::trim_overlap::*;
+/// use rustybam::paf::*;
+///
+/// ```
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn pretty_print_paf(paf: &Paf) {
+        println!("\nQUERY");
+        for rec in &paf.records {
+            for _i in 0..rec.q_st {
+                print!(" ");
+            }
+            if rec.strand == '-' {
+                rec.long_cigar.iter().rev().for_each(|x| {
+                    let opt = format!("{}", x).strip_prefix("1").unwrap().to_string();
+                    print!("{}", opt);
+                });
+            } else {
+                rec.long_cigar.iter().for_each(|x| {
+                    let opt = format!("{}", x).strip_prefix("1").unwrap().to_string();
+                    print!("{}", opt);
+                });
+            }
+
+            for _i in 0..(rec.q_len - rec.q_en + 5) {
+                print!(" ");
+            }
+            println!("{}-{}", rec.q_st, rec.q_en);
+        }
+
+        println!("REFERENCE");
+        for rec in &paf.records {
+            for _i in 0..rec.t_st {
+                print!(" ");
+            }
+            rec.long_cigar.iter().for_each(|x| {
+                let opt = format!("{}", x).strip_prefix("1").unwrap().to_string();
+                print!("{}", opt);
+            });
+
+            for _i in 0..(rec.t_len - rec.t_en + 5) {
+                print!(" ");
+            }
+            println!("{}-{}", rec.t_st, rec.t_en);
+        }
+    }
+
+    #[test]
+    fn test_inversion_trimming() {
+        let mut left = PafRecord::new("Q 20 0 10 + T 20 0 10 3 9 60 cg:Z:7=1X2=").unwrap();
+        left.aligned_pairs();
+        left.check_integrity().unwrap();
+
+        let mut center = PafRecord::new("Q 20 4 15 - T 20 5 16 3 9 60 cg:Z:3=1X3=1M1X2=").unwrap();
+        center.aligned_pairs();
+        center.check_integrity().unwrap();
+
+        let mut right =
+            PafRecord::new("Q 20 10 20 + T 20 10 20 3 9 60 cz:Z:10= cg:Z:2=2X2=2X2=").unwrap();
+        right.aligned_pairs();
+        right.check_integrity().unwrap();
+
+        println!("{:?}", center.tpos_aln);
+        println!("{:?}", center.qpos_aln);
+
+        let mut paf = Paf::new();
+        paf.records = vec![left, center, right];
+
+        pretty_print_paf(&paf);
+        paf.overlapping_paf_recs(1, 1, 1);
+        pretty_print_paf(&paf);
+
+        let expected_cigars = vec!["7=", "2=1X3=1M", "2=2X2="];
+        for (i, rec) in paf.records.iter().enumerate() {
+            assert_eq!(rec.cigar.to_string(), expected_cigars[i]);
+        }
+    }
+}
