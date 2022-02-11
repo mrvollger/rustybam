@@ -20,3 +20,4 @@ _site/**
 gh-md-toc
 .jekyll-metadata
 src/test.rs
+images/**
