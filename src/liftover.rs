@@ -26,7 +26,7 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
 
     // index at the start of trimmed alignment
     trimmed_paf.t_st = cmp::max(rgn.st, paf.t_st);
-    let start_idx = match paf.tpos_to_idx(trimmed_paf.t_st, true) {
+    let start_idx = match paf.tpos_to_idx(trimmed_paf.t_st, false) {
         Ok(idx) => idx,
         Err(_) => panic!(
             "\nProblem getting index in cigar:\n{}\n{}\n{}\n",
@@ -60,7 +60,18 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
 
     // get the cigar opts
     trimmed_paf.cigar = PafRecord::collapse_long_cigar(&paf.subset_cigar(start_idx, end_idx));
-    // trimmed_paf.long_cigar = paf.subset_cigar(start_idx, end_idx);
+
+    // make sure there are opts in the cigar that are not indels
+    let mut no_match_opts = true;
+    for opt in &trimmed_paf.cigar {
+        if matches!(opt, Match(_) | Equal(_) | Diff(_)) {
+            no_match_opts = false;
+            break;
+        }
+    }
+    if no_match_opts {
+        return None;
+    }
 
     if paf.strand == '-' {
         std::mem::swap(&mut trimmed_paf.q_en, &mut trimmed_paf.q_st);
@@ -164,8 +175,8 @@ pub fn trim_paf_by_rgns(
 /// rec.aligned_pairs();
 /// for paf in liftover::break_paf_on_indels(&rec, 0){
 ///     eprintln!("{}", paf);
-///     assert!(paf.t_en - paf.t_st == 5, "Incorrect size.");   
-/// }   
+///     assert!(paf.t_en - paf.t_st == 5, "Incorrect size.");
+/// }
 /// ```
 pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord> {
     let mut rtn = Vec::new();
@@ -183,7 +194,8 @@ pub fn break_paf_on_indels(paf: &PafRecord, break_length: u32) -> Vec<PafRecord>
                     ..Default::default()
                 };
                 //rtn.push(trim_paf_rec_to_rgn(&rgn, paf));
-                if let Some(x) = trim_paf_rec_to_rgn(&rgn, paf) {
+                if let Some(mut x) = trim_paf_rec_to_rgn(&rgn, paf) {
+                    x.check_integrity().unwrap();
                     rtn.push(x)
                 }
             }
@@ -228,7 +240,7 @@ mod tests {
             /// ------------||||I|D||
             ///             TGACGT-AC
             ///           01234567789 (forward)
-            ///               XXXXX           
+            ///               XXXXX
             ///             98765433210 (reverse)
             "
         );

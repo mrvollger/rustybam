@@ -214,6 +214,7 @@ pub fn parse_cli() {
             let rgns = bed::parse_bed(bed);
             // read in the file
             let paf = paf::Paf::from_file(paf);
+
             // trim the records
             let new_recs = liftover::trim_paf_by_rgns(&rgns, &paf.records, *qbed);
 

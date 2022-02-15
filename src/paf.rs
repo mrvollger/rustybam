@@ -64,7 +64,8 @@ impl Paf {
         for (index, line) in paf_file.lines().enumerate() {
             log::trace!("{:?}", line);
             match PafRecord::new(&line.unwrap()) {
-                Ok(rec) => {
+                Ok(mut rec) => {
+                    rec.check_integrity().unwrap();
                     paf.records.push(rec);
                 }
                 Err(_) => eprintln!("\nUnable to parse PAF record. Skipping line {}", index + 1),
@@ -205,6 +206,11 @@ impl Paf {
 
     /// Identify overlapping pairs in Paf set
     pub fn overlapping_paf_recs(&mut self, match_score: i32, diff_score: i32, indel_score: i32) {
+        // remove trailing indels in all cases
+        for rec in &mut self.records {
+            rec.remove_trailing_indels();
+        }
+
         let mut overlap_pairs = Vec::new();
         self.records.sort_by_key(|rec| rec.q_name.clone());
 
@@ -240,16 +246,30 @@ impl Paf {
             }
         }
         overlap_pairs.sort_by_key(|rec| std::u64::MAX - rec.0);
-        if !overlap_pairs.is_empty() {
-            let mut left = self.records[overlap_pairs[0].1].clone();
-            let mut right = self.records[overlap_pairs[0].2].clone();
-            left.aligned_pairs();
-            right.aligned_pairs();
-            trim_overlapping_pafs(&mut left, &mut right, match_score, diff_score, indel_score);
-            log::trace!("{}", left);
-            log::trace!("{}", right);
-            self.records[overlap_pairs[0].1] = left;
-            self.records[overlap_pairs[0].2] = right;
+        log::debug!("{} overlapping pairs found", overlap_pairs.len());
+        let mut q_seen: HashSet<String> = HashSet::new();
+        let mut unseen = 0;
+        for (_overlap, i, j) in overlap_pairs {
+            let mut left = self.records[i].clone();
+            let mut right = self.records[j].clone();
+            let q_name = left.q_name.clone();
+            // if we have not seen the q_name before it cannot be
+            // in conflict with previous trimming steps
+            if !q_seen.contains(&q_name) {
+                left.aligned_pairs();
+                right.aligned_pairs();
+                trim_overlapping_pafs(&mut left, &mut right, match_score, diff_score, indel_score);
+                log::trace!("{}", left);
+                log::trace!("{}", right);
+                self.records[i] = left;
+                self.records[j] = right;
+                q_seen.insert(q_name);
+            } else {
+                unseen += 1;
+            }
+        }
+
+        if unseen > 0 {
             // recursively call for next overlap
             self.overlapping_paf_recs(match_score, diff_score, indel_score);
         }
@@ -436,8 +456,23 @@ impl PafRecord {
         }
     }
 
+    // make a long cigar from the existing cigar
+    pub fn make_long_cigar(&mut self) {
+        let mut long_cigar = Vec::new();
+        for opt in self.cigar.into_iter() {
+            let opt_len = opt.len() as u64;
+            for _i in 0..opt_len {
+                long_cigar.push(update_cigar_opt_len(opt, 1));
+            }
+        }
+        self.long_cigar = CigarString(long_cigar);
+    }
+
     /// This function adds matching alignment positions and cigar operations
     pub fn aligned_pairs(&mut self) {
+        // aligned pairs is messed up when there are leading or trailing indels
+        self.remove_trailing_indels();
+
         let mut t_pos = self.t_st as i64 - 1;
         let mut q_pos = self.q_st as i64 - 1;
 
@@ -453,7 +488,7 @@ impl PafRecord {
             let moves_t = consumes_reference(opt);
             let moves_q = consumes_query(opt);
             let opt_len = opt.len() as u64;
-            // incrment the ref and or query
+            // increment the ref and or query
             for _i in 0..opt_len {
                 long_cigar.push(update_cigar_opt_len(opt, 1));
                 if moves_t {
@@ -497,15 +532,22 @@ impl PafRecord {
         } else {
             self.qpos_aln.binary_search(&qpos)?
         };
-        /*if right {
-            while idx + 1 < self.qpos_aln.len() && self.qpos_aln[idx + 1] == qpos {
+        Ok(idx)
+    }
+
+    /// force the qpos index to be at a match to the right (or left)
+    pub fn qpos_to_idx_match(&self, qpos: u64, search_right: bool) -> Result<usize, usize> {
+        let mut idx = self.qpos_to_idx(qpos)?;
+        // find the closes actual matching base
+        if (search_right && self.strand == '+') || (!search_right && self.strand == '-') {
+            while !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
                 idx += 1;
             }
         } else {
-            while idx > 0 && self.qpos_aln[idx - 1] == qpos {
+            while !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
                 idx -= 1;
             }
-        }*/
+        }
         Ok(idx)
     }
 
@@ -574,7 +616,9 @@ impl PafRecord {
     }
 
     pub fn remove_trailing_indels(&mut self) {
-        //let (t_bases, q_bases, nmatch, aln_len) = self.infer_n_bases();
+        // if we check integrity, here it may fail due to indels on the ends
+        // self.check_integrity().unwrap();
+
         let cigar_len = self.cigar.len();
 
         // find start to trim
@@ -593,7 +637,7 @@ impl PafRecord {
                 remove_st_q += st_opt.len();
                 // TODO learn why I need this
                 // TODO handle the case when it is a del and then and ins
-                remove_st_t += 1;
+                // remove_st_t += 1;
             }
             remove_st_opts += 1;
             removed_st_opts.push(st_opt);
@@ -603,13 +647,17 @@ impl PafRecord {
                 break;
             }
         }
+
         // remove extra counts put in my the case of Del followed by Ins
         if removed_st_opts.len() > 1 {
             for i in 0..(removed_st_opts.len() - 1) {
                 let pre_opt = removed_st_opts[i];
                 let cur_opt = removed_st_opts[i + 1];
-                if matches!(pre_opt, Del(_)) && matches!(cur_opt, Ins(_)) {
-                    remove_st_t -= 1;
+                if (matches!(pre_opt, Del(_)) && matches!(cur_opt, Ins(_)))
+                    || (matches!(pre_opt, Ins(_)) && matches!(cur_opt, Del(_)))
+                {
+                    remove_st_t += 1;
+                    remove_st_q -= 1;
                 }
             }
         }
@@ -640,10 +688,32 @@ impl PafRecord {
         if remove_en_opts > 0 || remove_st_opts > 0 {
             self.id += &format!(
                 "_TO.{}.{}",
-                CigarString(removed_st_opts),
-                CigarString(removed_en_opts)
+                CigarString(removed_st_opts.clone()),
+                CigarString(removed_en_opts.clone())
             );
         }
+
+        // some logging.
+        if remove_en_opts > 0 || remove_st_opts > 0 {
+            log::debug!(
+                "\nRemoved {} leading and {} trailing indels:\n{}\n{}\ntarget changes:{},{}\nquery changes: {},{}\n{}:{}-{}\n{}:{}-{}",
+                remove_st_opts,
+                remove_en_opts,
+                CigarString(removed_st_opts),
+                CigarString(removed_en_opts),
+                remove_st_t,
+                remove_en_t,
+                remove_st_q,
+                remove_en_q,
+                self.q_name,
+                self.q_st,
+                self.q_en,
+                self.t_name,
+                self.t_st,
+                self.t_en,
+            );
+        }
+
         // update the cigar string
         self.cigar = CigarString(self.cigar.0[remove_st_opts..].to_vec());
         self.cigar.0.truncate(self.cigar.len() - remove_en_opts);
@@ -669,6 +739,9 @@ impl PafRecord {
                 //self.remove_trailing_indels();
             }
         }
+
+        // make sure we did not break the cigar
+        self.check_integrity().unwrap();
     }
 
     pub fn truncate_record_by_query(&mut self, new_q_st: u64, new_q_en: u64) {
@@ -677,8 +750,14 @@ impl PafRecord {
         assert!(new_q_en <= self.q_en, "New end is greater than old end.");
 
         // get alignment positions
-        let mut aln_st = self.qpos_to_idx(new_q_st).unwrap();
-        let mut aln_en = self.qpos_to_idx(new_q_en - 1).unwrap();
+        self.make_long_cigar(); // needed for indel check
+        let mut aln_st = self.qpos_to_idx_match(new_q_st, true).unwrap();
+        let mut aln_en = self.qpos_to_idx_match(new_q_en - 1, false).unwrap();
+
+        let new_new_q_st = self.qpos_aln[aln_st];
+        let new_new_q_en = self.qpos_aln[aln_en] + 1; // ends are not inclusive
+
+        // if rc must swap
         if aln_st > aln_en {
             std::mem::swap(&mut aln_st, &mut aln_en);
         }
@@ -686,6 +765,7 @@ impl PafRecord {
         let new_t_en = self.tpos_aln[aln_en] + 1; // ends are not inclusive
 
         // update the cigar string
+        // update alignment positions
         self.long_cigar = self.subset_cigar(aln_st, aln_en);
         self.cigar = PafRecord::collapse_long_cigar(&self.long_cigar);
 
@@ -694,11 +774,8 @@ impl PafRecord {
         self.t_en = new_t_en;
 
         // fix the query positions that need to be
-        self.q_st = new_q_st;
-        self.q_en = new_q_en;
-
-        // update alignment positions
-        self.aligned_pairs();
+        self.q_st = new_new_q_st;
+        self.q_en = new_new_q_en;
 
         // should not happen but just in case
         self.remove_trailing_indels();
