@@ -1,6 +1,8 @@
 use super::bed;
+use super::getfasta;
 use super::myio;
 use super::trim_overlap::trim_overlapping_pafs;
+use bio::alphabets::dna::revcomp;
 use core::{fmt, panic};
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -9,6 +11,7 @@ use regex::Regex;
 use rust_htslib::bam::record::Cigar::*;
 use rust_htslib::bam::record::CigarString;
 use rust_htslib::bam::record::*;
+use rust_htslib::faidx;
 use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::io::BufRead;
@@ -509,14 +512,21 @@ impl PafRecord {
     }
 
     /// Does a binary search on the alignment to find its index in the alignment
-    pub fn tpos_to_idx(&self, tpos: u64, right: bool) -> Result<usize, usize> {
-        let mut idx = self.tpos_aln.binary_search(&tpos)?;
-        if right {
-            while idx + 1 < self.tpos_aln.len() && self.tpos_aln[idx + 1] == tpos {
+    pub fn tpos_to_idx(&self, tpos: u64) -> Result<usize, usize> {
+        let idx = self.tpos_aln.binary_search(&tpos)?;
+        Ok(idx)
+    }
+
+    /// force the tpos index to be at a match to the right (or left)
+    pub fn tpos_to_idx_match(&self, qpos: u64, search_right: bool) -> Result<usize, usize> {
+        let mut idx = self.tpos_to_idx(qpos)?;
+        // find the closes actual matching base
+        if search_right {
+            while !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
                 idx += 1;
             }
         } else {
-            while idx > 0 && self.tpos_aln[idx - 1] == tpos {
+            while !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
                 idx -= 1;
             }
         }
@@ -824,15 +834,33 @@ impl PafRecord {
     /// use rustybam::bed::*;
     /// use rustybam::paf::*;
     /// let paf = PafRecord::new("Q 10 0 10 + T 20 12 20 3 9 60 cg:Z:7=1X2=").unwrap();
-    /// let sam = paf.to_sam_string();
+    /// let sam = paf.to_sam_string(None);
     /// ```
-    pub fn to_sam_string(&self) -> String {
+    pub fn to_sam_string(&self, reader: Option<&faidx::Reader>) -> String {
         /*
         m64062_190807_194840/133628256/ccs	0	chr1	1	60	396=	*	0	0   *   *
         */
+        let seq = match reader {
+            Some(reader) => {
+                let seq = getfasta::fetch_fasta(
+                    reader,
+                    &self.q_name,
+                    self.q_st as usize,
+                    self.q_en as usize,
+                );
+                let seq = if self.strand == '-' {
+                    revcomp(seq)
+                } else {
+                    seq
+                };
+                std::str::from_utf8(&seq).unwrap().to_string()
+            }
+            None => "*".to_string(),
+        };
+        let qual = "*".to_string();
         let flag = if self.strand == '-' { 16 } else { 0 };
         format!(
-            "{}\t{}\t{}\t{}\t{}\t{}H{}{}H\t*\t0\t0\t*\t*",
+            "{}\t{}\t{}\t{}\t{}\t{}H{}{}H\t*\t0\t0\t{}\t{}",
             self.q_name,
             flag,
             self.t_name,
@@ -841,6 +869,8 @@ impl PafRecord {
             self.q_st,
             self.cigar,
             self.q_len - self.q_en,
+            seq,
+            qual
         )
     }
 }

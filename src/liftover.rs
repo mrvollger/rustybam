@@ -26,7 +26,7 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
 
     // index at the start of trimmed alignment
     trimmed_paf.t_st = cmp::max(rgn.st, paf.t_st);
-    let start_idx = match paf.tpos_to_idx(trimmed_paf.t_st, false) {
+    let start_idx = match paf.tpos_to_idx_match(trimmed_paf.t_st, true) {
         Ok(idx) => idx,
         Err(_) => panic!(
             "\nProblem getting index in cigar:\n{}\n{}\n{}\n",
@@ -39,7 +39,7 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
     // index at the end of trimmed alignment
     trimmed_paf.t_en = cmp::min(rgn.en, paf.t_en);
     // the end index is not inclusive so minus 1
-    let end_idx = match paf.tpos_to_idx(trimmed_paf.t_en - 1, false) {
+    let end_idx = match paf.tpos_to_idx_match(trimmed_paf.t_en - 1, false) {
         Ok(idx) => idx,
         Err(error_idx) => panic!(
             "\nProblem getting index in cigar:\n{}\n{:?}\n{}\n{}\n",

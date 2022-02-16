@@ -5,6 +5,7 @@ use log::LevelFilter;
 use rayon::prelude::*;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
+use rust_htslib::faidx;
 use rustybam::cli::Commands;
 use rustybam::fastx;
 use rustybam::paf::paf_swap_query_and_target;
@@ -303,11 +304,15 @@ pub fn parse_cli() {
         //
         // Run PafToSam
         //
-        Some(Commands::PafToSam { paf }) => {
+        Some(Commands::PafToSam { paf, fasta }) => {
+            let fasta_reader = fasta
+                .as_ref()
+                .map(|fasta| faidx::Reader::from_path(fasta).unwrap());
+
             let paf = paf::Paf::from_file(paf);
             println!("{}", paf.sam_header());
             for rec in paf.records {
-                println!("{}", rec.to_sam_string());
+                println!("{}", rec.to_sam_string(fasta_reader.as_ref()));
             }
         }
         //
