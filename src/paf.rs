@@ -864,8 +864,8 @@ impl PafRecord {
         } else {
             "".to_string()
         };
-        let mut trailing_hard_clip = if self.q_len - self.q_st > 0 {
-            format!("{}H", self.q_len - self.q_st)
+        let mut trailing_hard_clip = if self.q_len - self.q_en > 0 {
+            format!("{}H", self.q_len - self.q_en)
         } else {
             "".to_string()
         };
