@@ -846,7 +846,7 @@ impl PafRecord {
                 let seq = getfasta::fetch_fasta(
                     reader,
                     &self.q_name,
-                    self.q_st as usize,
+                    0, //self.q_st as usize,
                     self.q_len as usize,
                 );
                 clip_char = 'S';
