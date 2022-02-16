@@ -859,16 +859,31 @@ impl PafRecord {
         };
         let qual = "*".to_string();
         let flag = if self.strand == '-' { 16 } else { 0 };
+        let mut leading_hard_clip = if self.q_st > 0 {
+            format!("{}H", self.q_st)
+        } else {
+            "".to_string()
+        };
+        let mut trailing_hard_clip = if self.q_len - self.q_st > 0 {
+            format!("{}H", self.q_len - self.q_st)
+        } else {
+            "".to_string()
+        };
+        if self.strand == '-' {
+            std::mem::swap(&mut leading_hard_clip, &mut trailing_hard_clip);
+        }
+        let o_cigar = format!("{}{}{}", leading_hard_clip, self.cigar, trailing_hard_clip);
         format!(
-            "{}\t{}\t{}\t{}\t{}\t{}H{}{}H\t*\t0\t0\t{}\t{}",
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
             self.q_name,
             flag,
             self.t_name,
             self.t_st + 1,
             self.mapq,
-            self.q_st,
-            self.cigar,
-            self.q_len - self.q_en,
+            o_cigar,
+            "*",
+            0,
+            0,
             seq,
             qual
         )
