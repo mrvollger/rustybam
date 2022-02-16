@@ -840,14 +840,16 @@ impl PafRecord {
         /*
         m64062_190807_194840/133628256/ccs	0	chr1	1	60	396=	*	0	0   *   *
         */
+        let mut clip_char = 'H';
         let seq = match reader {
             Some(reader) => {
                 let seq = getfasta::fetch_fasta(
                     reader,
                     &self.q_name,
                     self.q_st as usize,
-                    self.q_en as usize,
+                    self.q_len as usize,
                 );
+                clip_char = 'S';
                 let seq = if self.strand == '-' {
                     revcomp(seq)
                 } else {
@@ -859,20 +861,20 @@ impl PafRecord {
         };
         let qual = "*".to_string();
         let flag = if self.strand == '-' { 16 } else { 0 };
-        let mut leading_hard_clip = if self.q_st > 0 {
-            format!("{}H", self.q_st)
+        let mut leading_clip = if self.q_st > 0 {
+            format!("{}{}", self.q_st, clip_char)
         } else {
             "".to_string()
         };
-        let mut trailing_hard_clip = if self.q_len - self.q_en > 0 {
-            format!("{}H", self.q_len - self.q_en)
+        let mut trailing_clip = if self.q_len - self.q_en > 0 {
+            format!("{}{}", self.q_len - self.q_en, clip_char)
         } else {
             "".to_string()
         };
         if self.strand == '-' {
-            std::mem::swap(&mut leading_hard_clip, &mut trailing_hard_clip);
+            std::mem::swap(&mut leading_clip, &mut trailing_clip);
         }
-        let o_cigar = format!("{}{}{}", leading_hard_clip, self.cigar, trailing_hard_clip);
+        let o_cigar = format!("{}{}{}", leading_clip, self.cigar, trailing_clip);
         format!(
             "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
             self.q_name,
