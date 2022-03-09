@@ -10,7 +10,7 @@ license = "MIT"
 name = "rustybam"
 readme = "README.md"
 repository = "https://github.com/mrvollger/rustybam"
-version = "0.1.29-alpha.1"
+version = "0.1.29"
 
 [[bin]]
 name = "rb"
@@ -36,7 +36,7 @@ bio = "0.39.1"
 bio-types = "0.12.0"
 calm_io = "0.1.1"
 chrono = "0.4.19"
-clap = {version = "3.0.0", features = ["yaml", "derive"]}
+clap = {version = "3.0.0", features = ["derive"]}
 colored = "2.0.0"
 env_logger = "0.9.0"
 flate2 = {version = "~1", default-features = false}
@@ -51,7 +51,7 @@ regex = "1.5.4"
 rust-htslib = "0.38.2"
 
 [build-dependencies]
-clap = {version = "3.0.0", features = ["yaml", "derive"]}
+clap = {version = "3.0.0", features = ["derive"]}
 clap_generate = "3.0.0"
 env_logger = "0.9.0"
 log = "0.4.14"

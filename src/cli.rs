@@ -1,12 +1,11 @@
 use clap::IntoApp;
-use clap::{App, AppSettings, Parser, Subcommand};
+use clap::{AppSettings, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[clap(global_setting(AppSettings::PropagateVersion))]
 #[clap(global_setting(AppSettings::DeriveDisplayOrder))]
 #[clap(global_setting(AppSettings::InferSubcommands))]
 #[clap(global_setting(AppSettings::HelpExpected))]
-#[clap(global_setting(AppSettings::UseLongFormatForHelpSubcommand))]
 #[clap(setting(AppSettings::SubcommandRequiredElseHelp))]
 #[clap(author, version, about)]
 pub struct Cli {
@@ -133,6 +132,9 @@ pub enum Commands {
         /// Value subtracted for an insertion or deletion.
         #[clap(short, long, default_value_t = 1)]
         indel_score: i32,
+        /// Remove contained alignments as well as overlaps.
+        #[clap(short, long)]
+        remove_contained: bool,
     },
     /// Orient paf records so that most of the bases are in the forward direction.
     ///
@@ -240,6 +242,6 @@ pub fn make_cli_parse() -> Cli {
     Cli::parse()
 }
 
-pub fn make_cli_app() -> App<'static> {
-    Cli::into_app()
+pub fn make_cli_app() -> clap::Command<'static> {
+    Cli::command()
 }

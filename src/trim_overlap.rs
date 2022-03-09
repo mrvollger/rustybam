@@ -159,7 +159,7 @@ mod tests {
         paf.records = vec![left, center, right];
 
         pretty_print_paf(&paf);
-        paf.overlapping_paf_recs(1, 1, 1);
+        paf.overlapping_paf_recs(1, 1, 1, false);
         pretty_print_paf(&paf);
 
         let expected_cigars = vec!["7=", "2=1X3=1M", "2=2X2="];

@@ -208,7 +208,13 @@ impl Paf {
     }
 
     /// Identify overlapping pairs in Paf set
-    pub fn overlapping_paf_recs(&mut self, match_score: i32, diff_score: i32, indel_score: i32) {
+    pub fn overlapping_paf_recs(
+        &mut self,
+        match_score: i32,
+        diff_score: i32,
+        indel_score: i32,
+        remove_contained: bool,
+    ) {
         // remove trailing indels in all cases
         for rec in &mut self.records {
             rec.remove_trailing_indels();
@@ -216,7 +222,7 @@ impl Paf {
 
         let mut overlap_pairs = Vec::new();
         self.records.sort_by_key(|rec| rec.q_name.clone());
-
+        let mut contained_indexes = vec![false; self.records.len()];
         for i in 0..(self.records.len() - 1) {
             let rec1 = &self.records[i];
             let rgn1 = rec1.get_query_as_region();
@@ -231,11 +237,11 @@ impl Paf {
                     j += 1;
                     continue;
                 } else if overlap == (rec2.q_en - rec2.q_st) {
-                    //rec2.contained = true;
-                    log::trace!("{}\n^is contained in another alignment", rec1);
+                    contained_indexes[j] = true;
+                    log::debug!("{}\n^is contained in another alignment", rec2);
                 } else if overlap == (rec1.q_en - rec1.q_st) {
-                    //rec1.contained = true;
-                    log::trace!("{}\n^is contained in another alignment", rec1);
+                    contained_indexes[i] = true;
+                    log::debug!("{}\n^is contained in another alignment", rec1);
                 } else {
                     // put recs in left, right order
                     if rec1.q_st <= rec2.q_st {
@@ -274,7 +280,22 @@ impl Paf {
 
         if unseen > 0 {
             // recursively call for next overlap
-            self.overlapping_paf_recs(match_score, diff_score, indel_score);
+            self.overlapping_paf_recs(match_score, diff_score, indel_score, remove_contained);
+        } else if remove_contained {
+            let n_to_remove = contained_indexes.iter().filter(|&x| *x).count();
+            log::info!("Removing {} contained alignments.", n_to_remove);
+            log::info!("{} total alignments.", self.records.len());
+            let mut new_records = Vec::new();
+            assert!(self.records.len() == contained_indexes.len());
+            for (i, rec) in self.records.iter().enumerate() {
+                if !contained_indexes[i] {
+                    new_records.push(rec.clone());
+                }
+            }
+            self.records = new_records;
+            log::info!("{} total alignments.", self.records.len());
+            // remove contained records
+            //self.records.retain(|rec| !rec.contained);
         }
     }
 
@@ -520,13 +541,14 @@ impl PafRecord {
     /// force the tpos index to be at a match to the right (or left)
     pub fn tpos_to_idx_match(&self, qpos: u64, search_right: bool) -> Result<usize, usize> {
         let mut idx = self.tpos_to_idx(qpos)?;
+        let max_idx = self.long_cigar.len();
         // find the closes actual matching base
         if search_right {
-            while !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
+            while idx < max_idx && !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
                 idx += 1;
             }
         } else {
-            while !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
+            while idx > 0 && !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
                 idx -= 1;
             }
         }
@@ -548,13 +570,14 @@ impl PafRecord {
     /// force the qpos index to be at a match to the right (or left)
     pub fn qpos_to_idx_match(&self, qpos: u64, search_right: bool) -> Result<usize, usize> {
         let mut idx = self.qpos_to_idx(qpos)?;
+        let max_idx = self.long_cigar.len();
         // find the closes actual matching base
         if (search_right && self.strand == '+') || (!search_right && self.strand == '-') {
-            while !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
+            while idx < max_idx && !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
                 idx += 1;
             }
         } else {
-            while !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
+            while idx > 0 && !matches!(self.long_cigar[idx], Match(_) | Diff(_) | Equal(_)) {
                 idx -= 1;
             }
         }

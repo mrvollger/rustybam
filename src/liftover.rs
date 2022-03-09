@@ -33,8 +33,6 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
             trimmed_paf.t_st, rgn, paf
         ),
     };
-    trimmed_paf.t_st = paf.tpos_aln[start_idx];
-    trimmed_paf.q_st = paf.qpos_aln[start_idx];
 
     // index at the end of trimmed alignment
     trimmed_paf.t_en = cmp::min(rgn.en, paf.t_en);
@@ -49,14 +47,17 @@ pub fn trim_paf_rec_to_rgn(rgn: &bed::Region, paf: &PafRecord) -> Option<PafReco
             paf
         ),
     };
-    trimmed_paf.t_en = paf.tpos_aln[end_idx];
-    trimmed_paf.q_en = paf.qpos_aln[end_idx];
 
-    // if this is the case then the whole internal region is indel
-    // TODO check to make sure this is true
+    // if this is the case then the whole internal regions is an indel
     if start_idx > end_idx {
         return None;
     }
+
+    // update the start and end positions
+    trimmed_paf.t_st = paf.tpos_aln[start_idx];
+    trimmed_paf.q_st = paf.qpos_aln[start_idx];
+    trimmed_paf.t_en = paf.tpos_aln[end_idx];
+    trimmed_paf.q_en = paf.qpos_aln[end_idx];
 
     // get the cigar opts
     trimmed_paf.cigar = PafRecord::collapse_long_cigar(&paf.subset_cigar(start_idx, end_idx));
@@ -123,7 +124,7 @@ pub fn trim_helper(name: &str, recs: &[PafRecord], rgns: &[bed::Region]) -> Vec<
         .iter()
         .cartesian_product(cur_rgns) // make all pairwise combs
         .par_bridge()
-        .filter(|(paf, rgn)| paf.paf_overlaps_rgn(rgn)) //filter to overlaping pairs
+        .filter(|(paf, rgn)| paf.paf_overlaps_rgn(rgn)) //filter to overlapping pairs
         .filter_map(|(paf, rgn)| trim_paf_rec_to_rgn(rgn, paf))
         .collect();
 
@@ -135,7 +136,7 @@ pub fn trim_paf_by_rgns(
     paf_recs: &[PafRecord],
     invert_query: bool,
 ) -> Vec<PafRecord> {
-    // swap qeury and ref if needed.
+    // swap query and ref if needed.
     let mut newvec = Vec::new();
     let recs: &[PafRecord] = if invert_query {
         for rec in paf_recs.iter() {

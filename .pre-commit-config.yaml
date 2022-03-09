@@ -14,5 +14,4 @@ repos:
     rev: v1.0
     hooks:
       - id: fmt
-      - id: clippy
       - id: cargo-check

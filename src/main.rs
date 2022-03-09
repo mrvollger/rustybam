@@ -243,9 +243,10 @@ pub fn parse_cli() {
             match_score,
             diff_score,
             indel_score,
+            remove_contained,
         }) => {
             let mut paf = paf::Paf::from_file(paf);
-            paf.overlapping_paf_recs(*match_score, *diff_score, *indel_score);
+            paf.overlapping_paf_recs(*match_score, *diff_score, *indel_score, *remove_contained);
             for rec in &paf.records {
                 println!("{}", rec);
             }
