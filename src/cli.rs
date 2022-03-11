@@ -2,12 +2,17 @@ use clap::IntoApp;
 use clap::{AppSettings, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
-#[clap(global_setting(AppSettings::PropagateVersion))]
+#[clap(
+    author,
+    version,
+    about,
+    propagate_version = true,
+    subcommand_required = true,
+    infer_subcommands = true,
+    arg_required_else_help = true,
+    help_expected = true
+)]
 #[clap(global_setting(AppSettings::DeriveDisplayOrder))]
-#[clap(global_setting(AppSettings::InferSubcommands))]
-#[clap(global_setting(AppSettings::HelpExpected))]
-#[clap(setting(AppSettings::SubcommandRequiredElseHelp))]
-#[clap(author, version, about)]
 pub struct Cli {
     /// Threads for decompression.
     #[clap(short, long, default_value_t = 8)]
