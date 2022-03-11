@@ -212,12 +212,14 @@ rb get-fasta --name --strand --bed {regions.of.interest.bed} --fasta {seq.fa(.gz
 
 ## TODO
 
-- [x] Finish implementing `trim-paf`.
 - [x] Add a `bedtools getfasta` like operation that actually works with bgzipped input.
   - [ ] implement bed12/split
 - [ ] Allow sam or paf for operations:
   - [x] make a sam header from a PAF file
-  - [ ] convert sam record to paf record
+  - [x] convert sam record to paf record
   - [x] convert paf record to sam record
+  - [ ] make tools seemlessly work with sam and paf
 - [ ] Add `D4` for Nucfreq.
 - [ ] Finish implementing `suns`.
+- [ ] Allow multiple input files in `bed-length`
+- [ ] Start keeping a changelog
