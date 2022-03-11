@@ -37,44 +37,37 @@ pub struct Cli {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Get percent identity stats from a sam/bam/cram or PAF.
-    ///
     /// Requires =/X operations in the CIGAR string!
     ///
-    /// # output column descriptions:
-    ///
-    /// perID_by_matches is calculated as:
-    ///
-    ///  matches / (matches + mismatches)
-    ///
-    /// perID_by_events is calculated as:
-    ///
-    ///  matches / (matches + mismatches + insertion events + deletion events)
-    ///
-    /// perID_by_all is calculated as:
-    ///
-    ///  matches / (matches + mismatches + insertion bases + deletion bases)
+    /// ## output column descriptions:
+    /// ### perID_by_matches is calculated as:
+    ///  `matches / (matches + mismatches)`
+    /// ### perID_by_events is calculated as:
+    ///  `matches / (matches + mismatches + insertion events + deletion events)`
+    /// ### perID_by_all is calculated as:
+    ///  `matches / (matches + mismatches + insertion bases + deletion bases)`
     Stats {
-        /// sam/bam/cram/file
+        /// Input sam/bam/cram/file.
         #[clap(default_value = "-")]
         bam: String,
-        /// print query coordinates first
+        /// Print query coordinates first
         #[clap(short, long)]
         qbed: bool,
-        /// The input is paf format
-        /// (must have cg tag with extended cigar or cs tag).
+        /// Specify that the input is paf format,
+        /// (must have cg tag with extended cigar).
         #[clap(short, long)]
         paf: bool,
     },
     /// Count the number of bases in a bed file.
     #[clap(visible_aliases = &["bedlen", "bl", "bedlength"])]
     BedLength {
-        /// a bed file
+        /// Input bed file.
         #[clap(default_value = "-")]
         bed: String,
-        /// make the output human readable (Mbp)
+        /// Make the output human readable (Mbp).
         #[clap(short, long)]
         readable: bool,
-        /// count bases for each category in this column <COLUMN>.
+        /// Count bases for each category in this column <COLUMN>.
         #[clap(short, long)]
         column: Option<u8>,
     },
@@ -83,13 +76,13 @@ pub enum Commands {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
         #[clap(default_value = "-")]
         paf: String,
-        /// minimum number of aligned bases across all alignments between a target and query in order to keep those records
+        /// Minimum number of aligned bases across all alignments between a target and query in order to keep those records.
         #[clap(short, long, default_value_t = 0)]
         paired_len: u64,
-        /// minimum alignment length
+        /// Minimum alignment length.
         #[clap(short, long, default_value_t = 0)]
         aln: u64,
-        /// minimum query length
+        /// Minimum query length.
         #[clap(short, long, default_value_t = 0)]
         query: u64,
     },
@@ -103,7 +96,7 @@ pub enum Commands {
     ///
     /// This is a function for lifting over coordinates from a reference (<BED>) to a query using a PAF file from minimap2 or unimap (note, you can use `paftools.js sam2paf` to convert SAM data to PAF format).
     /// The returned file is a PAF file that is trimmed to the regions in the bed file. Even the cigar in the returned PAF file is trimmed so it can be used downstream! Additionally, a tag with the format `id:Z:<>` is added to the PAF where `<>` is either the 4th column of the input bed file or if not present `chr_start_end`.
-    #[clap(aliases = &["william-t-harvey", "wth"])]
+    #[clap(visible_aliases=&["lo"], aliases = &["william-t-harvey", "wth"])]
     Liftover {
         /// PAF file from minimap2 or unimap run with -c and --eqx [i.e. the PAF file must have the cg tag and use extended CIGAR opts (=/X)].
         #[clap(default_value = "-")]
@@ -120,7 +113,9 @@ pub enum Commands {
         #[clap(short, long)]
         largest: bool,
     },
-    /// Trim paf records that overlap in query sequence.
+    /// Trim PAF records that overlap in query sequence to find and optimal splitting point using dynamic programing.
+    ///
+    /// Note, this can be combined with `rb invert` to also trim the target sequence.
     ///
     /// This idea is to mimic some of the trimming that happens in PAV to improve breakpoint detection. Starts with the largest overlap and iterates until no query overlaps remain.
     #[clap(visible_aliases = &["trim", "tp"])]
@@ -150,10 +145,10 @@ pub enum Commands {
         paf: String,
         /// Generate ~1 query per target that scaffolds together all the records that map to that target sequence.
         ///
-        /// The order of the scaffold will be determined by the average target position across all the queries, and the name of the new scaffold will be
+        /// The order of the scaffold will be determined by the average target position across all the queries, and the name of the new scaffold will be.
         #[clap(short, long)]
         scaffold: bool,
-        /// space to add between records
+        /// Space to add between records.
         #[clap(short, long, default_value_t = 1_000_000)]
         insert: u64,
     },
@@ -163,7 +158,7 @@ pub enum Commands {
         /// PAF file from minimap2 or unimap. Must have the cg tag, and n matches will be zero unless the cigar uses =X.
         #[clap(default_value = "-")]
         paf: String,
-        /// maximum indel size to keep in the paf
+        /// Maximum indel size to keep in the paf.
         #[clap(short, long, default_value_t = 100)]
         max_size: u32,
     },
@@ -182,62 +177,62 @@ pub enum Commands {
     /// Specifically it reads fastx format (fastq, fasta, or mixed) from stdin and divides the records across multiple output files. Output files can be compressed by adding `.gz`, and the input can also be compressed or uncompressed.
     #[clap(visible_aliases = &["fxs", "fasta-split", "fastq-split" ,"fa-split", "fq-split"])]
     FastxSplit {
-        /// List of fastx files to write to
+        /// List of fastx files to write to.
         fastx: Vec<String>,
     },
     /// Mimic bedtools getfasta but allow for bgzip in both bed and fasta inputs.
     #[clap(visible_aliases = &["getfasta", "gf"])]
     GetFasta {
-        /// fasta file to extract sequences from
+        /// Fasta file to extract sequences from.
         #[clap(short, long, default_value = "-")]
         fasta: String,
-        /// bed file of regions to extract
+        /// BED file of regions to extract.
         #[clap(short, long)]
         bed: String,
-        /// Reverse complement the sequence if the strand is "-"
+        /// Reverse complement the sequence if the strand is "-".
         #[clap(short, long)]
         strand: bool,
-        /// Add the name (4th column) to the header of the fasta output
+        /// Add the name (4th column) to the header of the fasta output.
         #[clap(short, long)]
         name: bool,
     },
     /// Get the frequencies of each bp at each position.
     Nucfreq {
-        /// sam/bam/cram/file
+        /// Input sam/bam/cram/file.
         #[clap(default_value = "-")]
         bam: String,
-        /// print nucfreq info from the input region e.g "chr1:1-1000"
+        /// Print nucfreq info from the input region e.g "chr1:1-1000".
         #[clap(short, long)]
         region: Option<String>,
-        /// print nucfreq info from regions in the bed file
-        /// output is optionally tagged using the 4th column
+        /// Print nucfreq info from regions in the bed file
+        /// output is optionally tagged using the 4th column.
         #[clap(short, long)]
         bed: Option<String>,
-        /// smaller output format
+        /// Smaller output format.
         #[clap(short, long)]
         small: bool,
     },
     /// Report the longest exact repeat length at every position in a fasta.
     Repeat {
-        /// a fasta file
+        /// Input fasta file.
         #[clap(default_value = "-")]
         fasta: String,
-        /// The smallest repeat length to report
+        /// The smallest repeat length to report.
         #[clap(short, long, default_value_t = 21)]
         min: usize,
     },
     /// Extract the intervals in a genome (fasta) that are made up of SUNs.
     Suns {
-        /// fasta file with the genome
+        /// Input fasta file with the genome.
         #[clap(short, long, default_value = "-")]
         fasta: String,
-        /// the size of the required unique kmer
+        /// The size of the required unique kmer.
         #[clap(short, long, default_value_t = 21)]
         kmer_size: usize,
-        /// the maximum size SUN interval to report
+        /// The maximum size SUN interval to report.
         #[clap(short, long, default_value_t = std::usize::MAX)]
         max_size: usize,
-        /// confirm all the SUNs (very slow) only for debugging.
+        /// Confirm all the SUNs (very slow) only for debugging.
         #[clap(short, long)]
         validate: bool,
     },
