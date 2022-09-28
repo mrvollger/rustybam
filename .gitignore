@@ -21,3 +21,4 @@ gh-md-toc
 .jekyll-metadata
 src/test.rs
 images/**
+.test/aligned.fiberseq.bam
