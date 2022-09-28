@@ -10,10 +10,11 @@ cargo run --bin rb -- --help
 # broken for some reason
 # target=aarch64-unknown-linux-musl
 # target=x86_64-unknown-linux-gnu
+# aarch64-apple-darwin
 
 mkdir -p dists
 
-for target in x86_64-apple-darwin aarch64-apple-darwin x86_64-unknown-linux-musl; do
+for target in x86_64-apple-darwin x86_64-unknown-linux-musl; do
     echo $target
     cross build --release --target ${target}
     tar -czvf ./dists/rustybam_v${V}-${target}.tar.gz \
