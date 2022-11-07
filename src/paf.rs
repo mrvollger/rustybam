@@ -223,6 +223,12 @@ impl Paf {
         let mut overlap_pairs = Vec::new();
         self.records.sort_by_key(|rec| rec.q_name.clone());
         let mut contained_indexes = vec![false; self.records.len()];
+
+        // check if there are enough records to even try this operation
+        if self.records.len() < 2 {
+            return;
+        }
+
         for i in 0..(self.records.len() - 1) {
             let rec1 = &self.records[i];
             let rgn1 = rec1.get_query_as_region();
