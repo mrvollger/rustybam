@@ -52,7 +52,6 @@ pub fn get_fasta(path: &str, bed: &str, add_name: bool, use_strand: bool) {
                 None => name.push_str("(.)"),
             };
         }
-
-        println!("{}\n{}", name, str::from_utf8(&seq).unwrap());
+        println!(">{}\n{}", name, str::from_utf8(&seq).unwrap());
     }
 }
