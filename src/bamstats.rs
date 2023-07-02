@@ -98,7 +98,7 @@ pub fn add_stats_from_cigar(cigar: &CigarStringView, stats: &mut Stats) {
     }
 }
 
-pub fn cigar_stats(mut rec: Record, header: &Header) -> Stats {
+pub fn cigar_stats(rec: Record, header: &Header) -> Stats {
     let cigar = rec.cigar();
     let bam_head = HeaderView::from_header(header);
     let r_nm = str::from_utf8(bam_head.tid2name(rec.tid() as u32)).unwrap();
