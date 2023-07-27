@@ -12,7 +12,7 @@
 
 [![DOI](https://zenodo.org/badge/351639424.svg)](https://zenodo.org/badge/latestdoi/351639424)
 
-`rustybam` is a bioinformatics toolkit written in the `rust` programing language focused around manipulation of alignment (`bam` and `PAF`), annotation (`bed`), and sequence (`fasta` and `fastq`) files.
+`rustybam` is a bioinformatics toolkit written in the `rust` programing language focused around manipulation of alignment (`bam` and `PAF`), annotation (`bed`), and sequence (`fasta` and `fastq`) files. If your alignment is in a different format checkout if [wgatools](https://github.com/wjwei-handsome/wgatools) can convert it for you!
 
 ## What can rustybam do?
 
