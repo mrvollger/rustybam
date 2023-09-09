@@ -2,7 +2,7 @@ use super::bed;
 //use rayon::prelude::*;
 use std::collections::HashMap;
 
-pub fn bed_stats(bed: &String, readable: bool, column: Option<u8>) {
+pub fn bed_stats(bed: &str, readable: bool, column: Option<u8>) {
     let rgns = bed::parse_bed(bed);
     match column {
         Some(c) => {
@@ -17,7 +17,7 @@ pub fn bed_stats(bed: &String, readable: bool, column: Option<u8>) {
             log::trace!("{:?}", dict);
             for (key, (count, n)) in dict.iter_mut() {
                 if readable {
-                    *count = *count / 1e6;
+                    *count /= 1e6;
                 }
                 println!("{}\t{}\t{}", key, count, n);
             }
@@ -26,7 +26,7 @@ pub fn bed_stats(bed: &String, readable: bool, column: Option<u8>) {
             let n = rgns.len();
             let mut count: f32 = rgns.into_iter().map(|rgn| (rgn.en - rgn.st) as f32).sum();
             if readable {
-                count = count / 1e6;
+                count /= 1e6;
             }
             println!("{}\t{}", count, n);
         }
