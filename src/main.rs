@@ -10,7 +10,6 @@ use rustybam::cli::Commands;
 use rustybam::fastx;
 use rustybam::paf::paf_swap_query_and_target;
 use rustybam::*;
-use std::collections::HashMap;
 use std::time::Instant;
 
 fn main() {
@@ -166,32 +165,7 @@ pub fn parse_cli() {
             readable,
             column,
         }) => {
-            let rgns = bed::parse_bed(bed);
-            match *column {
-                Some(c) => {
-                    let mut dict = HashMap::new();
-                    for rgn in rgns {
-                        let bp = dict.entry(rgn.get_column(c).clone()).or_insert(0_u64);
-                        *bp += rgn.en - rgn.st;
-                    }
-                    log::trace!("{:?}", dict);
-                    for (key, count) in dict {
-                        if *readable {
-                            println!("{}\t{}", key, (count as f64) / 1e6);
-                        } else {
-                            println!("{}\t{}", key, count);
-                        }
-                    }
-                }
-                None => {
-                    let count: u64 = rgns.into_iter().map(|rgn| rgn.en - rgn.st).sum();
-                    if *readable {
-                        println!("{}", (count as f64) / 1e6);
-                    } else {
-                        println!("{}", count);
-                    }
-                }
-            }
+            bed_stats::bed_stats(bed, *readable, *column);
         }
         //
         // Run Invert
