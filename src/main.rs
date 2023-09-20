@@ -165,7 +165,10 @@ pub fn parse_cli() {
             readable,
             column,
         }) => {
-            bed_stats::bed_stats(bed, *readable, *column);
+            for bed_file in bed {
+                print!("{bed_file}\t");
+                bed_stats::bed_stats(bed_file, *readable, *column);
+            }
         }
         //
         // Run Invert

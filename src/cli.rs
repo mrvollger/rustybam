@@ -63,7 +63,7 @@ pub enum Commands {
     BedLength {
         /// Input bed file.
         #[clap(default_value = "-")]
-        bed: String,
+        bed: Vec<String>,
         /// Make the output human readable (Mbp).
         #[clap(short, long)]
         readable: bool,
