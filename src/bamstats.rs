@@ -126,7 +126,7 @@ pub fn add_stats_from_cigar(cigar: &CigarStringView, stats: &mut Stats, md: Opti
         }
     }
     // try the MD tag if there are no matches
-    if stats.equal == 0 && md.is_some() {
+    if stats.equal == 0 && stats.matches > 0 && md.is_some() {
         let md = md.unwrap();
         let (m_count, mm_count, _i_c, _i_bp) = parse_md_for_stats(md);
         assert_eq!(m_count + mm_count, stats.diff);
@@ -142,13 +142,13 @@ pub fn add_stats_from_cigar(cigar: &CigarStringView, stats: &mut Stats, md: Opti
     stats.id_by_matches = 100.0 * stats.equal as f32 / (stats.equal + stats.diff) as f32;
 
     // print warnings if the cigar does not use =/X
-    if stats.matches > 0 {
+    if stats.matches > 0 && md.is_none() {
         eprint!(
             "\r{} {} {}{}",
             "\u{26A0} warning:".bold().yellow(),
             "cigar string contains".yellow(),
             "'M'".bold().red(),
-            ", assuming mismatch.".yellow()
+            ", assuming mismatch since there is no MD tag.".yellow()
         );
     }
 }
