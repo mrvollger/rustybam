@@ -61,7 +61,7 @@ pub struct NucList {
 pub fn nucfreq(bam: &mut rust_htslib::bam::IndexedReader, rgn: &Region) -> Vec<Nucfreq> {
     let rgn_length = usize::try_from(rgn.en - rgn.st + 1).unwrap();
     let mut vec = Vec::with_capacity(rgn_length);
-    for (_idx, p) in bam.pileup().enumerate() {
+    for p in bam.pileup() {
         let pileup = p.unwrap();
         if (pileup.pos() as u64) < rgn.st || (pileup.pos() as u64) >= rgn.en {
             continue;
@@ -145,7 +145,7 @@ pub fn small_nucfreq(vec: &[Nucfreq]) {
             cur_id = nf.id.clone();
             println!("#{}\t{}\t{}", nf.name, nf.pos, nf.id);
         }
-        let mut mc = vec![nf.a, nf.c, nf.g, nf.t];
+        let mut mc = [nf.a, nf.c, nf.g, nf.t];
         mc.sort_unstable();
         println!("{}\t{}", mc[3], mc[2]);
     }

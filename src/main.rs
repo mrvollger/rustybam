@@ -68,7 +68,7 @@ pub fn parse_cli() {
             let bam_header = bam::Header::from_template(bam_reader.header());
 
             // get stats
-            for (_idx, rec) in bam_reader.records().enumerate() {
+            for rec in bam_reader.records() {
                 let rec = rec.unwrap();
                 if !rec.is_unmapped() {
                     let stats = bamstats::cigar_stats(rec, &bam_header);

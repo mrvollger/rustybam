@@ -1,6 +1,9 @@
 use super::paf;
 use bio_types::strand::ReqStrand::*;
 use colored::Colorize;
+use lazy_static::lazy_static;
+use regex::Regex;
+use rust_htslib::bam::record::Aux;
 use rust_htslib::bam::record::{Cigar::*, CigarStringView};
 use rust_htslib::bam::Header;
 use rust_htslib::bam::HeaderView;
@@ -8,6 +11,7 @@ use rust_htslib::bam::Record;
 use std::convert::TryFrom;
 use std::fmt;
 use std::str;
+
 #[derive(Default)]
 pub struct Stats {
     pub q_nm: String,
@@ -31,6 +35,49 @@ pub struct Stats {
     pub id_by_matches: f32,
 }
 
+///
+/// ```
+/// use rustybam::bamstats::*;
+/// let md_string = "10A3T0T10^ACGT";
+/// let (m_count, mm_count, i_c, i_bp) =parse_md_for_stats(md_string);
+/// assert_eq!(m_count, 23);
+/// assert_eq!(mm_count, 3);
+/// assert_eq!(i_c, 1);
+/// assert_eq!(i_bp, 4);
+/// ```
+pub fn parse_md_for_stats(md: &str) -> (u32, u32, u32, u32) {
+    // Regular expression to match runs of identical bases, mismatches, and deletions
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"(\d+)|([A-Z])|(\^[A-Z]+)").unwrap();
+    }
+    let matches = RE.captures_iter(md);
+
+    // Counters
+    let mut match_count = 0;
+    let mut mismatch_count = 0;
+    let mut insertion_count = 0;
+    let mut insertion_bases = 0;
+
+    // Parsing the matches
+    for caps in matches {
+        if let Some(m) = caps.get(1) {
+            match_count += m.as_str().parse::<u32>().unwrap();
+        } else if let Some(_m) = caps.get(2) {
+            mismatch_count += 1;
+        } else if let Some(ins) = caps.get(3) {
+            insertion_bases += ins.as_str().len() as u32 - 1;
+            insertion_count += 1;
+        }
+    }
+
+    (
+        match_count,
+        mismatch_count,
+        insertion_count,
+        insertion_bases,
+    )
+}
+
 impl fmt::Display for Stats {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -44,7 +91,7 @@ impl fmt::Display for Stats {
 pub fn stats_from_paf(paf: paf::PafRecord) -> Stats {
     //let paf = paf::read_paf_line(line).unwrap();
     let mut stats = Stats::default();
-    add_stats_from_cigar(&CigarStringView::new(paf.cigar, 0), &mut stats);
+    add_stats_from_cigar(&CigarStringView::new(paf.cigar, 0), &mut stats, None);
     stats.r_nm = paf.t_name;
     stats.r_len = paf.t_len as i64;
     stats.r_st = paf.t_st as i64;
@@ -57,7 +104,7 @@ pub fn stats_from_paf(paf: paf::PafRecord) -> Stats {
     stats
 }
 
-pub fn add_stats_from_cigar(cigar: &CigarStringView, stats: &mut Stats) {
+pub fn add_stats_from_cigar(cigar: &CigarStringView, stats: &mut Stats, md: Option<&str>) {
     // iterate over cigar
     for opt in cigar {
         match opt {
@@ -77,6 +124,14 @@ pub fn add_stats_from_cigar(cigar: &CigarStringView, stats: &mut Stats) {
             }
             _ => (),
         }
+    }
+    // try the MD tag if there are no matches
+    if stats.equal == 0 && md.is_some() {
+        let md = md.unwrap();
+        let (m_count, mm_count, _i_c, _i_bp) = parse_md_for_stats(md);
+        assert_eq!(m_count + mm_count, stats.diff);
+        stats.equal = m_count;
+        stats.diff = mm_count;
     }
 
     // make the summary stats
@@ -151,8 +206,15 @@ pub fn cigar_stats(rec: Record, header: &Header) -> Stats {
         stats.q_en = stats.q_len - temp;
     }
 
+    // check if there is an MD tag
+    let md = if let Ok(Aux::String(md_text)) = rec.aux(b"MD") {
+        Some(md_text)
+    } else {
+        None
+    };
+
     // read the cigar string and add in the stats
-    add_stats_from_cigar(&cigar, &mut stats);
+    add_stats_from_cigar(&cigar, &mut stats, md);
 
     //eprintln!("{} {} {} {}", stats.equal, stats.diff, stats.ins, stats.del);
     // println!("{}", stats);
@@ -228,7 +290,7 @@ mod tests {
         let cigar = CigarString::try_from("10=10X").unwrap();
         let view = CigarStringView::new(cigar, 0);
         let mut stats = Stats::default();
-        add_stats_from_cigar(&view, &mut stats);
+        add_stats_from_cigar(&view, &mut stats, None);
         assert!((50.0 - stats.id_by_all).abs() < 1e-10);
     }
 }
