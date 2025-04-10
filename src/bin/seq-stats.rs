@@ -97,8 +97,8 @@ where
 
 fn main() {
     let matches = App::new("seq_stats")
-        .version("1.0")
-        .author("Your Name <your.email@example.com>")
+        .version("0.1")
+        .author("Mitchell R. Vollger <mrvollger@gmail.com>")
         .about("Calculates sequence statistics from various file formats")
         .arg(
             Arg::new("infiles")
