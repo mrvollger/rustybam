@@ -35,7 +35,11 @@ pub fn get_rg_ids(header: &Header) -> Vec<String> {
 
 pub fn add_rg(threads: usize, source_file: &str, uncompressed: bool, sample: &Option<String>) {
     // Open the source BAM file and read its header
-    let source_bam = bam::Reader::from_path(source_file).expect("Failed to open source BAM file");
+    let mut source_bam =
+        bam::Reader::from_path(source_file).expect("Failed to open source BAM file");
+    source_bam
+        .set_threads(threads)
+        .expect("Failed to set threads for source BAM file");
     let source_header_view = source_bam.header();
     let source_header = Header::from_template(source_header_view);
     let mut source_header_hash = source_header.to_hashmap();
