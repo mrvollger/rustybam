@@ -16,7 +16,6 @@ use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::io::BufRead;
 use std::str::FromStr;
-use std::usize;
 
 lazy_static! {
     static ref PAF_TAG: Regex = Regex::new("(..):(.):(.*)").unwrap();
@@ -260,7 +259,7 @@ impl Paf {
                 j += 1;
             }
         }
-        overlap_pairs.sort_by_key(|rec| std::u64::MAX - rec.0);
+        overlap_pairs.sort_by_key(|rec| u64::MAX - rec.0);
         log::debug!("{} overlapping pairs found", overlap_pairs.len());
         let mut q_seen: HashSet<String> = HashSet::new();
         let mut unseen = 0;

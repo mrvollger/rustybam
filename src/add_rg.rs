@@ -56,7 +56,7 @@ pub fn add_rg(threads: usize, source_file: &str, uncompressed: bool, sample: &Op
     let mut new_header = Header::from_template(target_header).to_hashmap();
 
     // Add RG lines from the source header to the new header
-    let new_header_rg_lines = new_header.entry("RG".to_string()).or_insert_with(Vec::new);
+    let new_header_rg_lines = new_header.entry("RG".to_string()).or_default();
 
     // remove rg lines with IDs in the target header that are also in the source header
     let fake_id = "".to_string();
@@ -66,9 +66,7 @@ pub fn add_rg(threads: usize, source_file: &str, uncompressed: bool, sample: &Op
     });
 
     // get RG lines from the source header
-    let source_rg_lines = source_header_hash
-        .entry("RG".to_string())
-        .or_insert_with(Vec::new);
+    let source_rg_lines = source_header_hash.entry("RG".to_string()).or_default();
 
     // Add sample if provided to the source rg lines
     if let Some(sample) = sample {

@@ -117,7 +117,7 @@ pub fn seq_stats(
 
         if let Some((_, lengths)) = lengths {
             let (total, n, mean, quantile_values, min, max, n50, au_n) =
-                calc_stats(&lengths, &quantiles, genome_size);
+                calc_stats(&lengths, quantiles, genome_size);
 
             let quantile_str = quantile_values
                 .iter()

@@ -1,7 +1,7 @@
 use bio::alphabets::dna::revcomp;
 use bio::data_structures::suffix_array::{lcp, shortest_unique_substrings, suffix_array};
 use bio::io::fasta;
-use std::{fs::File, io::BufReader, usize};
+use std::{fs::File, io::BufReader};
 
 static END_CHAR: u8 = b'$';
 static END_CHAR_STR: &str = "$";
