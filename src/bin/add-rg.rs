@@ -23,6 +23,14 @@ fn main() {
                 .takes_value(true)
                 .default_value("8"),
         )
+        // add -u for uncompressed output
+        .arg(
+            Arg::new("uncompressed")
+                .short('u')
+                .long("uncompressed")
+                .help("Write uncompressed output")
+                .takes_value(false),
+        )
         .get_matches();
 
     // set log level to info
@@ -80,6 +88,13 @@ fn main() {
     output_bam
         .set_threads(n_threads)
         .expect("Failed to set threads for output BAM writer");
+
+    // Check if the output should be uncompressed
+    if matches.is_present("uncompressed") {
+        output_bam
+            .set_compression_level(bam::CompressionLevel::Uncompressed)
+            .expect("Failed to set compression level for output BAM writer");
+    }
 
     // Write records from the target BAM file to the output BAM file
     for record in target_bam.records() {
