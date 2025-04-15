@@ -48,6 +48,10 @@ fn main() {
         .filter(|line| line.starts_with("@RG"))
         // strip the leading @ character
         .map(|line| line.trim_start_matches('@'))
+        // keep only unique lines
+        .collect::<std::collections::HashSet<_>>()
+        // convert to Vec
+        .into_iter()
         .collect();
 
     if rg_lines.is_empty() {
@@ -68,6 +72,7 @@ fn main() {
         let header_line = HeaderRecord::new(rg_line.as_bytes());
         new_header.push_record(&header_line);
     }
+    // remove duplicate RG lines
 
     // Create a writer for the output BAM file
     let mut output_bam = bam::Writer::from_stdout(&new_header, bam::Format::Bam)
@@ -79,10 +84,10 @@ fn main() {
     // Write records from the target BAM file to the output BAM file
     for record in target_bam.records() {
         let record = record.expect("Failed to read record from target BAM file");
+
         output_bam
             .write(&record)
             .expect("Failed to write record to output BAM file");
     }
-
-    println!("RG lines successfully added to the output BAM file.");
+    log::info!("RG lines successfully added to the output BAM file.");
 }
