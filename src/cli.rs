@@ -249,6 +249,10 @@ pub enum Commands {
         /// Write uncompressed output
         #[clap(short = 'u', long)]
         uncompressed: bool,
+
+        /// Add this string as the sample name (SM) to each read group in the output BAM
+        #[clap(short = 's', long)]
+        sample: Option<String>,
     },
     /// Calculate summary statistics from fasta/q, sam, bam, or bed files. e.g. N50, mean, quantiles.
     SeqStats {

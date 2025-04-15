@@ -304,8 +304,9 @@ pub fn parse_cli() {
             source,
             threads,
             uncompressed,
+            sample,
         }) => {
-            add_rg::add_rg(*threads, &source, *uncompressed);
+            add_rg::add_rg(*threads, &source, *uncompressed, sample);
         }
         Some(Commands::SeqStats {
             infiles,

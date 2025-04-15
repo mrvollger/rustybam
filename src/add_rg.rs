@@ -2,7 +2,7 @@ use log;
 use rust_htslib::bam::header::HeaderRecord;
 use rust_htslib::bam::{self, Header, Read};
 
-pub fn add_rg(threads: usize, source_file: &str, uncompressed: bool) {
+pub fn add_rg(threads: usize, source_file: &str, uncompressed: bool, sample: &Option<String>) {
     // Open the source BAM file and read its header
     let source_bam = bam::Reader::from_path(source_file).expect("Failed to open source BAM file");
     let source_header = source_bam.header();
@@ -35,7 +35,11 @@ pub fn add_rg(threads: usize, source_file: &str, uncompressed: bool) {
 
     // Add RG lines to the new header
     for rg_line in rg_lines {
-        let header_line = HeaderRecord::new(rg_line.as_bytes());
+        let mut header_line = HeaderRecord::new(rg_line.as_bytes());
+        // add sample name if provided
+        if let Some(sample_name) = sample {
+            header_line.push_tag(b"SM", sample_name);
+        }
         new_header.push_record(&header_line);
     }
     // remove duplicate RG lines
