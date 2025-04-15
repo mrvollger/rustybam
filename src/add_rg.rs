@@ -1,9 +1,8 @@
-use clap::{App, Arg};
 use log;
 use rust_htslib::bam::header::HeaderRecord;
 use rust_htslib::bam::{self, Header, Read};
 
-fn add_rg(threads: usize, source_file: &str, uncompressed: bool) {
+pub fn add_rg(threads: usize, source_file: &str, uncompressed: bool) {
     // Open the source BAM file and read its header
     let source_bam = bam::Reader::from_path(source_file).expect("Failed to open source BAM file");
     let source_header = source_bam.header();

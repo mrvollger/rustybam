@@ -300,6 +300,22 @@ pub fn parse_cli() {
             //run_split_fasta(fasta);
             fastx::run_split_fastx(fastx, "-");
         }
+        Some(Commands::AddRg {
+            source,
+            threads,
+            uncompressed,
+        }) => {
+            add_rg::add_rg(*threads, &source, *uncompressed);
+        }
+        Some(Commands::SeqStats {
+            infiles,
+            threads,
+            human,
+            quantiles,
+            genome_size,
+        }) => {
+            seq_stats::seq_stats(infiles, *threads, *human, quantiles, *genome_size);
+        }
         //
         // Run GetFasta
         //

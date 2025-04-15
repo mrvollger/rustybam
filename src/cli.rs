@@ -236,6 +236,7 @@ pub enum Commands {
         #[clap(short, long)]
         validate: bool,
     },
+    /// Add RG lines from a source BAM file to the BAM from stdin to the BAM going to stdout
     AddRg {
         /// Source BAM file to read RG lines from
         #[clap(required = true)]
@@ -249,6 +250,7 @@ pub enum Commands {
         #[clap(short = 'u', long)]
         uncompressed: bool,
     },
+    /// Calculate summary statistics from fasta/q, sam, bam, or bed files. e.g. N50, mean, quantiles.
     SeqStats {
         /// Input files (fast{a,q}(.gz), sam, bam, bed)
         #[clap(required = true)]

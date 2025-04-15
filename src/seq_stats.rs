@@ -1,4 +1,3 @@
-use clap::{App, Arg};
 use niffler::get_reader;
 use num_format::{Locale, ToFormattedString};
 use rust_htslib::bam::{self, Read};
@@ -96,7 +95,7 @@ where
 }
 
 pub fn seq_stats(
-    infiles: &[&str],
+    infiles: &[String],
     threads: usize,
     human_readable: bool,
     quantiles: &[f64],
