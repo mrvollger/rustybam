@@ -1,4 +1,5 @@
 use clap::{App, Arg};
+use log;
 use rust_htslib::bam::header::HeaderRecord;
 use rust_htslib::bam::{self, Header, Read};
 
@@ -24,6 +25,11 @@ fn main() {
         )
         .get_matches();
 
+    // set log level to info
+    env_logger::Builder::new()
+        .filter(None, log::LevelFilter::Info)
+        .init();
+
     let n_threads = matches
         .value_of("threads")
         .unwrap_or("8")
@@ -45,8 +51,7 @@ fn main() {
         .collect();
 
     if rg_lines.is_empty() {
-        eprintln!("No RG lines found in the source BAM file.");
-        return;
+        log::warn!("No RG lines found in the source BAM file.");
     }
 
     // Open the target BAM file and read its header
