@@ -31,3 +31,5 @@ pub mod trim_overlap;
 pub mod bed_stats;
 
 //pub mod test;
+pub mod add_rg;
+pub mod seq_stats;

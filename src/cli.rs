@@ -236,6 +236,40 @@ pub enum Commands {
         #[clap(short, long)]
         validate: bool,
     },
+    AddRg {
+        /// Source BAM file to read RG lines from
+        #[clap(required = true)]
+        source: String,
+
+        /// Number of threads to use
+        #[clap(short, long, default_value_t = 8)]
+        threads: usize,
+
+        /// Write uncompressed output
+        #[clap(short = 'u', long)]
+        uncompressed: bool,
+    },
+    SeqStats {
+        /// Input files (fast{a,q}(.gz), sam, bam, bed)
+        #[clap(required = true)]
+        infiles: Vec<String>,
+
+        /// Number of threads to use
+        #[clap(short, long, default_value_t = 4)]
+        threads: usize,
+
+        /// Print human-readable output
+        #[clap(short = 'r', long)]
+        human: bool,
+
+        /// Quantiles to calculate
+        #[clap(short, long, default_value = "0.5")]
+        quantiles: Vec<f64>,
+
+        /// Genome size for NG50 calculation
+        #[clap(short = 'g', long)]
+        genome_size: Option<usize>,
+    },
 }
 
 pub fn make_cli_parse() -> Cli {
