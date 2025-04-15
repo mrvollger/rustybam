@@ -37,6 +37,7 @@ anyhow = "1.0.71"
 bimap = "0.6.3"
 bio = "1.3"
 bio-types = "1.0"
+linear-map = "1.2.0"
 calm_io = "0.1.1"
 chrono = "0.4.26"
 clap = { version = "3.2.22", features = ["derive"] }

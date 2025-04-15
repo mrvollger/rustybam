@@ -1584,6 +1584,7 @@ dependencies = [
  "gzp",
  "itertools 0.10.5",
  "lazy_static",
+ "linear-map",
  "log",
  "natord",
  "needletail",
